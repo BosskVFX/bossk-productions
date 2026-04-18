@@ -37,6 +37,8 @@ export default async function handler(req, res) {
         `
       })
     });
+    const emailData = await emailRes.json();
+    console.log('Resend response:', JSON.stringify(emailData));
     emailSent = emailRes.ok;
   } catch (e) {
     console.error('Resend error:', e);
@@ -47,10 +49,11 @@ export default async function handler(req, res) {
   try {
     const sheetRes = await fetch(SHEET_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, company, service, message })
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ name, email, company, service, message }),
+      redirect: 'follow'
     });
-    sheetLogged = sheetRes.ok;
+    sheetLogged = true;
   } catch (e) {
     console.error('Sheet error:', e);
   }
