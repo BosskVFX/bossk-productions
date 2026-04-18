@@ -11,10 +11,13 @@ export default async function handler(req, res) {
 
   const RESEND_KEY = process.env.RESEND_API_KEY;
   const SHEET_URL = process.env.GOOGLE_SHEET_URL;
+  const BEEHIIV_KEY = process.env.BEEHIIV_API_KEY;
+  const BEEHIIV_PUB = process.env.BEEHIIV_PUB_ID;
 
   let emailSent = false;
   let autoReplySent = false;
   let sheetLogged = false;
+  let newsletterAdded = false;
 
   // 1. Send notification email to Bossk team
   try {
@@ -103,10 +106,42 @@ export default async function handler(req, res) {
     console.error('GOOGLE_SHEET_URL env var not set');
   }
 
+  // 4. Add to Beehiiv newsletter
+  if (BEEHIIV_KEY && BEEHIIV_PUB) {
+    try {
+      const bhRes = await fetch(`https://api.beehiiv.com/v2/publications/${BEEHIIV_PUB}/subscriptions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${BEEHIIV_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email,
+          utm_source: 'website_contact_form',
+          referring_site: 'bosskproductions.com',
+          double_opt_override: 'off',
+          send_welcome_email: false,
+          custom_fields: [
+            { name: 'Full Name', value: name },
+            { name: 'Company', value: company || '' }
+          ]
+        })
+      });
+      const bhData = await bhRes.json();
+      console.log('Beehiiv response:', JSON.stringify(bhData));
+      newsletterAdded = bhRes.ok || bhRes.status === 201;
+    } catch (e) {
+      console.error('Beehiiv error:', e.message);
+    }
+  } else {
+    console.error('BEEHIIV env vars not set');
+  }
+
   return res.status(200).json({
     success: true,
     emailSent,
     autoReplySent,
-    sheetLogged
+    sheetLogged,
+    newsletterAdded
   });
 }
