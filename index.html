@@ -334,6 +334,47 @@
   }
   .t-name { font-family:var(--display); font-size:1.15rem; letter-spacing:0.05em; }
   .t-role { font-family:var(--mono); font-size:0.55rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); margin-top:0.2rem; }
+  .t-member { text-align:center; cursor:pointer; }
+  .t-bio { display:none; }
+
+  /* BIO MODAL */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,0.85); backdrop-filter:blur(10px);
+    align-items:center; justify-content:center;
+    padding:2rem;
+  }
+  .modal-overlay.active { display:flex; }
+  .modal {
+    background:var(--card); border:1px solid var(--line);
+    max-width:600px; width:100%; position:relative;
+    max-height:90vh; overflow-y:auto;
+  }
+  .modal-close {
+    position:absolute; top:1rem; right:1rem;
+    background:none; border:none; color:var(--dim);
+    font-size:1.5rem; cursor:pointer; z-index:1;
+    width:36px; height:36px; display:flex;
+    align-items:center; justify-content:center;
+    transition:color 0.2s;
+  }
+  .modal-close:hover { color:var(--text); }
+  .modal-img {
+    width:100%; aspect-ratio:1; object-fit:cover;
+  }
+  .modal-body { padding:2rem; }
+  .modal-name {
+    font-family:var(--display); font-size:1.8rem;
+    letter-spacing:0.05em; margin-bottom:0.2rem;
+  }
+  .modal-role {
+    font-family:var(--mono); font-size:0.6rem;
+    letter-spacing:0.15em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:1.25rem;
+  }
+  .modal-text {
+    color:var(--dim); font-size:0.9rem; line-height:1.8;
+  }
 
   /* CTA */
   .cta {
@@ -761,25 +802,29 @@
     <div class="s-label reveal">Team</div>
     <h2 class="s-title reveal">WHO WE ARE</h2>
     <div class="t-grid stagger">
-      <div class="t-member reveal">
+      <div class="t-member reveal" onclick="openBio(0)">
         <div class="t-photo"><img src="team-jason.jpg" alt="Jason R. Miller" style="width:100%;height:100%;object-fit:cover;"></div>
         <div class="t-name">JASON R. MILLER</div>
         <div class="t-role">Founder / CCO</div>
+        <div class="t-bio">Emmy Award–winning filmmaker with a diverse background in production spanning VFX, editing, producing, writing, and directing. Today his focus is on harnessing AI to create at the speed of thought. With a deep understanding of visual effects and post-production, Jason approaches every project with a full-spectrum perspective, blending traditional craft with next-generation tools.</div>
       </div>
-      <div class="t-member reveal">
+      <div class="t-member reveal" onclick="openBio(1)">
         <div class="t-photo"><img src="team-isaac.jpg" alt="Isaac Loftus" style="width:100%;height:100%;object-fit:cover;"></div>
         <div class="t-name">ISAAC LOFTUS</div>
         <div class="t-role">Executive Producer</div>
+        <div class="t-bio">Isaac leads strategic growth, guiding projects from early concept through delivery while shaping how emerging technologies enhance storytelling. His focus is on building partnerships, expanding production capabilities, and ensuring every project meets the highest standards of craft, clarity, and integrity. Isaac works at the intersection of narrative, technology, and strategy.</div>
       </div>
-      <div class="t-member reveal">
+      <div class="t-member reveal" onclick="openBio(2)">
         <div class="t-photo"><img src="team-andrew.png" alt="Andrew Oleck" style="width:100%;height:100%;object-fit:cover;"></div>
         <div class="t-name">ANDREW OLECK</div>
         <div class="t-role">Creative Director</div>
+        <div class="t-bio">Andrew is a filmmaker who has created acclaimed short films, viral videos, ads, and branded content, bringing decades of expertise in post-production and live events. He has a sharp instinct for producing media that stands out from the crowd. Andrew uses the latest AI technology to supercharge storytelling, bringing to life bold, imaginative visions the world has yet to see.</div>
       </div>
-      <div class="t-member reveal">
+      <div class="t-member reveal" onclick="openBio(3)">
         <div class="t-photo"><img src="team-jordan.jpg" alt="Jordan Sloane" style="width:100%;height:100%;object-fit:cover;"></div>
         <div class="t-name">JORDAN SLOANE</div>
         <div class="t-role">Executive Producer</div>
+        <div class="t-bio">Jordan is a director and producer with experience on over 40 major feature films and television shows, including Black Panther, Spider-Man, Fast and Furious, and multiple multi-camera sitcoms. His ability to lead multidisciplinary teams and execute at scale makes him a versatile creative force across genres and platforms.</div>
       </div>
     </div>
   </div>
@@ -850,6 +895,19 @@
   </div>
 </section>
 
+<!-- BIO MODAL -->
+<div class="modal-overlay" id="bioModal" onclick="if(event.target===this)closeBio()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeBio()">&times;</button>
+    <img class="modal-img" id="modalImg" src="" alt="">
+    <div class="modal-body">
+      <div class="modal-name" id="modalName"></div>
+      <div class="modal-role" id="modalRole"></div>
+      <div class="modal-text" id="modalText"></div>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="f-left">&copy; 2026 BOSSK PRODUCTIONS LLC — LOS ANGELES, CA</div>
   <div class="f-right">
@@ -860,6 +918,32 @@
 </footer>
 
 <script>
+// Bio modal
+function openBio(idx) {
+  const members = document.querySelectorAll('.t-member');
+  const m = members[idx];
+  const img = m.querySelector('img').src;
+  const name = m.querySelector('.t-name').textContent;
+  const role = m.querySelector('.t-role').textContent;
+  const bio = m.querySelector('.t-bio').textContent;
+
+  document.getElementById('modalImg').src = img;
+  document.getElementById('modalName').textContent = name;
+  document.getElementById('modalRole').textContent = role;
+  document.getElementById('modalText').textContent = bio;
+  document.getElementById('bioModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBio() {
+  document.getElementById('bioModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeBio();
+});
+
 // Scroll-triggered reveals
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
