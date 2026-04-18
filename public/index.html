@@ -896,7 +896,7 @@ document.querySelectorAll('.stat').forEach(stat => {
   });
 });
 
-// Contact form submission via Formspree
+// Contact form submission
 async function submitForm() {
   const name = document.getElementById('cf-name').value;
   const email = document.getElementById('cf-email').value;
@@ -914,27 +914,24 @@ async function submitForm() {
   btn.disabled = true;
 
   try {
-    const res = await fetch('https://formspree.io/f/team@bosskproductions.com', {
+    const res = await fetch('/api/contact', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        name, email, company, service, message,
-        _subject: 'New inquiry from bosskproductions.com'
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, company, service, message })
     });
 
     if (res.ok) {
       document.getElementById('contactForm').style.display = 'none';
       document.getElementById('formSuccess').style.display = 'block';
     } else {
-      // Fallback to mailto
-      window.location.href = 'mailto:team@bosskproductions.com?subject=New Inquiry&body=' +
-        encodeURIComponent('Name: ' + name + '\nCompany: ' + company + '\nService: ' + service + '\n\n' + message);
+      btn.textContent = 'Send It';
+      btn.disabled = false;
+      alert('Something went wrong. Please try again or email team@bosskproductions.com directly.');
     }
   } catch {
-    // Fallback to mailto
-    window.location.href = 'mailto:team@bosskproductions.com?subject=New Inquiry&body=' +
-      encodeURIComponent('Name: ' + name + '\nCompany: ' + company + '\nService: ' + service + '\n\n' + message);
+    btn.textContent = 'Send It';
+    btn.disabled = false;
+    alert('Something went wrong. Please try again or email team@bosskproductions.com directly.');
   }
 }
 </script>
