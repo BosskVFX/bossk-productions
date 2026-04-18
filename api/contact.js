@@ -14,10 +14,13 @@ export default async function handler(req, res) {
   const BEEHIIV_KEY = process.env.BEEHIIV_API_KEY;
   const BEEHIIV_PUB = process.env.BEEHIIV_PUB_ID;
 
-  let emailSent = false;
-  let autoReplySent = false;
-  let sheetLogged = false;
-  let newsletterAdded = false;
+  const results = {
+    emailSent: false,
+    autoReplySent: false,
+    sheetLogged: false,
+    newsletterAdded: false,
+    errors: []
+  };
 
   // 1. Send notification email to Bossk team
   try {
@@ -28,8 +31,8 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Bossk Website <onboarding@resend.dev>',
-        to: 'bosskproductions@gmail.com',
+        from: 'Bossk Productions <notifications@bosskproductions.com>',
+        to: 'team@bosskproductions.com',
         subject: `New Inquiry: ${name}${company ? ' — ' + company : ''}`,
         html: `
           <h2 style="color:#ff6b35;">New inquiry from bosskproductions.com</h2>
@@ -44,10 +47,12 @@ export default async function handler(req, res) {
       })
     });
     const emailData = await emailRes.json();
-    console.log('Team email response:', JSON.stringify(emailData));
-    emailSent = emailRes.ok;
+    console.log('TEAM EMAIL:', JSON.stringify(emailData));
+    results.emailSent = emailRes.ok;
+    if (!emailRes.ok) results.errors.push('team_email: ' + JSON.stringify(emailData));
   } catch (e) {
-    console.error('Team email error:', e);
+    console.error('TEAM EMAIL ERROR:', e.message);
+    results.errors.push('team_email_catch: ' + e.message);
   }
 
   // 2. Send auto-reply to the person who submitted
@@ -59,7 +64,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Bossk Productions <onboarding@resend.dev>',
+        from: 'Bossk Productions <hello@bosskproductions.com>',
         to: email,
         subject: 'We got your message — Bossk Productions',
         html: `
@@ -82,31 +87,38 @@ export default async function handler(req, res) {
       })
     });
     const replyData = await replyRes.json();
-    console.log('Auto-reply response:', JSON.stringify(replyData));
-    autoReplySent = replyRes.ok;
+    console.log('AUTO REPLY:', JSON.stringify(replyData));
+    results.autoReplySent = replyRes.ok;
+    if (!replyRes.ok) results.errors.push('auto_reply: ' + JSON.stringify(replyData));
   } catch (e) {
-    console.error('Auto-reply error:', e);
+    console.error('AUTO REPLY ERROR:', e.message);
+    results.errors.push('auto_reply_catch: ' + e.message);
   }
 
   // 3. Log to Google Sheet
+  console.log('SHEET_URL value:', SHEET_URL ? 'SET (' + SHEET_URL.substring(0, 50) + '...)' : 'NOT SET');
   if (SHEET_URL) {
     try {
-      await fetch(SHEET_URL, {
+      const sheetRes = await fetch(SHEET_URL, {
         method: 'POST',
         body: JSON.stringify({ name, email, company, service, message }),
         headers: { 'Content-Type': 'text/plain' },
         redirect: 'follow'
       });
-      sheetLogged = true;
-      console.log('Sheet logged successfully');
+      const sheetText = await sheetRes.text();
+      console.log('SHEET RESPONSE:', sheetRes.status, sheetText);
+      results.sheetLogged = true;
     } catch (e) {
-      console.error('Sheet error:', e.message);
+      console.error('SHEET ERROR:', e.message);
+      results.errors.push('sheet: ' + e.message);
     }
   } else {
-    console.error('GOOGLE_SHEET_URL env var not set');
+    results.errors.push('GOOGLE_SHEET_URL env var not set');
   }
 
   // 4. Add to Beehiiv newsletter
+  console.log('BEEHIIV KEY:', BEEHIIV_KEY ? 'SET' : 'NOT SET');
+  console.log('BEEHIIV PUB:', BEEHIIV_PUB ? BEEHIIV_PUB : 'NOT SET');
   if (BEEHIIV_KEY && BEEHIIV_PUB) {
     try {
       const bhRes = await fetch(`https://api.beehiiv.com/v2/publications/${BEEHIIV_PUB}/subscriptions`, {
@@ -120,28 +132,25 @@ export default async function handler(req, res) {
           utm_source: 'website_contact_form',
           referring_site: 'bosskproductions.com',
           double_opt_override: 'off',
-          send_welcome_email: false,
-          custom_fields: [
-            { name: 'Full Name', value: name },
-            { name: 'Company', value: company || '' }
-          ]
+          send_welcome_email: false
         })
       });
       const bhData = await bhRes.json();
-      console.log('Beehiiv response:', JSON.stringify(bhData));
-      newsletterAdded = bhRes.ok || bhRes.status === 201;
+      console.log('BEEHIIV RESPONSE:', JSON.stringify(bhData));
+      results.newsletterAdded = bhRes.ok || bhRes.status === 201;
+      if (!bhRes.ok && bhRes.status !== 201) results.errors.push('beehiiv: ' + JSON.stringify(bhData));
     } catch (e) {
-      console.error('Beehiiv error:', e.message);
+      console.error('BEEHIIV ERROR:', e.message);
+      results.errors.push('beehiiv: ' + e.message);
     }
   } else {
-    console.error('BEEHIIV env vars not set');
+    results.errors.push('BEEHIIV env vars not set');
   }
+
+  console.log('FINAL RESULTS:', JSON.stringify(results));
 
   return res.status(200).json({
     success: true,
-    emailSent,
-    autoReplySent,
-    sheetLogged,
-    newsletterAdded
+    ...results
   });
 }
