@@ -349,8 +349,58 @@
     line-height:0.95; margin-bottom:1.25rem; position:relative;
   }
   .cta h2 span { color:var(--accent); }
-  .cta p { color:var(--dim); font-size:1rem; max-width:420px; margin:0 auto 2.5rem; line-height:1.7; position:relative; }
+  .cta p { color:var(--dim); font-size:1rem; max-width:420px; margin:0 auto 0; line-height:1.7; position:relative; }
   .cta .btn-p { position:relative; }
+
+  /* CONTACT FORM */
+  .cta-form {
+    max-width:520px; margin:2.5rem auto 0; text-align:left;
+    position:relative;
+  }
+  .form-row {
+    display:flex; gap:1rem; margin-bottom:1rem;
+  }
+  .form-field {
+    flex:1; display:flex; flex-direction:column;
+  }
+  .form-field label {
+    font-family:var(--mono); font-size:0.55rem;
+    letter-spacing:0.15em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:0.4rem;
+  }
+  .form-field input, .form-field textarea, .form-field select {
+    background:var(--bg); color:var(--text);
+    border:1px solid var(--line);
+    padding:0.75rem 1rem;
+    font-family:var(--body); font-size:0.88rem;
+    outline:none; transition:border-color 0.2s;
+    resize:vertical;
+  }
+  .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+    border-color:var(--accent);
+  }
+  .form-field input::placeholder, .form-field textarea::placeholder {
+    color:rgba(138,134,128,0.6);
+  }
+  .form-field select option { background:var(--bg); color:var(--text); }
+  .form-submit {
+    width:100%;
+    background:var(--accent); color:var(--bg);
+    font-family:var(--mono); font-size:0.72rem; font-weight:700;
+    letter-spacing:0.1em; text-transform:uppercase;
+    padding:1rem; border:none; cursor:pointer;
+    margin-top:0.5rem;
+    transition:transform 0.2s, box-shadow 0.3s;
+  }
+  .form-submit:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 30px var(--glow);
+  }
+  .form-success {
+    display:none; text-align:center; padding:2rem;
+    font-family:var(--mono); font-size:0.75rem;
+    letter-spacing:0.1em; color:var(--accent);
+  }
 
   /* FOOTER */
   footer {
@@ -739,7 +789,46 @@
 <section class="cta" id="contact">
   <h2 class="reveal">TELL US WHAT<br>YOU'RE <span>MAKING.</span></h2>
   <p class="reveal">We'll show you what it looks like — in one week.</p>
-  <a href="/cdn-cgi/l/email-protection#b9d3d8cad6d7f9dbd6cacad2c9cbd6ddccdacdd0d6d7ca97dad6d4" class="btn-p">Get Started</a>
+  <div class="cta-form reveal" id="contactForm">
+    <div class="form-row">
+      <div class="form-field">
+        <label>Name</label>
+        <input type="text" id="cf-name" placeholder="Your name" required>
+      </div>
+      <div class="form-field">
+        <label>Company</label>
+        <input type="text" id="cf-company" placeholder="Company or brand">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Email</label>
+        <input type="email" id="cf-email" placeholder="your@email.com" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>What do you need?</label>
+        <select id="cf-service">
+          <option value="" disabled selected>Select a service</option>
+          <option value="Creative Preview">Creative Preview</option>
+          <option value="AI Production">AI Production</option>
+          <option value="Post Production">Post Production</option>
+          <option value="Not sure yet">Not sure yet</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Tell us about your project</label>
+        <textarea id="cf-message" rows="4" placeholder="What are you making? What's the timeline? Any details help."></textarea>
+      </div>
+    </div>
+    <button type="button" class="form-submit" onclick="submitForm()">Send It</button>
+  </div>
+  <div class="form-success" id="formSuccess">
+    Got it. We'll be in touch within 24 hours.
+  </div>
 </section>
 
 <!-- NEWSLETTER -->
@@ -806,6 +895,48 @@ document.querySelectorAll('.stat').forEach(stat => {
     stat.querySelector('.stat-num').style.transition = 'color 0.3s, text-shadow 0.3s';
   });
 });
+
+// Contact form submission via Formspree
+async function submitForm() {
+  const name = document.getElementById('cf-name').value;
+  const email = document.getElementById('cf-email').value;
+  const company = document.getElementById('cf-company').value;
+  const service = document.getElementById('cf-service').value;
+  const message = document.getElementById('cf-message').value;
+
+  if (!name || !email) {
+    alert('Please fill in your name and email.');
+    return;
+  }
+
+  const btn = document.querySelector('.form-submit');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('https://formspree.io/f/team@bosskproductions.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        name, email, company, service, message,
+        _subject: 'New inquiry from bosskproductions.com'
+      })
+    });
+
+    if (res.ok) {
+      document.getElementById('contactForm').style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    } else {
+      // Fallback to mailto
+      window.location.href = 'mailto:team@bosskproductions.com?subject=New Inquiry&body=' +
+        encodeURIComponent('Name: ' + name + '\nCompany: ' + company + '\nService: ' + service + '\n\n' + message);
+    }
+  } catch {
+    // Fallback to mailto
+    window.location.href = 'mailto:team@bosskproductions.com?subject=New Inquiry&body=' +
+      encodeURIComponent('Name: ' + name + '\nCompany: ' + company + '\nService: ' + service + '\n\n' + message);
+  }
+}
 </script>
 
 </body>
