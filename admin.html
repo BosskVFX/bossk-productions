@@ -122,6 +122,50 @@
     .saved-panel{position:static;max-height:300px;}
   }
 
+  /* CALENDAR */
+  .cal-container{
+    background:var(--bg);border:1px solid var(--line);padding:1.25rem;
+  }
+  .cal-header{
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;
+  }
+  .cal-month{
+    font-family:var(--display);font-size:1.2rem;letter-spacing:0.05em;
+  }
+  .cal-nav{
+    background:none;border:1px solid var(--line);color:var(--text);
+    width:32px;height:32px;cursor:pointer;font-size:1rem;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color 0.2s;
+  }
+  .cal-nav:hover{border-color:var(--accent);}
+  .cal-days{
+    display:grid;grid-template-columns:repeat(7,1fr);text-align:center;
+    font-family:var(--mono);font-size:0.5rem;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--dim);margin-bottom:0.5rem;
+  }
+  .cal-grid{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:2px;
+  }
+  .cal-day{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-family:var(--body);font-size:0.8rem;cursor:pointer;
+    background:transparent;border:1px solid transparent;color:var(--text);
+    transition:all 0.15s;
+  }
+  .cal-day:hover{border-color:var(--accent);background:rgba(255,107,53,0.08);}
+  .cal-day.selected{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:700;}
+  .cal-day.today{border-color:var(--dim);}
+  .cal-day.disabled{color:rgba(138,134,128,0.3);cursor:default;}
+  .cal-day.disabled:hover{border-color:transparent;background:transparent;}
+  .cal-day.empty{cursor:default;}
+  .cal-day.empty:hover{border-color:transparent;background:transparent;}
+  .cal-time-select{
+    background:var(--bg);color:var(--text);border:1px solid var(--line);
+    padding:0.4rem 0.5rem;font-family:var(--mono);font-size:0.75rem;
+    outline:none;flex:1;
+  }
+
   /* IMAGE PICKER */
   .drive-thumb{
     aspect-ratio:1;overflow:hidden;cursor:pointer;border:2px solid var(--line);
@@ -433,8 +477,27 @@ function renderOutput(type, data) {
         <button class="submit-btn" style="flex:1;min-width:150px;margin:0;" onclick="saveCase('publish')">Publish Now</button>
       </div>
       <div id="scheduleWrap" style="display:none;margin-top:1rem;">
-        <div class="field"><label>Schedule Date & Time</label><input type="datetime-local" id="cs-schedule-date" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);padding:0.75rem 1rem;font-family:var(--body);font-size:0.9rem;"></div>
-        <button class="submit-btn" style="margin-top:0.5rem;" onclick="saveCase('scheduled')">Confirm Schedule</button>
+        <div class="cal-container">
+          <div class="cal-header">
+            <button class="cal-nav" onclick="calNav(-1)">&larr;</button>
+            <div class="cal-month" id="calMonth"></div>
+            <button class="cal-nav" onclick="calNav(1)">&rarr;</button>
+          </div>
+          <div class="cal-days">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div style="display:flex;gap:0.75rem;margin-top:1rem;align-items:center;">
+            <label style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);white-space:nowrap;">Time</label>
+            <select id="cal-hour" class="cal-time-select"></select>
+            <span style="color:var(--dim);">:</span>
+            <select id="cal-min" class="cal-time-select"></select>
+            <select id="cal-ampm" class="cal-time-select"><option>AM</option><option>PM</option></select>
+          </div>
+          <div id="calSelected" style="font-family:var(--mono);font-size:0.7rem;color:var(--text);margin-top:0.75rem;text-align:center;min-height:1.2em;"></div>
+          <button class="submit-btn" style="margin-top:0.75rem;" onclick="saveCase('scheduled')">Confirm Schedule</button>
+        </div>
+        <input type="hidden" id="cs-schedule-date">
       </div>
       <div id="publishStatus" style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--accent);margin-top:0.75rem;display:none;"></div>
     `;
@@ -680,9 +743,92 @@ function driveToEmbed(url) {
   return url; // Return as-is if not a Drive link
 }
 
+// Calendar
+let calYear, calMonth, calSelectedDate = null;
+
+function initCalendar() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  
+  // Populate time selects
+  const hourSel = document.getElementById('cal-hour');
+  const minSel = document.getElementById('cal-min');
+  hourSel.innerHTML = '';
+  minSel.innerHTML = '';
+  for (let h = 1; h <= 12; h++) {
+    hourSel.innerHTML += `<option value="${h}"${h===9?' selected':''}>${h}</option>`;
+  }
+  for (let m = 0; m < 60; m += 15) {
+    minSel.innerHTML += `<option value="${m}">${m.toString().padStart(2,'0')}</option>`;
+  }
+  
+  renderCalendar();
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonth').textContent = months[calMonth] + ' ' + calYear;
+  
+  const grid = document.getElementById('calGrid');
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const today = new Date();
+  
+  let html = '';
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div class="cal-day empty"></div>';
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(calYear, calMonth, d);
+    const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+    const isSelected = calSelectedDate && d === calSelectedDate.getDate() && calMonth === calSelectedDate.getMonth() && calYear === calSelectedDate.getFullYear();
+    
+    const classes = ['cal-day'];
+    if (isPast) classes.push('disabled');
+    if (isToday) classes.push('today');
+    if (isSelected) classes.push('selected');
+    
+    html += `<div class="${classes.join(' ')}" onclick="${isPast ? '' : `selectCalDay(${d})`}">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function selectCalDay(d) {
+  calSelectedDate = new Date(calYear, calMonth, d);
+  renderCalendar();
+  updateScheduleDisplay();
+}
+
+function updateScheduleDisplay() {
+  if (!calSelectedDate) return;
+  const h = parseInt(document.getElementById('cal-hour').value);
+  const m = parseInt(document.getElementById('cal-min').value);
+  const ampm = document.getElementById('cal-ampm').value;
+  
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const display = `${months[calSelectedDate.getMonth()]} ${calSelectedDate.getDate()}, ${calSelectedDate.getFullYear()} at ${h}:${m.toString().padStart(2,'0')} ${ampm}`;
+  document.getElementById('calSelected').textContent = display;
+  
+  // Set hidden input value
+  const hour24 = ampm === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
+  const isoDate = `${calSelectedDate.getFullYear()}-${(calSelectedDate.getMonth()+1).toString().padStart(2,'0')}-${calSelectedDate.getDate().toString().padStart(2,'0')}T${hour24.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+  document.getElementById('cs-schedule-date').value = isoDate;
+}
+
 function scheduleCase() {
   const wrap = document.getElementById('scheduleWrap');
-  wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+  const isHidden = wrap.style.display === 'none';
+  wrap.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) initCalendar();
 }
 
 async function saveCase(action) {
