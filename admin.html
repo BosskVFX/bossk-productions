@@ -345,6 +345,9 @@ function renderOutput(type, data) {
     `;
     out._data = data;
   } else if (type === 'cs') {
+    const heroImg = document.getElementById('cs-hero-img').value;
+    const extraImgs = document.getElementById('cs-images').value.trim().split('\n').filter(Boolean);
+    
     out.innerHTML = `
       <div class="output-header">
         <span class="output-label">Optimized Case Study</span>
@@ -353,12 +356,14 @@ function renderOutput(type, data) {
           <button class="copy-btn" onclick="copyHTML('cs')">Copy HTML</button>
         </div>
       </div>
+      ${heroImg ? `<img src="${heroImg}" style="width:100%;max-height:400px;object-fit:cover;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
       <div class="output-title">${data.title}</div>
       <div class="output-subtitle">${data.subtitle}</div>
       <div class="output-section"><div class="output-section-label">Challenge</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.challenge}</div></div>
       <div class="output-section"><div class="output-section-label">Solution</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.solution}</div></div>
       <div class="output-section"><div class="output-section-label">Result</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.result}</div></div>
       <blockquote style="border-left:3px solid var(--accent);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;font-size:1.05rem;line-height:1.6">"${data.pull_quote}"</blockquote>
+      ${extraImgs.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-top:1.5rem;">${extraImgs.map(img => `<img src="${img}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--line);">`).join('')}</div>` : ''}
       <div class="output-meta"><strong>SEO Meta:</strong> ${data.seo_description}</div>
       <button class="submit-btn" style="margin-top:1.5rem;" onclick="publishCase()">Publish to Website</button>
       <div id="publishStatus" style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--accent);margin-top:0.75rem;display:none;"></div>
