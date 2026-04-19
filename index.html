@@ -351,12 +351,17 @@
     overflow:hidden;
     cursor:pointer;
     transition:border-color 0.3s;
-    background:url('originals-banner.jpg') center/cover no-repeat;
     height:200px;
     display:flex;
     align-items:center;
     justify-content:center;
     width:100%;
+    background:var(--card);
+  }
+  .originals-banner img {
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
+    object-fit:cover;
   }
   .originals-banner:hover { border-color:rgba(255,107,53,0.3); }
   .originals-banner::before {
@@ -902,6 +907,7 @@
 
   <!-- ORIGINALS BANNER -->
   <div class="originals-banner reveal" onclick="openOriginal(0)">
+    <img src="originals-banner.jpg" alt="Bossk Production Originals">
     <div class="originals-text">BOSSK PRODUCTION <span>ORIGINALS</span></div>
   </div>
 </section>
