@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -11,46 +13,25 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GOOGLE_DRIVE_KEY not set' });
   }
 
-  const PRIVATE_KEY = Buffer.from(PRIVATE_KEY_B64, 'base64').toString('utf-8');
-
   try {
+    const PRIVATE_KEY = Buffer.from(PRIVATE_KEY_B64, 'base64').toString('utf-8');
+
     // Create JWT
-    const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
     const now = Math.floor(Date.now() / 1000);
-    const claims = btoa(JSON.stringify({
+    const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const claims = Buffer.from(JSON.stringify({
       iss: CLIENT_EMAIL,
       scope: 'https://www.googleapis.com/auth/drive.readonly',
       aud: 'https://oauth2.googleapis.com/token',
       iat: now,
       exp: now + 3600
-    }));
+    })).toString('base64url');
 
     const signInput = header + '.' + claims;
-
-    // Import the private key
-    const keyData = PRIVATE_KEY.replace(/-----BEGIN PRIVATE KEY-----/g, '')
-      .replace(/-----END PRIVATE KEY-----/g, '')
-      .replace(/\\n/g, '')
-      .replace(/\n/g, '')
-      .trim();
-
-    const binaryKey = Uint8Array.from(atob(keyData), c => c.charCodeAt(0));
-    const cryptoKey = await crypto.subtle.importKey(
-      'pkcs8', binaryKey,
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-      false, ['sign']
-    );
-
-    const signature = await crypto.subtle.sign(
-      'RSASSA-PKCS1-v1_5',
-      cryptoKey,
-      new TextEncoder().encode(signInput)
-    );
-
-    const sig = btoa(String.fromCharCode(...new Uint8Array(signature)))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    const jwt = signInput + '.' + sig;
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(signInput);
+    const signature = sign.sign(PRIVATE_KEY, 'base64url');
+    const jwt = signInput + '.' + signature;
 
     // Exchange JWT for access token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -59,10 +40,11 @@ export default async function handler(req, res) {
       body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
     });
     const tokenData = await tokenRes.json();
+    console.log('Token response status:', tokenRes.status);
 
     if (!tokenData.access_token) {
       console.error('Token error:', JSON.stringify(tokenData));
-      return res.status(500).json({ error: 'Failed to get access token' });
+      return res.status(500).json({ error: 'Failed to get access token', detail: tokenData });
     }
 
     // List files in folder
@@ -71,6 +53,7 @@ export default async function handler(req, res) {
       { headers: { 'Authorization': `Bearer ${tokenData.access_token}` } }
     );
     const filesData = await filesRes.json();
+    console.log('Files response:', JSON.stringify(filesData).substring(0, 200));
 
     const images = (filesData.files || []).map(f => ({
       id: f.id,
@@ -83,7 +66,7 @@ export default async function handler(req, res) {
     return res.status(200).json(images);
 
   } catch (e) {
-    console.error('Drive API error:', e.message, e.stack);
+    console.error('Drive API error:', e.message);
     return res.status(500).json({ error: 'Failed to fetch images', detail: e.message });
   }
 }
