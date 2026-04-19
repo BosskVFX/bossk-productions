@@ -1,5 +1,3 @@
-import crypto from 'crypto';
-
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -14,9 +12,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    const crypto = await import('crypto');
     const PRIVATE_KEY = Buffer.from(PRIVATE_KEY_B64, 'base64').toString('utf-8');
 
-    // Create JWT
     const now = Math.floor(Date.now() / 1000);
     const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
     const claims = Buffer.from(JSON.stringify({
@@ -33,27 +31,22 @@ export default async function handler(req, res) {
     const signature = sign.sign(PRIVATE_KEY, 'base64url');
     const jwt = signInput + '.' + signature;
 
-    // Exchange JWT for access token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
     });
     const tokenData = await tokenRes.json();
-    console.log('Token response status:', tokenRes.status);
 
     if (!tokenData.access_token) {
-      console.error('Token error:', JSON.stringify(tokenData));
-      return res.status(500).json({ error: 'Failed to get access token', detail: tokenData });
+      return res.status(500).json({ error: 'Token failed', detail: tokenData });
     }
 
-    // List files in folder
     const filesRes = await fetch(
       `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+mimeType+contains+'image/'&fields=files(id,name,mimeType,thumbnailLink)&pageSize=100`,
       { headers: { 'Authorization': `Bearer ${tokenData.access_token}` } }
     );
     const filesData = await filesRes.json();
-    console.log('Files response:', JSON.stringify(filesData).substring(0, 200));
 
     const images = (filesData.files || []).map(f => ({
       id: f.id,
@@ -62,11 +55,9 @@ export default async function handler(req, res) {
       full: `https://lh3.googleusercontent.com/d/${f.id}`
     }));
 
-    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate');
     return res.status(200).json(images);
 
   } catch (e) {
-    console.error('Drive API error:', e.message);
-    return res.status(500).json({ error: 'Failed to fetch images', detail: e.message });
+    return res.status(500).json({ error: e.message, stack: e.stack });
   }
 }
