@@ -330,16 +330,31 @@
     overflow:hidden;
     cursor:pointer;
     transition:border-color 0.3s;
+    background:url('originals-banner.jpg') center/cover no-repeat;
+    height:200px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   .originals-banner:hover { border-color:rgba(255,107,53,0.3); }
-  .originals-fallback {
-    display:none;
-    background:var(--card);
-    padding:3rem;
-    text-align:center;
+  .originals-banner::before {
+    content:'';
+    position:absolute; inset:0;
+    background:rgba(0,0,0,0.55);
+    transition:background 0.3s;
+  }
+  .originals-banner:hover::before {
+    background:rgba(0,0,0,0.4);
+  }
+  .originals-text {
+    position:relative; z-index:1;
     font-family:var(--display);
     font-size:clamp(1.5rem,3vw,2.5rem);
-    letter-spacing:0.1em;
+    letter-spacing:0.15em;
+    color:var(--text);
+    text-align:center;
+  }
+  .originals-text span {
     color:var(--accent);
   }
 
@@ -872,10 +887,7 @@
 
   <!-- ORIGINALS BANNER -->
   <div class="originals-banner reveal" onclick="openOriginal(0)">
-    <img id="originalsBannerImg" src="originals-banner.jpg" alt="Bossk Production Originals" style="width:100%;display:block;cursor:pointer;">
-    <div class="originals-fallback" id="originalsFallback">
-      <span>BOSSK PRODUCTION ORIGINALS</span>
-    </div>
+    <div class="originals-text">BOSSK PRODUCTION <span>ORIGINALS</span></div>
   </div>
 </section>
 
@@ -1102,15 +1114,6 @@ function closeBio() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeBio(); closeReel(); }
 });
-
-// Originals banner fallback
-const bannerImg = document.getElementById('originalsBannerImg');
-if (bannerImg) {
-  bannerImg.onerror = function() {
-    this.style.display = 'none';
-    document.getElementById('originalsFallback').style.display = 'block';
-  };
-}
 
 // Scroll-triggered reveals
 const observer = new IntersectionObserver((entries) => {
