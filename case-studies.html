@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Studies — Bossk Productions</title>
+<meta name="description" content="See how Bossk Productions builds creative previews and AI productions for brands worldwide.">
+<meta name="robots" content="index, follow">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0a;--bg2:#111;--card:#161616;--text:#f0ede8;
+    --dim:#8a8680;--accent:#ff6b35;--line:rgba(255,255,255,0.06);
+    --display:'Bebas Neue',sans-serif;--mono:'Space Mono',monospace;--body:'DM Sans',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);}
+
+  nav{
+    position:fixed;top:0;width:100%;z-index:100;padding:1.25rem 3rem;
+    display:flex;justify-content:space-between;align-items:center;
+    background:rgba(10,10,10,0.85);backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{font-family:var(--display);font-size:1.6rem;letter-spacing:0.15em;color:var(--text);text-decoration:none;}
+  .logo span{color:var(--accent);}
+  .nav-links{display:flex;gap:2.5rem;align-items:center;list-style:none;}
+  .nav-links a{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);text-decoration:none;}
+  .nav-links a:hover{color:var(--text);}
+  .nav-cta{background:var(--accent)!important;color:var(--bg)!important;padding:0.55rem 1.4rem;font-weight:700;}
+
+  .page-header{
+    padding:10rem 3rem 4rem;max-width:1200px;margin:0 auto;
+  }
+  .page-label{font-family:var(--mono);font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+  .page-title{font-family:var(--display);font-size:clamp(3rem,6vw,5rem);line-height:1;}
+
+  .cases{padding:0 3rem 6rem;max-width:1200px;margin:0 auto;}
+  .case-card{
+    background:var(--card);border:1px solid var(--line);padding:3rem;
+    margin-bottom:1.5rem;transition:border-color 0.3s;
+  }
+  .case-card:hover{border-color:rgba(255,107,53,0.25);}
+  .case-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:2rem;}
+  .case-title{font-family:var(--display);font-size:2rem;letter-spacing:0.03em;}
+  .case-subtitle{color:var(--dim);font-size:0.95rem;margin-top:0.25rem;}
+  .case-tags{display:flex;gap:0.5rem;flex-wrap:wrap;flex-shrink:0;}
+  .case-tag{
+    font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;
+    padding:0.3rem 0.65rem;border:1px solid rgba(255,107,53,0.15);
+    background:rgba(255,107,53,0.08);color:var(--accent);
+  }
+  .case-type{
+    font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;
+    padding:0.3rem 0.65rem;border:1px solid var(--line);color:var(--dim);
+  }
+  .case-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-bottom:1.5rem;}
+  .case-section-label{
+    font-family:var(--mono);font-size:0.55rem;letter-spacing:0.2em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;
+  }
+  .case-section-text{color:var(--dim);font-size:0.88rem;line-height:1.7;}
+  .case-quote{
+    border-left:3px solid var(--accent);padding-left:1.25rem;
+    font-style:italic;color:var(--text);font-size:1rem;line-height:1.6;
+  }
+  .case-date{font-family:var(--mono);font-size:0.55rem;color:var(--dim);letter-spacing:0.1em;margin-top:1rem;}
+
+  .empty{text-align:center;padding:6rem 2rem;color:var(--dim);font-size:1rem;}
+  .loading{text-align:center;padding:6rem 2rem;color:var(--dim);font-family:var(--mono);font-size:0.75rem;letter-spacing:0.1em;}
+
+  .back-link{
+    display:inline-block;margin-top:2rem;
+    font-family:var(--mono);font-size:0.7rem;letter-spacing:0.12em;
+    text-transform:uppercase;color:var(--accent);text-decoration:none;
+  }
+
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem;}
+    .page-header{padding:8rem 1.5rem 3rem;}
+    .cases{padding:0 1.5rem 4rem;}
+    .case-card{padding:2rem;}
+    .case-grid{grid-template-columns:1fr;}
+    .case-top{flex-direction:column;gap:1rem;}
+  }
+  @media(max-width:600px){
+    .nav-links{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">BOSSK <span>PRODUCTIONS</span></a>
+  <ul class="nav-links">
+    <li><a href="/#services">Services</a></li>
+    <li><a href="/#work">Work</a></li>
+    <li><a href="/case-studies.html">Case Studies</a></li>
+    <li><a href="/#team">Team</a></li>
+    <li><a href="/#contact" class="nav-cta">Let's Talk</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <div class="page-label">Case Studies</div>
+  <h1 class="page-title">THE WORK SPEAKS</h1>
+</div>
+
+<div class="cases" id="casesList">
+  <div class="loading">Loading case studies...</div>
+</div>
+
+<script>
+async function loadCases() {
+  const container = document.getElementById('casesList');
+  try {
+    const res = await fetch('/api/cases');
+    const cases = await res.json();
+
+    if (!cases.length) {
+      container.innerHTML = '<div class="empty">Case studies coming soon.<br><a href="/" class="back-link">← Back to Home</a></div>';
+      return;
+    }
+
+    container.innerHTML = cases.reverse().map(c => {
+      const services = (c.Services || '').split(',').map(s => s.trim()).filter(Boolean);
+      const date = c.Date ? new Date(c.Date).toLocaleDateString('en-US', { year:'numeric', month:'long' }) : '';
+      return `
+        <div class="case-card">
+          <div class="case-top">
+            <div>
+              <div class="case-title">${c.Title || ''}</div>
+              <div class="case-subtitle">${c.Subtitle || ''}</div>
+            </div>
+            <div class="case-tags">
+              ${c['Client Type'] ? `<span class="case-tag">${c['Client Type']}</span>` : ''}
+              ${services.map(s => `<span class="case-type">${s}</span>`).join('')}
+            </div>
+          </div>
+          <div class="case-grid">
+            <div>
+              <div class="case-section-label">Challenge</div>
+              <div class="case-section-text">${c.Challenge || ''}</div>
+            </div>
+            <div>
+              <div class="case-section-label">Solution</div>
+              <div class="case-section-text">${c.Solution || ''}</div>
+            </div>
+            <div>
+              <div class="case-section-label">Result</div>
+              <div class="case-section-text">${c.Result || ''}</div>
+            </div>
+          </div>
+          ${c.Quote ? `<div class="case-quote">"${c.Quote}"</div>` : ''}
+          ${date ? `<div class="case-date">${date}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    container.innerHTML = '<div class="empty">Unable to load case studies.<br><a href="/" class="back-link">← Back to Home</a></div>';
+    console.error(e);
+  }
+}
+loadCases();
+</script>
+</body>
+</html>

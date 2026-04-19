@@ -286,7 +286,7 @@ async function optimize(type) {
     console.error(e);
   } finally {
     btn.disabled = false;
-    btn.textContent = type === 'cs' ? 'Optimize Case Study' : type === 'blog' ? 'Optimize Blog Post' : 'Optimize Newsletter';
+    btn.textContent = type === 'cs' ? 'Optimize Case Study' : 'Optimize Newsletter';
   }
 }
 
@@ -324,26 +324,45 @@ function renderOutput(type, data) {
       <div class="output-section"><div class="output-section-label">Result</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.result}</div></div>
       <blockquote style="border-left:3px solid var(--accent);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;font-size:1.05rem;line-height:1.6">"${data.pull_quote}"</blockquote>
       <div class="output-meta"><strong>SEO Meta:</strong> ${data.seo_description}</div>
-    `;
-    out._data = data;
-  } else {
-    out.innerHTML = `
-      <div class="output-header">
-        <span class="output-label">Optimized Blog Post</span>
-        <div class="copy-btns">
-          <button class="copy-btn" onclick="copyText('blog')">Copy Text</button>
-          <button class="copy-btn" onclick="copyHTML('blog')">Copy HTML</button>
-        </div>
-      </div>
-      <div class="output-title">${data.title}</div>
-      <div class="output-subtitle">${data.subtitle}</div>
-      <div class="output-body">${data.body}</div>
-      <div class="output-meta"><strong>SEO Meta:</strong> ${data.seo_description}<br><strong>Keywords:</strong> ${data.keywords?.join(', ')}</div>
+      <button class="submit-btn" style="margin-top:1.5rem;" onclick="publishCase()">Publish to Website</button>
+      <div id="publishStatus" style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--accent);margin-top:0.75rem;display:none;"></div>
     `;
     out._data = data;
   }
 
   out.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function publishCase() {
+  const d = document.getElementById('outputPanel')._data;
+  const btn = event.target;
+  const status = document.getElementById('publishStatus');
+  
+  btn.disabled = true;
+  btn.textContent = 'Publishing...';
+
+  try {
+    const res = await fetch('/api/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
+    });
+
+    if (res.ok) {
+      status.textContent = 'Published. Live at bosskproductions.com/case-studies.html';
+      status.style.display = 'block';
+      btn.textContent = 'Published';
+      btn.style.background = '#00ff88';
+    } else {
+      btn.textContent = 'Publish to Website';
+      btn.disabled = false;
+      alert('Failed to publish. Try again.');
+    }
+  } catch {
+    btn.textContent = 'Publish to Website';
+    btn.disabled = false;
+    alert('Failed to publish. Try again.');
+  }
 }
 
 function copyText(type) {
