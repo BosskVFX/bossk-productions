@@ -379,8 +379,8 @@
   /* VIDEO MODAL */
   .v-modal-overlay {
     display:none; position:fixed; inset:0; z-index:200;
-    background:rgba(0,0,0,0.92); backdrop-filter:blur(10px);
-    padding:2rem;
+    background:rgba(0,0,0,0.95); backdrop-filter:blur(10px);
+    padding:1.5rem 2rem;
   }
   .v-modal-overlay.active { display:flex; flex-direction:column; }
   .v-modal-top {
@@ -388,11 +388,12 @@
     margin-bottom:1rem; flex-shrink:0;
   }
   .v-modal-title {
-    font-family:var(--display); font-size:1.4rem; letter-spacing:0.05em;
+    font-family:var(--display); font-size:2rem; letter-spacing:0.05em;
   }
   .v-modal-close {
     background:none; border:none; color:var(--dim);
-    font-size:1.8rem; cursor:pointer; transition:color 0.2s;
+    font-size:2.5rem; cursor:pointer; transition:color 0.2s;
+    line-height:1;
   }
   .v-modal-close:hover { color:var(--text); }
   .v-modal-player {
@@ -400,17 +401,19 @@
     min-height:0;
   }
   .v-modal-player iframe {
-    width:100%; max-width:960px; aspect-ratio:16/9; border:none;
+    width:100%; max-width:1200px; aspect-ratio:16/9; border:none;
   }
   .v-modal-playlist {
-    display:flex; gap:0.75rem; margin-top:1.25rem;
-    overflow-x:auto; flex-shrink:0; padding-bottom:0.5rem;
+    display:flex; gap:1rem; margin-top:1.5rem;
+    justify-content:center;
+    flex-shrink:0; padding-bottom:0.5rem;
+    flex-wrap:wrap;
   }
   .v-thumb {
     flex-shrink:0; cursor:pointer;
-    background:var(--card); border:1px solid var(--line);
-    padding:0.6rem 1rem; transition:border-color 0.2s, background 0.2s;
-    min-width:140px; text-align:center;
+    background:var(--card); border:2px solid var(--line);
+    padding:0.85rem 1.5rem; transition:border-color 0.2s, background 0.2s;
+    min-width:160px; text-align:center;
   }
   .v-thumb:hover { border-color:rgba(255,107,53,0.3); }
   .v-thumb.active {
@@ -418,12 +421,12 @@
     background:rgba(255,107,53,0.08);
   }
   .v-thumb-type {
-    font-family:var(--mono); font-size:0.45rem;
+    font-family:var(--mono); font-size:0.55rem;
     letter-spacing:0.15em; text-transform:uppercase;
-    color:var(--accent); margin-bottom:0.2rem;
+    color:var(--accent); margin-bottom:0.3rem;
   }
   .v-thumb-title {
-    font-family:var(--display); font-size:0.85rem;
+    font-family:var(--display); font-size:1.05rem;
     letter-spacing:0.03em;
   }
 
