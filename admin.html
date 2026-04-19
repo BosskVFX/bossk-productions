@@ -88,6 +88,40 @@
   }
   .submit-btn:disabled{background:rgba(255,107,53,0.3);cursor:not-allowed;}
 
+  /* ADMIN LAYOUT */
+  .admin-body{display:flex;gap:1.5rem;align-items:flex-start;}
+  .admin-main{flex:1;min-width:0;}
+  .admin-sidebar{width:280px;flex-shrink:0;}
+  .saved-panel{
+    background:var(--card);border:1px solid var(--line);padding:1.25rem;
+    position:sticky;top:5rem;max-height:80vh;overflow-y:auto;
+  }
+  .saved-title{
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:1rem;
+  }
+  .saved-item{
+    padding:0.75rem;border-bottom:1px solid var(--line);cursor:pointer;
+    transition:background 0.2s;
+  }
+  .saved-item:hover{background:rgba(255,255,255,0.03);}
+  .saved-item:last-child{border-bottom:none;}
+  .saved-item-title{font-family:var(--display);font-size:1rem;letter-spacing:0.03em;}
+  .saved-item-meta{
+    font-family:var(--mono);font-size:0.5rem;letter-spacing:0.1em;
+    text-transform:uppercase;margin-top:0.25rem;
+  }
+  .saved-item-meta .draft{color:var(--dim);}
+  .saved-item-meta .published{color:#00ff88;}
+  .saved-item-meta .scheduled{color:#ffd700;}
+  .saved-empty{color:var(--dim);font-size:0.8rem;text-align:center;padding:1rem 0;}
+
+  @media(max-width:900px){
+    .admin-body{flex-direction:column-reverse;}
+    .admin-sidebar{width:100%;}
+    .saved-panel{position:static;max-height:300px;}
+  }
+
   /* IMAGE PICKER */
   .drive-thumb{
     aspect-ratio:1;overflow:hidden;cursor:pointer;border:2px solid var(--line);
@@ -169,6 +203,9 @@
     <button class="tab" onclick="switchTab('nl',this)">Newsletter</button>
   </div>
 
+  <div class="admin-body">
+    <div class="admin-main">
+
   <!-- CASE STUDY -->
   <div class="form-panel active" id="panel-cs">
     <div class="field"><label>Project Title</label><input id="cs-title" placeholder="e.g. Happy Being Peach White Tea Campaign"></div>
@@ -208,6 +245,16 @@
 
   <!-- OUTPUT -->
   <div class="output" id="outputPanel"></div>
+
+    </div><!-- end admin-main -->
+
+    <div class="admin-sidebar">
+      <div class="saved-panel">
+        <div class="saved-title">Saved Posts</div>
+        <div id="savedList"><div class="saved-empty">Loading...</div></div>
+      </div>
+    </div>
+  </div><!-- end admin-body -->
 </div>
 
 <script>
@@ -226,6 +273,7 @@ async function tryLogin() {
     sessionStorage.setItem('bossk_admin','1');
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('adminPanel').style.display='block';
+    loadSavedPosts();
   } else {
     document.getElementById('loginError').style.display='block';
   }
@@ -243,6 +291,7 @@ function logout() {
 if (sessionStorage.getItem('bossk_admin')==='1') {
   document.getElementById('loginWrap').style.display='none';
   document.getElementById('adminPanel').style.display='block';
+  loadSavedPosts();
 }
 
 // Tabs
@@ -393,6 +442,80 @@ function renderOutput(type, data) {
     out._data._videoUrl = videoUrl;
   }
 
+  out.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Load saved posts
+async function loadSavedPosts() {
+  const list = document.getElementById('savedList');
+  try {
+    const res = await fetch('/api/all-cases');
+    const posts = await res.json();
+    window._savedPosts = posts;
+    
+    if (!posts.length) {
+      list.innerHTML = '<div class="saved-empty">No posts yet</div>';
+      return;
+    }
+
+    list.innerHTML = [...posts].reverse().map((p, i) => {
+      const status = (p.Status || 'publish').toLowerCase();
+      const statusLabel = status === 'draft' ? 'Draft' : status === 'scheduled' ? 'Scheduled' : 'Published';
+      const statusClass = status === 'draft' ? 'draft' : status === 'scheduled' ? 'scheduled' : 'published';
+      const date = p.Date ? new Date(p.Date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
+      return `
+        <div class="saved-item" onclick="viewSavedPost(${posts.length - 1 - i})">
+          <div class="saved-item-title">${p.Title || 'Untitled'}</div>
+          <div class="saved-item-meta">
+            <span class="${statusClass}">${statusLabel}</span>
+            ${date ? ` · ${date}` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<div class="saved-empty">Failed to load</div>';
+  }
+}
+
+function viewSavedPost(idx) {
+  const p = window._savedPosts[idx];
+  if (!p) return;
+  
+  const out = document.getElementById('outputPanel');
+  const heroImg = p['Hero Image'] || '';
+  const extraImgs = (p['Extra Images'] || '').split(',').filter(Boolean);
+  const videoUrl = p['Video URL'] || '';
+  let videoEmbed = '';
+  if (videoUrl) {
+    const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
+    const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    const frameMatch = videoUrl.match(/app\.frame\.io/) || videoUrl.match(/f\.io/);
+    if (vimeoMatch) videoEmbed = `<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?title=0&byline=0&portrait=0" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
+    else if (ytMatch) videoEmbed = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
+    else if (frameMatch) videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--accent);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--accent);letter-spacing:0.1em;">REVIEW ON FRAME.IO</span></a>`;
+    else videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--line);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--text);">WATCH VIDEO</span></a>`;
+  }
+
+  out.innerHTML = `
+    <div class="output-header">
+      <span class="output-label">Saved — ${(p.Status || 'Published').toUpperCase()}</span>
+      <div class="copy-btns">
+        <button class="copy-btn" onclick="copyText('cs')">Copy Text</button>
+      </div>
+    </div>
+    ${heroImg ? `<img src="${heroImg}" style="width:100%;object-fit:contain;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
+    ${videoEmbed}
+    <div class="output-title">${p.Title || ''}</div>
+    <div class="output-subtitle">${p.Subtitle || ''}</div>
+    <div class="output-section"><div class="output-section-label">Challenge</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Challenge || ''}</div></div>
+    <div class="output-section"><div class="output-section-label">Solution</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Solution || ''}</div></div>
+    <div class="output-section"><div class="output-section-label">Result</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Result || ''}</div></div>
+    ${p.Quote ? `<blockquote style="border-left:3px solid var(--accent);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;font-size:1.05rem;line-height:1.6">"${p.Quote}"</blockquote>` : ''}
+    ${extraImgs.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-top:1.5rem;">${extraImgs.map(img => `<img src="${img}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--line);">`).join('')}</div>` : ''}
+  `;
+  out._data = {title:p.Title,subtitle:p.Subtitle,challenge:p.Challenge,solution:p.Solution,result:p.Result,pull_quote:p.Quote};
+  out.style.display = 'block';
   out.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -558,6 +681,7 @@ async function saveCase(action) {
       status.textContent = msgs[action];
       status.style.display = 'block';
       status.style.color = action === 'draft' ? 'var(--dim)' : 'var(--accent)';
+      loadSavedPosts();
     } else {
       alert('Failed to save. Try again.');
       btns.forEach(b => { b.disabled = false; });
