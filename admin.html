@@ -195,7 +195,7 @@
       <input type="hidden" id="cs-images">
     </div>
     <div class="field"><label>Project Notes</label><textarea id="cs-notes" rows="10" placeholder="Dump everything here — what the client needed, what you built, tools used, how it turned out. Claude will handle the formatting."></textarea></div>
-    <div class="field"><label>Video URL (Vimeo or YouTube)</label><input id="cs-video" placeholder="e.g. https://vimeo.com/1184456353"></div>
+    <div class="field"><label>Video URL (Vimeo, YouTube, or Frame.io)</label><input id="cs-video" placeholder="e.g. https://vimeo.com/1184456353 or Frame.io review link"></div>
     <button class="submit-btn" onclick="optimize('cs')">Optimize Case Study</button>
   </div>
 
@@ -353,8 +353,11 @@ function renderOutput(type, data) {
     if (videoUrl) {
       const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
       const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+      const frameMatch = videoUrl.match(/app\.frame\.io/) || videoUrl.match(/f\.io/);
       if (vimeoMatch) videoEmbed = `<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?title=0&byline=0&portrait=0" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
       else if (ytMatch) videoEmbed = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
+      else if (frameMatch) videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--accent);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;transition:background 0.2s;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--accent);letter-spacing:0.1em;">REVIEW ON FRAME.IO</span><br><span style="font-family:var(--mono);font-size:0.6rem;color:var(--dim);letter-spacing:0.1em;margin-top:0.5rem;display:inline-block;">Click to open review link</span></a>`;
+      else videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--line);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--text);letter-spacing:0.1em;">WATCH VIDEO</span><br><span style="font-family:var(--mono);font-size:0.6rem;color:var(--dim);">${videoUrl}</span></a>`;
     }
     
     out.innerHTML = `
