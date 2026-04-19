@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bossk Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0a; --bg2:#111; --card:#161616; --text:#f0ede8;
+    --dim:#8a8680; --accent:#ff6b35; --glow:rgba(255,107,53,0.15);
+    --line:rgba(255,255,255,0.06);
+    --display:'Bebas Neue',sans-serif; --mono:'Space Mono',monospace; --body:'DM Sans',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;}
+
+  /* LOGIN */
+  .login-wrap{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+  }
+  .login-box{
+    background:var(--card);border:1px solid var(--line);padding:3rem;
+    width:100%;max-width:380px;text-align:center;
+  }
+  .login-logo{font-family:var(--display);font-size:1.6rem;letter-spacing:0.15em;margin-bottom:0.3rem;}
+  .login-logo span{color:var(--accent);}
+  .login-sub{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:2rem;}
+  .login-input{
+    width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);
+    padding:0.85rem 1rem;font-family:var(--body);font-size:0.9rem;outline:none;
+    margin-bottom:1rem;text-align:center;
+  }
+  .login-input:focus{border-color:var(--accent);}
+  .login-input::placeholder{color:var(--dim);}
+  .login-btn{
+    width:100%;background:var(--accent);color:var(--bg);
+    font-family:var(--mono);font-size:0.72rem;font-weight:700;
+    letter-spacing:0.1em;text-transform:uppercase;padding:0.85rem;
+    border:none;cursor:pointer;
+  }
+  .login-error{color:#ff4444;font-size:0.75rem;margin-top:0.75rem;display:none;}
+
+  /* ADMIN DASHBOARD */
+  .admin{display:none;padding:2rem;max-width:760px;margin:0 auto;}
+  .admin-header{
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:2.5rem;
+  }
+  .admin-title{font-family:var(--display);font-size:1.4rem;letter-spacing:0.15em;}
+  .admin-title span{color:var(--accent);}
+  .admin-logout{
+    background:none;border:1px solid var(--line);color:var(--dim);
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;
+    text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;
+  }
+
+  /* TABS */
+  .tabs{display:flex;gap:0;margin-bottom:2rem;}
+  .tab{
+    background:transparent;color:var(--dim);border:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:0.7rem;letter-spacing:0.12em;
+    text-transform:uppercase;padding:0.75rem 1.5rem;cursor:pointer;
+  }
+  .tab.active{background:var(--card);color:var(--text);border-color:var(--accent);border-bottom:2px solid var(--accent);}
+
+  /* FORM */
+  .form-panel{display:none;background:var(--card);border:1px solid var(--line);padding:2rem;}
+  .form-panel.active{display:block;}
+  .field{margin-bottom:1.25rem;}
+  .field label{
+    display:block;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;
+  }
+  .field input,.field textarea,.field select{
+    width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);
+    padding:0.75rem 1rem;font-family:var(--body);font-size:0.9rem;outline:none;resize:vertical;
+  }
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);}
+  .field input::placeholder,.field textarea::placeholder{color:rgba(138,134,128,0.6);}
+  .field select option{background:var(--bg);color:var(--text);}
+  .submit-btn{
+    width:100%;background:var(--accent);color:var(--bg);
+    font-family:var(--mono);font-size:0.72rem;font-weight:700;
+    letter-spacing:0.1em;text-transform:uppercase;padding:1rem;
+    border:none;cursor:pointer;margin-top:0.5rem;
+  }
+  .submit-btn:disabled{background:rgba(255,107,53,0.3);cursor:not-allowed;}
+
+  /* OUTPUT */
+  .output{
+    background:var(--card);border:1px solid var(--line);padding:2rem;margin-top:2rem;display:none;
+  }
+  .output-header{
+    display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid var(--line);padding-bottom:1rem;margin-bottom:1.5rem;
+  }
+  .output-label{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);}
+  .copy-btns{display:flex;gap:0.5rem;}
+  .copy-btn{
+    background:none;border:1px solid var(--line);color:var(--dim);
+    font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;
+    text-transform:uppercase;padding:0.4rem 0.8rem;cursor:pointer;
+  }
+  .output-title{font-family:var(--display);font-size:1.8rem;letter-spacing:0.03em;margin-bottom:0.25rem;}
+  .output-subtitle{color:var(--dim);font-size:0.95rem;margin-bottom:1.5rem;}
+  .output-body{color:var(--text);font-size:0.9rem;line-height:1.8;white-space:pre-wrap;}
+  .output-section{margin-bottom:1.25rem;}
+  .output-section-label{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;}
+  .output-meta{
+    margin-top:1.5rem;padding:1rem;background:var(--bg);border:1px solid var(--line);
+    font-size:0.75rem;color:var(--dim);line-height:1.5;
+  }
+  .output-meta strong{color:var(--accent);}
+
+  /* NEWSLETTER OUTPUT */
+  .nl-out-field{background:var(--bg);border:1px solid var(--line);padding:1.25rem;margin-bottom:1.25rem;}
+  .nl-out-label{font-family:var(--mono);font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;}
+  .nl-out-cta{
+    display:inline-block;background:var(--accent);color:var(--bg);
+    font-family:var(--mono);font-size:0.65rem;font-weight:700;
+    letter-spacing:0.1em;text-transform:uppercase;padding:0.75rem 1.5rem;margin-top:1rem;
+  }
+
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:18px;height:18px;border:2px solid var(--line);border-top:2px solid var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">BOSSK <span>ADMIN</span></div>
+    <div class="login-sub">Content Manager</div>
+    <input type="password" class="login-input" id="passInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">Enter</button>
+    <div class="login-error" id="loginError">Wrong password.</div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div class="admin" id="adminPanel">
+  <div class="admin-header">
+    <div class="admin-title">BOSSK <span>CONTENT MANAGER</span></div>
+    <button class="admin-logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('cs',this)">Case Study</button>
+    <button class="tab" onclick="switchTab('blog',this)">Blog Post</button>
+    <button class="tab" onclick="switchTab('nl',this)">Newsletter</button>
+  </div>
+
+  <!-- CASE STUDY -->
+  <div class="form-panel active" id="panel-cs">
+    <div class="field"><label>Project Title</label><input id="cs-title" placeholder="e.g. Happy Being Peach White Tea Campaign"></div>
+    <div class="field"><label>Client / Client Type</label><input id="cs-client" placeholder="e.g. Happy Being (CPG Brand)"></div>
+    <div class="field"><label>Project Notes</label><textarea id="cs-notes" rows="10" placeholder="Dump everything here — what the client needed, what you built, tools used, how it turned out. Claude will handle the formatting."></textarea></div>
+    <button class="submit-btn" onclick="optimize('cs')">Optimize Case Study</button>
+  </div>
+
+  <!-- BLOG -->
+  <div class="form-panel" id="panel-blog">
+    <div class="field"><label>Topic / Title</label><input id="blog-topic" placeholder="e.g. Why Brands Should Preview Their Ads Before Production"></div>
+    <div class="field"><label>Notes / Draft</label><textarea id="blog-notes" rows="12" placeholder="Write your thoughts, key points, rough draft. Claude will structure and optimize."></textarea></div>
+    <button class="submit-btn" onclick="optimize('blog')">Optimize Blog Post</button>
+  </div>
+
+  <!-- NEWSLETTER -->
+  <div class="form-panel" id="panel-nl">
+    <div class="field"><label>Topic / Subject</label><input id="nl-topic" placeholder="e.g. We just built a full commercial in 5 days"></div>
+    <div class="field"><label>Notes / Content</label><textarea id="nl-notes" rows="10" placeholder="Paste your blog post or raw notes. Claude will condense into a punchy newsletter."></textarea></div>
+    <button class="submit-btn" onclick="optimize('nl')">Optimize Newsletter</button>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output" id="outputPanel"></div>
+</div>
+
+<script>
+// Auth
+const PASS_HASH = '5a39bead318f306939acb1d016647be2e38c6501c58571fa37f0e780e137e';
+
+async function hashPass(p) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function tryLogin() {
+  const p = document.getElementById('passInput').value;
+  const h = await hashPass(p);
+  if (p === 'bossk2026') {
+    sessionStorage.setItem('bossk_admin','1');
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+  } else {
+    document.getElementById('loginError').style.display='block';
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem('bossk_admin');
+  document.getElementById('adminPanel').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('passInput').value='';
+  document.getElementById('loginError').style.display='none';
+}
+
+// Check session
+if (sessionStorage.getItem('bossk_admin')==='1') {
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('adminPanel').style.display='block';
+}
+
+// Tabs
+function switchTab(id, btn) {
+  document.querySelectorAll('.form-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('outputPanel').style.display='none';
+}
+
+// Prompts
+const PROMPTS = {
+  cs: `You are a content optimizer for Bossk Productions, an Emmy Award-winning AI production studio in Los Angeles. You take raw case study notes and transform them into a polished case study page optimized for both human readers and LLM/AI discoverability.
+
+Output ONLY valid JSON with these fields:
+{"title":"Project title","subtitle":"One-line hook","client_type":"e.g. Brand, Agency, Creator","services_used":["Creative Preview","AI Production","Post Production"],"challenge":"2-3 sentences on what the client needed","solution":"2-3 sentences on what Bossk built","result":"2-3 sentences on the outcome","pull_quote":"One punchy quote or stat from the project","seo_description":"155 char meta description"}
+
+Rules: Write for brand marketing directors. Use plain language. Mention "Bossk Productions" by full name at least twice. Include relevant keywords naturally. Keep it concise.`,
+
+  blog: `You are a content optimizer for Bossk Productions, an Emmy Award-winning AI production studio in Los Angeles. You take raw blog post notes and transform them into a polished blog post optimized for both human readers and LLM/AI discoverability.
+
+Output ONLY valid JSON with these fields:
+{"title":"Blog post title","subtitle":"One-line subtitle","body":"Full blog post in markdown. 400-800 words max.","seo_description":"155 char meta description","keywords":["keyword1","keyword2"]}
+
+Rules: Write with authority. Use plain language. Mention "Bossk Productions" by full name at least once. Structure with clear headings. Keep paragraphs short. End with a subtle CTA.`,
+
+  nl: `You are a content optimizer for Bossk Productions, an Emmy Award-winning AI production studio in Los Angeles. You take raw notes and transform them into a punchy email newsletter.
+
+Output ONLY valid JSON with these fields:
+{"subject_line":"Email subject line under 50 chars","preview_text":"Email preview text 80 chars max","body":"Full newsletter in markdown. 200-400 words MAX.","cta_text":"Call to action button text","cta_url":"https://www.bosskproductions.com/blog/slug"}
+
+Rules: Newsletters are SHORT. Open with a hook. Write conversationally. No heavy formatting. End with a clear CTA. Mention "Bossk Productions" once.`
+};
+
+async function optimize(type) {
+  const btn = event.target;
+  let userContent = '';
+
+  if (type === 'cs') {
+    const t = document.getElementById('cs-title').value;
+    const c = document.getElementById('cs-client').value;
+    const n = document.getElementById('cs-notes').value;
+    if (!t || !n) return alert('Fill in the title and notes.');
+    userContent = `Project: ${t}\nClient/Type: ${c}\nNotes:\n${n}`;
+  } else if (type === 'blog') {
+    const t = document.getElementById('blog-topic').value;
+    const n = document.getElementById('blog-notes').value;
+    if (!t || !n) return alert('Fill in the topic and notes.');
+    userContent = `Topic: ${t}\nNotes:\n${n}`;
+  } else {
+    const t = document.getElementById('nl-topic').value;
+    const n = document.getElementById('nl-notes').value;
+    if (!t || !n) return alert('Fill in the topic and notes.');
+    userContent = `Topic: ${t}\nNotes:\n${n}`;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Optimizing...';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: PROMPTS[type],
+        messages: [{ role: 'user', content: userContent }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.map(i => i.text || '').join('\n') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderOutput(type, parsed);
+  } catch (e) {
+    alert('Failed to optimize. Check your input and try again.');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = type === 'cs' ? 'Optimize Case Study' : type === 'blog' ? 'Optimize Blog Post' : 'Optimize Newsletter';
+  }
+}
+
+function renderOutput(type, data) {
+  const out = document.getElementById('outputPanel');
+  out.style.display = 'block';
+
+  if (type === 'nl') {
+    out.innerHTML = `
+      <div class="output-header">
+        <span class="output-label">Optimized Newsletter</span>
+        <div class="copy-btns"><button class="copy-btn" onclick="copyText('nl')">Copy Text</button></div>
+      </div>
+      <div class="nl-out-field"><div class="nl-out-label">Subject Line</div><div style="font-size:1.1rem;font-weight:600">${data.subject_line}</div></div>
+      <div class="nl-out-field"><div class="nl-out-label">Preview Text</div><div style="color:var(--dim);font-size:0.88rem">${data.preview_text}</div></div>
+      <div class="nl-out-label">Email Body</div>
+      <div class="output-body" id="nlBody">${data.body}</div>
+      <div class="nl-out-cta">${data.cta_text}</div>
+      <div style="font-family:var(--mono);font-size:0.55rem;color:var(--dim);margin-top:0.5rem">${data.cta_url}</div>
+    `;
+    out._data = data;
+  } else if (type === 'cs') {
+    out.innerHTML = `
+      <div class="output-header">
+        <span class="output-label">Optimized Case Study</span>
+        <div class="copy-btns">
+          <button class="copy-btn" onclick="copyText('cs')">Copy Text</button>
+          <button class="copy-btn" onclick="copyHTML('cs')">Copy HTML</button>
+        </div>
+      </div>
+      <div class="output-title">${data.title}</div>
+      <div class="output-subtitle">${data.subtitle}</div>
+      <div class="output-section"><div class="output-section-label">Challenge</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.challenge}</div></div>
+      <div class="output-section"><div class="output-section-label">Solution</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.solution}</div></div>
+      <div class="output-section"><div class="output-section-label">Result</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.result}</div></div>
+      <blockquote style="border-left:3px solid var(--accent);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;font-size:1.05rem;line-height:1.6">"${data.pull_quote}"</blockquote>
+      <div class="output-meta"><strong>SEO Meta:</strong> ${data.seo_description}</div>
+    `;
+    out._data = data;
+  } else {
+    out.innerHTML = `
+      <div class="output-header">
+        <span class="output-label">Optimized Blog Post</span>
+        <div class="copy-btns">
+          <button class="copy-btn" onclick="copyText('blog')">Copy Text</button>
+          <button class="copy-btn" onclick="copyHTML('blog')">Copy HTML</button>
+        </div>
+      </div>
+      <div class="output-title">${data.title}</div>
+      <div class="output-subtitle">${data.subtitle}</div>
+      <div class="output-body">${data.body}</div>
+      <div class="output-meta"><strong>SEO Meta:</strong> ${data.seo_description}<br><strong>Keywords:</strong> ${data.keywords?.join(', ')}</div>
+    `;
+    out._data = data;
+  }
+
+  out.scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyText(type) {
+  const d = document.getElementById('outputPanel')._data;
+  let text = '';
+  if (type === 'cs') text = `# ${d.title}\n${d.subtitle}\n\nChallenge: ${d.challenge}\n\nSolution: ${d.solution}\n\nResult: ${d.result}\n\n"${d.pull_quote}"`;
+  else if (type === 'blog') text = `# ${d.title}\n${d.subtitle}\n\n${d.body}`;
+  else text = `Subject: ${d.subject_line}\nPreview: ${d.preview_text}\n\n${d.body}\n\n[${d.cta_text}](${d.cta_url})`;
+  navigator.clipboard.writeText(text);
+}
+
+function copyHTML(type) {
+  const d = document.getElementById('outputPanel')._data;
+  let html = '';
+  if (type === 'cs') html = `<article><h1>${d.title}</h1><p>${d.subtitle}</p><h2>Challenge</h2><p>${d.challenge}</p><h2>Solution</h2><p>${d.solution}</p><h2>Result</h2><p>${d.result}</p><blockquote>${d.pull_quote}</blockquote></article>`;
+  else html = `<article><h1>${d.title}</h1><p>${d.subtitle}</p><div>${d.body}</div></article>`;
+  navigator.clipboard.writeText(html);
+}
+</script>
+</body>
+</html>
