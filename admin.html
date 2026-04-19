@@ -149,7 +149,6 @@
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('cs',this)">Case Study</button>
-    <button class="tab" onclick="switchTab('blog',this)">Blog Post</button>
     <button class="tab" onclick="switchTab('nl',this)">Newsletter</button>
   </div>
 
@@ -159,13 +158,6 @@
     <div class="field"><label>Client / Client Type</label><input id="cs-client" placeholder="e.g. Happy Being (CPG Brand)"></div>
     <div class="field"><label>Project Notes</label><textarea id="cs-notes" rows="10" placeholder="Dump everything here — what the client needed, what you built, tools used, how it turned out. Claude will handle the formatting."></textarea></div>
     <button class="submit-btn" onclick="optimize('cs')">Optimize Case Study</button>
-  </div>
-
-  <!-- BLOG -->
-  <div class="form-panel" id="panel-blog">
-    <div class="field"><label>Topic / Title</label><input id="blog-topic" placeholder="e.g. Why Brands Should Preview Their Ads Before Production"></div>
-    <div class="field"><label>Notes / Draft</label><textarea id="blog-notes" rows="12" placeholder="Write your thoughts, key points, rough draft. Claude will structure and optimize."></textarea></div>
-    <button class="submit-btn" onclick="optimize('blog')">Optimize Blog Post</button>
   </div>
 
   <!-- NEWSLETTER -->
