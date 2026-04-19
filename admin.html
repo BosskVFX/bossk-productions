@@ -730,7 +730,6 @@ function clearSelectedImages() {
 
 function driveToEmbed(url) {
   if (!url) return '';
-  // Extract file ID from various Google Drive URL formats
   const patterns = [
     /\/file\/d\/([a-zA-Z0-9_-]+)/,
     /id=([a-zA-Z0-9_-]+)/,
@@ -738,9 +737,9 @@ function driveToEmbed(url) {
   ];
   for (const p of patterns) {
     const m = url.match(p);
-    if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+    if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1600';
   }
-  return url; // Return as-is if not a Drive link
+  return url;
 }
 
 // Calendar
