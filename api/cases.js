@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     // Fetch published case studies
     try {
-      const sheetRes = await fetch('https://script.google.com/macros/s/AKfycbzzXof9Jz5M-qPTtCMnDjANZnWJujK2m7QXeKHmgno4ZL9DojMyr0KtfjkPRLIjuKee/exec', {
+      const sheetRes = await fetch('https://script.google.com/macros/s/AKfycbxYaYdSBO1IKkbJgIfF_V3EtYl34OiMXsO9j5d8b79RXUoahcOHSHAPvrkLu_35l-zx/exec', {
         redirect: 'follow'
       });
       const data = await sheetRes.text();
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     }
 
     try {
-      await fetch('https://script.google.com/macros/s/AKfycbzzXof9Jz5M-qPTtCMnDjANZnWJujK2m7QXeKHmgno4ZL9DojMyr0KtfjkPRLIjuKee/exec', {
+      await fetch('https://script.google.com/macros/s/AKfycbxYaYdSBO1IKkbJgIfF_V3EtYl34OiMXsO9j5d8b79RXUoahcOHSHAPvrkLu_35l-zx/exec', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
