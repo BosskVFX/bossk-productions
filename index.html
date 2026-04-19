@@ -297,38 +297,51 @@
   /* WORK */
   .work { padding:8rem 3rem; max-width:1200px; margin:0 auto; }
   .w-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem; margin-top:4rem; }
-  .w-item {
-    position:relative; aspect-ratio:16/9;
-    background-color:var(--card); border:1px solid var(--line);
-    overflow:hidden; cursor:pointer;
-    background-size:cover; background-position:center;
+  .w-card {
+    position:relative;
+    aspect-ratio:16/9;
+    overflow:hidden;
+    cursor:pointer;
+    border:1px solid var(--line);
     transition:border-color 0.3s, transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s;
   }
-  .w-item:hover {
+  .w-card:hover {
     border-color:rgba(255,107,53,0.3);
     transform:translateY(-4px);
     box-shadow:0 16px 50px rgba(0,0,0,0.5);
   }
-  .w-bg {
-    position:absolute; inset:0;
-    background:transparent;
+  .w-card img {
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    object-fit:cover; display:block;
+  }
+  .w-card-play {
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:60px; height:60px;
+    border:2px solid rgba(255,255,255,0.25);
+    border-radius:50%;
     display:flex; align-items:center; justify-content:center;
+    z-index:2;
+    transition:border-color 0.3s, transform 0.3s;
   }
-  .play {
-    width:60px; height:60px; border:2px solid rgba(255,255,255,0.25); border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    transition:border-color 0.3s,transform 0.3s;
+  .w-card:hover .w-card-play {
+    border-color:var(--accent);
+    transform:translate(-50%,-50%) scale(1.1);
   }
-  .w-item:hover .play { border-color:var(--accent); transform:scale(1.1); }
-  .play svg { width:18px; height:18px; fill:var(--text); margin-left:3px; }
-  .w-meta {
-    position:absolute; bottom:0; left:0; right:0; padding:1.5rem 1.75rem;
-    background:linear-gradient(to top, rgba(10,10,10,1) 0%, rgba(10,10,10,0.85) 40%, transparent 100%);
-    min-height:30%;
-    display:flex; flex-direction:column; justify-content:flex-end;
+  .w-card-play svg { width:18px; height:18px; fill:var(--text); margin-left:3px; }
+  .w-card-info {
+    position:absolute; bottom:0; left:0; right:0; z-index:2;
+    padding:2rem;
+    background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
   }
-  .w-type { font-family:var(--mono); font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); }
-  .w-title { font-family:var(--display); font-size:1.3rem; letter-spacing:0.05em; margin-top:0.2rem; }
+  .w-card-type {
+    font-family:var(--mono); font-size:0.55rem;
+    letter-spacing:0.2em; text-transform:uppercase; color:var(--accent);
+  }
+  .w-card-title {
+    font-family:var(--display); font-size:1.3rem;
+    letter-spacing:0.05em; margin-top:0.2rem; color:var(--text);
+  }
 
   /* ORIGINALS BANNER */
   .originals-banner {
@@ -852,32 +865,36 @@
   <div class="s-label reveal">Selected Work</div>
   <h2 class="s-title reveal">THE REEL</h2>
   <div class="w-grid stagger">
-    <div class="w-item reveal" onclick="openReel(0)" style="background-image:url('thumb-ai.jpg');">
-      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
-      <div class="w-meta">
-        <div class="w-type">AI Production</div>
-        <div class="w-title">AI REEL 2026</div>
+    <div class="w-card reveal" onclick="openReel(0)">
+      <img src="thumb-ai.jpg" alt="AI Reel 2026">
+      <div class="w-card-play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="w-card-info">
+        <div class="w-card-type">AI Production</div>
+        <div class="w-card-title">AI REEL 2026</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(1)" style="background-image:url('thumb-vfx.jpg');">
-      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
-      <div class="w-meta">
-        <div class="w-type">Visual Effects</div>
-        <div class="w-title">FEATURE FILM VFX</div>
+    <div class="w-card reveal" onclick="openReel(1)">
+      <img src="thumb-vfx.jpg" alt="Feature Film VFX">
+      <div class="w-card-play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="w-card-info">
+        <div class="w-card-type">Visual Effects</div>
+        <div class="w-card-title">FEATURE FILM VFX</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(2)" style="background-image:url('thumb-commercial.jpg');">
-      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
-      <div class="w-meta">
-        <div class="w-type">Post Production</div>
-        <div class="w-title">COMMERCIAL FINISHING</div>
+    <div class="w-card reveal" onclick="openReel(2)">
+      <img src="thumb-commercial.jpg" alt="Commercial Finishing">
+      <div class="w-card-play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="w-card-info">
+        <div class="w-card-type">Post Production</div>
+        <div class="w-card-title">COMMERCIAL FINISHING</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(3)" style="background-image:url('thumb-mograph.jpg');">
-      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
-      <div class="w-meta">
-        <div class="w-type">Motion Graphics</div>
-        <div class="w-title">MOTION GRAPHICS REEL</div>
+    <div class="w-card reveal" onclick="openReel(3)">
+      <img src="thumb-mograph.jpg" alt="Motion Graphics Reel">
+      <div class="w-card-play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="w-card-info">
+        <div class="w-card-type">Motion Graphics</div>
+        <div class="w-card-title">MOTION GRAPHICS REEL</div>
       </div>
     </div>
   </div>
