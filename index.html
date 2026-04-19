@@ -299,13 +299,14 @@
   .w-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem; margin-top:4rem; }
   .w-item {
     position:relative; aspect-ratio:16/9;
-    background:var(--card); border:1px solid var(--line);
+    background-color:var(--card); border:1px solid var(--line);
     overflow:hidden; cursor:pointer; transition:border-color 0.3s;
+    background-size:cover; background-position:center;
   }
   .w-item:hover { border-color:rgba(255,107,53,0.3); }
   .w-bg {
     position:absolute; inset:0;
-    background:linear-gradient(135deg,rgba(255,107,53,0.06),rgba(0,255,136,0.03));
+    background:transparent;
     display:flex; align-items:center; justify-content:center;
   }
   .play {
@@ -855,29 +856,29 @@
   <div class="s-label reveal">Selected Work</div>
   <h2 class="s-title reveal">THE REEL</h2>
   <div class="w-grid stagger">
-    <div class="w-item reveal" onclick="openReel(0)" style="background:url('thumb-ai.jpg') center/cover no-repeat;">
-      <div class="w-bg" style="background:none;"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+    <div class="w-item reveal" onclick="openReel(0)" style="background-image:url('thumb-ai.jpg');">
+      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
         <div class="w-type">AI Production</div>
         <div class="w-title">AI REEL 2026</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(1)" style="background:url('thumb-vfx.jpg') center/cover no-repeat;">
-      <div class="w-bg" style="background:none;"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+    <div class="w-item reveal" onclick="openReel(1)" style="background-image:url('thumb-vfx.jpg');">
+      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
         <div class="w-type">Visual Effects</div>
         <div class="w-title">FEATURE FILM VFX</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(2)" style="background:url('thumb-commercial.jpg') center/cover no-repeat;">
-      <div class="w-bg" style="background:none;"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+    <div class="w-item reveal" onclick="openReel(2)" style="background-image:url('thumb-commercial.jpg');">
+      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
         <div class="w-type">Post Production</div>
         <div class="w-title">COMMERCIAL FINISHING</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(3)" style="background:url('thumb-mograph.jpg') center/cover no-repeat;">
-      <div class="w-bg" style="background:none;"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+    <div class="w-item reveal" onclick="openReel(3)" style="background-image:url('thumb-mograph.jpg');">
+      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
         <div class="w-type">Motion Graphics</div>
         <div class="w-title">MOTION GRAPHICS REEL</div>
