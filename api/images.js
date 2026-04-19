@@ -5,11 +5,13 @@ export default async function handler(req, res) {
 
   const FOLDER_ID = '1p7JCwa6c3s5VcW40coM9kjUeEIpyxnt-';
   const CLIENT_EMAIL = 'bossk-website@bossk-website.iam.gserviceaccount.com';
-  const PRIVATE_KEY = process.env.GOOGLE_DRIVE_KEY;
+  const PRIVATE_KEY_B64 = process.env.GOOGLE_DRIVE_KEY;
 
-  if (!PRIVATE_KEY) {
+  if (!PRIVATE_KEY_B64) {
     return res.status(500).json({ error: 'GOOGLE_DRIVE_KEY not set' });
   }
+
+  const PRIVATE_KEY = Buffer.from(PRIVATE_KEY_B64, 'base64').toString('utf-8');
 
   try {
     // Create JWT
