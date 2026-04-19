@@ -863,7 +863,7 @@
     <p class="hero-sub">We build your project in AI first. Review it, refine it, then decide how you want to produce it.</p>
     <div class="hero-actions">
       <a href="#contact" class="btn-p">Book a Call</a>
-      <a href="#" onclick="openReel(0);return false;" class="btn-s">Watch the Reel</a>
+      <a href="#" class="btn-s" id="watchReelBtn">Watch the Reel</a>
     </div>
   </div>
 </section>
@@ -1181,6 +1181,11 @@ function closeReel() {
   document.getElementById('reelPlayer').src = '';
   document.body.style.overflow = '';
 }
+
+document.getElementById('watchReelBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  openReel(0);
+});
 
 // Newsletter subscribe
 async function subscribeNewsletter() {
