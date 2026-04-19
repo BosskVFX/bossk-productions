@@ -195,6 +195,7 @@
       <input type="hidden" id="cs-images">
     </div>
     <div class="field"><label>Project Notes</label><textarea id="cs-notes" rows="10" placeholder="Dump everything here — what the client needed, what you built, tools used, how it turned out. Claude will handle the formatting."></textarea></div>
+    <div class="field"><label>Video URL (Vimeo or YouTube)</label><input id="cs-video" placeholder="e.g. https://vimeo.com/1184456353"></div>
     <button class="submit-btn" onclick="optimize('cs')">Optimize Case Study</button>
   </div>
 
@@ -347,6 +348,14 @@ function renderOutput(type, data) {
   } else if (type === 'cs') {
     const heroImg = document.getElementById('cs-hero-img').value;
     const extraImgs = document.getElementById('cs-images').value.trim().split('\n').filter(Boolean);
+    const videoUrl = document.getElementById('cs-video').value.trim();
+    let videoEmbed = '';
+    if (videoUrl) {
+      const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
+      const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+      if (vimeoMatch) videoEmbed = `<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?title=0&byline=0&portrait=0" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
+      else if (ytMatch) videoEmbed = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
+    }
     
     out.innerHTML = `
       <div class="output-header">
@@ -357,6 +366,7 @@ function renderOutput(type, data) {
         </div>
       </div>
       ${heroImg ? `<img src="${heroImg}" style="width:100%;object-fit:contain;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
+      ${videoEmbed}
       <div class="output-title">${data.title}</div>
       <div class="output-subtitle">${data.subtitle}</div>
       <div class="output-section"><div class="output-section-label">Challenge</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.challenge}</div></div>
@@ -365,10 +375,19 @@ function renderOutput(type, data) {
       <blockquote style="border-left:3px solid var(--accent);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;font-size:1.05rem;line-height:1.6">"${data.pull_quote}"</blockquote>
       ${extraImgs.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-top:1.5rem;">${extraImgs.map(img => `<img src="${img}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--line);">`).join('')}</div>` : ''}
       <div class="output-meta"><strong>SEO Meta:</strong> ${data.seo_description}</div>
-      <button class="submit-btn" style="margin-top:1.5rem;" onclick="publishCase()">Publish to Website</button>
+      <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;">
+        <button class="submit-btn" style="flex:1;min-width:150px;margin:0;" onclick="saveCase('draft')">Save Draft</button>
+        <button class="submit-btn" style="flex:1;min-width:150px;margin:0;background:#888;" onclick="scheduleCase()">Schedule</button>
+        <button class="submit-btn" style="flex:1;min-width:150px;margin:0;" onclick="saveCase('publish')">Publish Now</button>
+      </div>
+      <div id="scheduleWrap" style="display:none;margin-top:1rem;">
+        <div class="field"><label>Schedule Date & Time</label><input type="datetime-local" id="cs-schedule-date" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);padding:0.75rem 1rem;font-family:var(--body);font-size:0.9rem;"></div>
+        <button class="submit-btn" style="margin-top:0.5rem;" onclick="saveCase('scheduled')">Confirm Schedule</button>
+      </div>
       <div id="publishStatus" style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--accent);margin-top:0.75rem;display:none;"></div>
     `;
     out._data = data;
+    out._data._videoUrl = videoUrl;
   }
 
   out.scrollIntoView({ behavior: 'smooth' });
@@ -497,20 +516,28 @@ function driveToEmbed(url) {
   return url; // Return as-is if not a Drive link
 }
 
-async function publishCase() {
+function scheduleCase() {
+  const wrap = document.getElementById('scheduleWrap');
+  wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveCase(action) {
   const d = document.getElementById('outputPanel')._data;
   const heroImg = document.getElementById('cs-hero-img').value.trim();
   const extraImgs = document.getElementById('cs-images').value.trim()
     .split('\n').filter(Boolean).join(',');
-  
+  const videoUrl = d._videoUrl || '';
+  const scheduleDate = document.getElementById('cs-schedule-date')?.value || '';
+
   d.hero_image = heroImg;
   d.extra_images = extraImgs;
-  
-  const btn = event.target;
+  d.video_url = videoUrl;
+  d.status = action; // 'draft', 'publish', or 'scheduled'
+  d.schedule_date = action === 'scheduled' ? scheduleDate : '';
+
   const status = document.getElementById('publishStatus');
-  
-  btn.disabled = true;
-  btn.textContent = 'Publishing...';
+  const btns = document.querySelectorAll('.submit-btn');
+  btns.forEach(b => { b.disabled = true; });
 
   try {
     const res = await fetch('/api/cases', {
@@ -520,19 +547,21 @@ async function publishCase() {
     });
 
     if (res.ok) {
-      status.textContent = 'Published. Live at bosskproductions.com/case-studies.html';
+      const msgs = {
+        draft: 'Draft saved.',
+        publish: 'Published. Live at bosskproductions.com/case-studies.html',
+        scheduled: `Scheduled for ${scheduleDate}.`
+      };
+      status.textContent = msgs[action];
       status.style.display = 'block';
-      btn.textContent = 'Published';
-      btn.style.background = '#00ff88';
+      status.style.color = action === 'draft' ? 'var(--dim)' : 'var(--accent)';
     } else {
-      btn.textContent = 'Publish to Website';
-      btn.disabled = false;
-      alert('Failed to publish. Try again.');
+      alert('Failed to save. Try again.');
+      btns.forEach(b => { b.disabled = false; });
     }
   } catch {
-    btn.textContent = 'Publish to Website';
-    btn.disabled = false;
-    alert('Failed to publish. Try again.');
+    alert('Failed to save. Try again.');
+    btns.forEach(b => { b.disabled = false; });
   }
 }
 
