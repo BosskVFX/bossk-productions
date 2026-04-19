@@ -179,7 +179,7 @@
   }
   .logo { font-family:var(--display); font-size:1.6rem; letter-spacing:0.15em; color:var(--text); text-decoration:none; display:flex; align-items:center; }
   .logo span { color:var(--accent); }
-  .logo-icon { height:1.6rem; margin-right:-0.05em; vertical-align:middle; }
+  .logo-icon { height:1.6rem; margin-right:0.05em; vertical-align:middle; position:relative; top:-2px; }
   .nav-links { display:flex; gap:2.5rem; align-items:center; list-style:none; }
   .nav-links a { font-family:var(--mono); font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); text-decoration:none; transition:color 0.3s; }
   .nav-links a:hover { color:var(--text); }
@@ -829,7 +829,7 @@
 <body>
 
 <nav>
-  <a href="#" class="logo">BOSSK <span>PRODUCTIONS</span></a>
+  <a href="#" class="logo"><img src="logo-icon.png" alt="B" class="logo-icon">OSSK <span>PRODUCTIONS</span></a>
   <ul class="nav-links">
     <li><a href="#services">Services</a></li>
     <li><a href="#work">Work</a></li>
