@@ -861,7 +861,7 @@
         <div class="w-title">COMMERCIAL FINISHING</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(7)">
+    <div class="w-item reveal" onclick="openReel(3)">
       <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
         <div class="w-type">Motion Graphics</div>
@@ -871,7 +871,7 @@
   </div>
 
   <!-- ORIGINALS BANNER -->
-  <div class="originals-banner reveal" onclick="openReel(3)">
+  <div class="originals-banner reveal" onclick="openOriginal(0)">
     <img id="originalsBannerImg" src="originals-banner.jpg" alt="Bossk Production Originals" style="width:100%;display:block;cursor:pointer;">
     <div class="originals-fallback" id="originalsFallback">
       <span>BOSSK PRODUCTION ORIGINALS</span>
@@ -1013,22 +1013,27 @@
 </footer>
 
 <script>
-// Reel data
-const reels = [
+// Reel data - two separate playlists
+const showreels = [
   { id: '1184456353', type: 'AI Production', title: 'AI REEL 2026' },
   { id: '1184456832', type: 'Visual Effects', title: 'FEATURE FILM VFX' },
   { id: '1184456958', type: 'Post Production', title: 'COMMERCIAL FINISHING' },
+  { id: '1184460226', type: 'Motion Graphics', title: 'MOTION GRAPHICS REEL' }
+];
+
+const originals = [
   { id: '1184457836', type: 'AI Short Film', title: 'STONE COLD JUSTICE' },
   { id: '1184457467', type: 'AI Short Film', title: 'JEEPNEY' },
   { id: '1184458603', type: 'AI Production', title: "MCDONALD'S WRAP BATTLE" },
-  { id: '1184458926', type: 'AI Production', title: 'TACO BELL FINAL BOSS' },
-  { id: '1184460226', type: 'Motion Graphics', title: 'MOTION GRAPHICS REEL' }
+  { id: '1184458926', type: 'AI Production', title: 'TACO BELL FINAL BOSS' }
 ];
+
+let activePlaylist = showreels;
 let currentReel = 0;
 
 function buildPlaylist(activeIdx) {
   const pl = document.getElementById('reelPlaylist');
-  pl.innerHTML = reels.map((r, i) => `
+  pl.innerHTML = activePlaylist.map((r, i) => `
     <div class="v-thumb ${i === activeIdx ? 'active' : ''}" onclick="switchReel(${i})">
       <div class="v-thumb-type">${r.type}</div>
       <div class="v-thumb-title">${r.title}</div>
@@ -1037,20 +1042,30 @@ function buildPlaylist(activeIdx) {
 }
 
 function openReel(tileIdx) {
-  // Tile 3 (AI Short Films) opens Stone Cold Justice (index 3)
-  const reelIdx = tileIdx;
-  currentReel = reelIdx;
-  const r = reels[reelIdx];
+  activePlaylist = showreels;
+  currentReel = tileIdx;
+  const r = activePlaylist[tileIdx];
   document.getElementById('reelTitle').textContent = r.title;
   document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
-  buildPlaylist(reelIdx);
+  buildPlaylist(tileIdx);
+  document.getElementById('reelModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function openOriginal(idx) {
+  activePlaylist = originals;
+  currentReel = idx;
+  const r = activePlaylist[idx];
+  document.getElementById('reelTitle').textContent = r.title;
+  document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
+  buildPlaylist(idx);
   document.getElementById('reelModal').classList.add('active');
   document.body.style.overflow = 'hidden';
 }
 
 function switchReel(idx) {
   currentReel = idx;
-  const r = reels[idx];
+  const r = activePlaylist[idx];
   document.getElementById('reelTitle').textContent = r.title;
   document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
   buildPlaylist(idx);
