@@ -376,6 +376,57 @@
     color:var(--dim); font-size:0.9rem; line-height:1.8;
   }
 
+  /* VIDEO MODAL */
+  .v-modal-overlay {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,0.92); backdrop-filter:blur(10px);
+    padding:2rem;
+  }
+  .v-modal-overlay.active { display:flex; flex-direction:column; }
+  .v-modal-top {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:1rem; flex-shrink:0;
+  }
+  .v-modal-title {
+    font-family:var(--display); font-size:1.4rem; letter-spacing:0.05em;
+  }
+  .v-modal-close {
+    background:none; border:none; color:var(--dim);
+    font-size:1.8rem; cursor:pointer; transition:color 0.2s;
+  }
+  .v-modal-close:hover { color:var(--text); }
+  .v-modal-player {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    min-height:0;
+  }
+  .v-modal-player iframe {
+    width:100%; max-width:960px; aspect-ratio:16/9; border:none;
+  }
+  .v-modal-playlist {
+    display:flex; gap:0.75rem; margin-top:1.25rem;
+    overflow-x:auto; flex-shrink:0; padding-bottom:0.5rem;
+  }
+  .v-thumb {
+    flex-shrink:0; cursor:pointer;
+    background:var(--card); border:1px solid var(--line);
+    padding:0.6rem 1rem; transition:border-color 0.2s, background 0.2s;
+    min-width:140px; text-align:center;
+  }
+  .v-thumb:hover { border-color:rgba(255,107,53,0.3); }
+  .v-thumb.active {
+    border-color:var(--accent);
+    background:rgba(255,107,53,0.08);
+  }
+  .v-thumb-type {
+    font-family:var(--mono); font-size:0.45rem;
+    letter-spacing:0.15em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:0.2rem;
+  }
+  .v-thumb-title {
+    font-family:var(--display); font-size:0.85rem;
+    letter-spacing:0.03em;
+  }
+
   /* CTA */
   .cta {
     padding:8rem 3rem; text-align:center; position:relative;
@@ -765,32 +816,39 @@
   <div class="s-label reveal">Selected Work</div>
   <h2 class="s-title reveal">THE REEL</h2>
   <div class="w-grid stagger">
-    <div class="w-item reveal">
-      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
-      <div class="w-meta">
-        <div class="w-type">Creative Preview</div>
-        <div class="w-title">AI PRODUCTION REEL 2026</div>
-      </div>
-    </div>
-    <div class="w-item reveal">
+    <div class="w-item reveal" onclick="openReel(0)">
       <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
         <div class="w-type">AI Production</div>
-        <div class="w-title">BRAND CAMPAIGNS</div>
+        <div class="w-title">AI REEL 2026</div>
       </div>
     </div>
-    <div class="w-item reveal">
+    <div class="w-item reveal" onclick="openReel(1)">
+      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+      <div class="w-meta">
+        <div class="w-type">Visual Effects</div>
+        <div class="w-title">FEATURE FILM VFX</div>
+      </div>
+    </div>
+    <div class="w-item reveal" onclick="openReel(2)">
       <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
         <div class="w-type">Post Production</div>
         <div class="w-title">COMMERCIAL FINISHING</div>
       </div>
     </div>
-    <div class="w-item reveal">
+    <div class="w-item reveal" onclick="openReel(3)">
       <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
-        <div class="w-type">Original Content</div>
-        <div class="w-title">AI SHORT FILMS</div>
+        <div class="w-type">AI Short Film</div>
+        <div class="w-title">STONE COLD JUSTICE</div>
+      </div>
+    </div>
+    <div class="w-item reveal" onclick="openReel(4)">
+      <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+      <div class="w-meta">
+        <div class="w-type">AI Short Film</div>
+        <div class="w-title">JEEPNEY</div>
       </div>
     </div>
   </div>
@@ -895,6 +953,18 @@
   </div>
 </section>
 
+<!-- VIDEO MODAL -->
+<div class="v-modal-overlay" id="reelModal" onclick="if(event.target===this)closeReel()">
+  <div class="v-modal-top">
+    <div class="v-modal-title" id="reelTitle"></div>
+    <button class="v-modal-close" onclick="closeReel()">&times;</button>
+  </div>
+  <div class="v-modal-player">
+    <iframe id="reelPlayer" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
+  </div>
+  <div class="v-modal-playlist" id="reelPlaylist"></div>
+</div>
+
 <!-- BIO MODAL -->
 <div class="modal-overlay" id="bioModal" onclick="if(event.target===this)closeBio()">
   <div class="modal">
@@ -918,6 +988,50 @@
 </footer>
 
 <script>
+// Reel data
+const reels = [
+  { id: '1184456353', type: 'AI Production', title: 'AI REEL 2026' },
+  { id: '1184456832', type: 'Visual Effects', title: 'FEATURE FILM VFX' },
+  { id: '1184456958', type: 'Post Production', title: 'COMMERCIAL FINISHING' },
+  { id: '1184457836', type: 'AI Short Film', title: 'STONE COLD JUSTICE' },
+  { id: '1184457467', type: 'AI Short Film', title: 'JEEPNEY' }
+];
+let currentReel = 0;
+
+function buildPlaylist(activeIdx) {
+  const pl = document.getElementById('reelPlaylist');
+  pl.innerHTML = reels.map((r, i) => `
+    <div class="v-thumb ${i === activeIdx ? 'active' : ''}" onclick="switchReel(${i})">
+      <div class="v-thumb-type">${r.type}</div>
+      <div class="v-thumb-title">${r.title}</div>
+    </div>
+  `).join('');
+}
+
+function openReel(idx) {
+  currentReel = idx;
+  const r = reels[idx];
+  document.getElementById('reelTitle').textContent = r.title;
+  document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
+  buildPlaylist(idx);
+  document.getElementById('reelModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function switchReel(idx) {
+  currentReel = idx;
+  const r = reels[idx];
+  document.getElementById('reelTitle').textContent = r.title;
+  document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
+  buildPlaylist(idx);
+}
+
+function closeReel() {
+  document.getElementById('reelModal').classList.remove('active');
+  document.getElementById('reelPlayer').src = '';
+  document.body.style.overflow = '';
+}
+
 // Bio modal
 function openBio(idx) {
   const members = document.querySelectorAll('.t-member');
@@ -941,7 +1055,7 @@ function closeBio() {
 }
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeBio();
+  if (e.key === 'Escape') { closeBio(); closeReel(); }
 });
 
 // Scroll-triggered reveals
