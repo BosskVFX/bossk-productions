@@ -322,6 +322,27 @@
   .w-type { font-family:var(--mono); font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); }
   .w-title { font-family:var(--display); font-size:1.3rem; letter-spacing:0.05em; margin-top:0.2rem; }
 
+  /* ORIGINALS BANNER */
+  .originals-banner {
+    margin-top:1.5rem;
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+    cursor:pointer;
+    transition:border-color 0.3s;
+  }
+  .originals-banner:hover { border-color:rgba(255,107,53,0.3); }
+  .originals-fallback {
+    display:none;
+    background:var(--card);
+    padding:3rem;
+    text-align:center;
+    font-family:var(--display);
+    font-size:clamp(1.5rem,3vw,2.5rem);
+    letter-spacing:0.1em;
+    color:var(--accent);
+  }
+
   /* TEAM */
   .team { padding:8rem 3rem; background:var(--bg2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   .team-inner { max-width:1200px; margin:0 auto; }
@@ -840,12 +861,20 @@
         <div class="w-title">COMMERCIAL FINISHING</div>
       </div>
     </div>
-    <div class="w-item reveal" onclick="openReel(3)">
+    <div class="w-item reveal" onclick="openReel(7)">
       <div class="w-bg"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
       <div class="w-meta">
-        <div class="w-type">Original Content</div>
-        <div class="w-title">AI SHORT FILMS</div>
+        <div class="w-type">Motion Graphics</div>
+        <div class="w-title">MOTION GRAPHICS REEL</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ORIGINALS BANNER -->
+  <div class="originals-banner reveal" onclick="openReel(3)">
+    <img id="originalsBannerImg" src="originals-banner.jpg" alt="Bossk Production Originals" style="width:100%;display:block;cursor:pointer;">
+    <div class="originals-fallback" id="originalsFallback">
+      <span>BOSSK PRODUCTION ORIGINALS</span>
     </div>
   </div>
 </section>
@@ -1058,6 +1087,15 @@ function closeBio() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeBio(); closeReel(); }
 });
+
+// Originals banner fallback
+const bannerImg = document.getElementById('originalsBannerImg');
+if (bannerImg) {
+  bannerImg.onerror = function() {
+    this.style.display = 'none';
+    document.getElementById('originalsFallback').style.display = 'block';
+  };
+}
 
 // Scroll-triggered reveals
 const observer = new IntersectionObserver((entries) => {
