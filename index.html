@@ -999,16 +999,16 @@
   <div class="nl-inner reveal">
     <div class="nl-text">
       <div class="s-label">Newsletter</div>
-      <h3 class="nl-title">THE INSIDE TRACK</h3>
+      <h3 class="nl-title">THE BOSSK BRIEF</h3>
       <p class="nl-desc">AI production insights, behind-the-scenes breakdowns, and industry shifts — straight from the studio. No spam, no fluff.</p>
     </div>
     <div class="nl-form">
-      <!-- Replace this div with your Beehiiv embed code -->
-      <div class="nl-input-wrap">
+      <div class="nl-input-wrap" id="nlForm">
         <input type="email" placeholder="your@email.com" class="nl-input" id="nl-email">
-        <button class="nl-btn" onclick="document.getElementById('nl-email').value && window.open('https://bossk-newsletter.beehiiv.com/subscribe?email=' + encodeURIComponent(document.getElementById('nl-email').value), '_blank')">Subscribe</button>
+        <button class="nl-btn" onclick="subscribeNewsletter()">Subscribe</button>
       </div>
-      <p class="nl-fine">Join the list. Unsubscribe anytime.</p>
+      <div id="nlSuccess" style="display:none;font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--accent);">You're in. Welcome to The Bossk Brief.</div>
+      <p class="nl-fine" id="nlFine">Join the list. Unsubscribe anytime.</p>
     </div>
   </div>
 </section>
@@ -1110,6 +1110,36 @@ function closeReel() {
   document.getElementById('reelModal').classList.remove('active');
   document.getElementById('reelPlayer').src = '';
   document.body.style.overflow = '';
+}
+
+// Newsletter subscribe
+async function subscribeNewsletter() {
+  const email = document.getElementById('nl-email').value;
+  if (!email) return;
+
+  const btn = document.querySelector('.nl-btn');
+  btn.textContent = 'Subscribing...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    if (res.ok) {
+      document.getElementById('nlForm').style.display = 'none';
+      document.getElementById('nlFine').style.display = 'none';
+      document.getElementById('nlSuccess').style.display = 'block';
+    } else {
+      btn.textContent = 'Subscribe';
+      btn.disabled = false;
+    }
+  } catch {
+    btn.textContent = 'Subscribe';
+    btn.disabled = false;
+  }
 }
 
 // Bio modal
