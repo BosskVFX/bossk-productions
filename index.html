@@ -13,6 +13,8 @@
 <meta property="og:image" content="https://www.bosskproductions.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="canonical" href="https://www.bosskproductions.com">
 
 <script type="application/ld+json">
@@ -750,6 +752,40 @@
     animation:glowPulse 4s ease-in-out infinite;
   }
 
+  /* MOBILE MENU */
+  .hamburger {
+    display:none;
+    background:none; border:none; cursor:pointer;
+    flex-direction:column; gap:5px; padding:4px;
+  }
+  .hamburger span {
+    display:block; width:24px; height:2px;
+    background:var(--text); transition:all 0.3s;
+  }
+  .mobile-menu {
+    display:none; position:fixed; inset:0; z-index:99;
+    background:rgba(10,10,10,0.97); backdrop-filter:blur(20px);
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:2.5rem;
+  }
+  .mobile-menu.active { display:flex; }
+  .mobile-menu a {
+    font-family:var(--display); font-size:2rem;
+    letter-spacing:0.1em; color:var(--text);
+    text-decoration:none; transition:color 0.2s;
+  }
+  .mobile-menu a:hover { color:var(--accent); }
+  .mobile-menu .nav-cta {
+    background:var(--accent); color:var(--bg)!important;
+    padding:0.75rem 2rem; font-family:var(--mono);
+    font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase;
+  }
+  .mobile-close {
+    position:absolute; top:1.5rem; right:1.5rem;
+    background:none; border:none; color:var(--dim);
+    font-size:2rem; cursor:pointer;
+  }
+
   @media(max-width:900px){
     nav{padding:1rem 1.5rem} .nav-links{gap:1.5rem}
     .hero{padding:7rem 1.5rem 3rem}
@@ -764,8 +800,16 @@
   }
   @media(max-width:600px){
     .nav-links{display:none}
+    .hamburger{display:flex}
     .hero-actions{flex-direction:column}
     .t-grid{grid-template-columns:1fr}
+    .form-row{flex-direction:column;gap:0}
+    .v-modal-overlay{padding:1rem}
+    .v-modal-playlist{flex-direction:column;align-items:center}
+    .v-thumb{min-width:200px;width:100%}
+    .originals-banner{height:150px}
+    .modal{max-height:85vh}
+    .modal-img{aspect-ratio:auto;max-height:40vh}
   }
 </style>
 </head>
@@ -779,7 +823,18 @@
     <li><a href="#team">Team</a></li>
     <li><a href="#contact" class="nav-cta">Let's Talk</a></li>
   </ul>
+  <button class="hamburger" onclick="document.getElementById('mobileMenu').classList.add('active')">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" onclick="this.parentElement.classList.remove('active')">&times;</button>
+  <a href="#services" onclick="this.parentElement.classList.remove('active')">SERVICES</a>
+  <a href="#work" onclick="this.parentElement.classList.remove('active')">WORK</a>
+  <a href="#team" onclick="this.parentElement.classList.remove('active')">TEAM</a>
+  <a href="#contact" class="nav-cta" onclick="this.parentElement.classList.remove('active')">LET'S TALK</a>
+</div>
 
 <!-- HERO -->
 <section class="hero">
