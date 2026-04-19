@@ -131,9 +131,21 @@ async function loadCases() {
       const date = c.Date ? new Date(c.Date).toLocaleDateString('en-US', { year:'numeric', month:'long' }) : '';
       const slug = (c.Title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/,'');
       const extraImgs = (c['Extra Images'] || '').split(',').map(s => s.trim()).filter(Boolean);
+      const videoUrl = c['Video URL'] || '';
+      let videoEmbed = '';
+      if (videoUrl) {
+        const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
+        const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+        const frameMatch = videoUrl.match(/app\.frame\.io/) || videoUrl.match(/f\.io/);
+        if (vimeoMatch) videoEmbed = '<iframe src="https://player.vimeo.com/video/' + vimeoMatch[1] + '?title=0&byline=0&portrait=0" style="width:100%;aspect-ratio:16/9;border:1px solid rgba(255,255,255,0.06);margin:1.5rem 0;" frameborder="0" allowfullscreen></iframe>';
+        else if (ytMatch) videoEmbed = '<iframe src="https://www.youtube.com/embed/' + ytMatch[1] + '" style="width:100%;aspect-ratio:16/9;border:1px solid rgba(255,255,255,0.06);margin:1.5rem 0;" frameborder="0" allowfullscreen></iframe>';
+        else if (frameMatch) videoEmbed = '<a href="' + videoUrl + '" target="_blank" style="display:block;background:#161616;border:1px solid #ff6b35;padding:1.5rem;text-align:center;margin:1.5rem 0;text-decoration:none;"><span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:#ff6b35;letter-spacing:0.1em;">REVIEW ON FRAME.IO</span></a>';
+        else videoEmbed = '<a href="' + videoUrl + '" target="_blank" style="display:block;background:#161616;border:1px solid rgba(255,255,255,0.06);padding:1.5rem;text-align:center;margin:1.5rem 0;text-decoration:none;"><span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:#f0ede8;letter-spacing:0.1em;">WATCH VIDEO</span></a>';
+      }
       return `
         <div class="case-card" id="${slug}">
           ${c['Hero Image'] ? `<img class="case-hero" src="${c['Hero Image']}" alt="${c.Title}">` : ''}
+          ${videoEmbed}
           <div class="case-top">
             <div>
               <div class="case-title">${c.Title || ''}</div>
