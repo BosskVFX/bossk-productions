@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     // Publish a new case study
-    const { title, subtitle, client_type, services_used, challenge, solution, result, pull_quote, seo_description } = req.body;
+    const { title, subtitle, client_type, services_used, challenge, solution, result, pull_quote, seo_description, hero_image, extra_images } = req.body;
 
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
@@ -36,7 +36,9 @@ export default async function handler(req, res) {
           solution,
           result,
           quote: pull_quote,
-          seo_description
+          seo_description,
+          hero_image: hero_image || '',
+          extra_images: extra_images || ''
         }),
         redirect: 'follow'
       });

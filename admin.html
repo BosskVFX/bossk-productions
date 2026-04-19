@@ -156,6 +156,8 @@
   <div class="form-panel active" id="panel-cs">
     <div class="field"><label>Project Title</label><input id="cs-title" placeholder="e.g. Happy Being Peach White Tea Campaign"></div>
     <div class="field"><label>Client / Client Type</label><input id="cs-client" placeholder="e.g. Happy Being (CPG Brand)"></div>
+    <div class="field"><label>Hero Image (Google Drive share link)</label><input id="cs-hero-img" placeholder="Paste Google Drive share link for the main project image"><div style="font-size:0.65rem;color:var(--dim);margin-top:0.3rem;">Right-click image in Drive → Share → Anyone with link → Copy link</div></div>
+    <div class="field"><label>Additional Images (one Drive link per line)</label><textarea id="cs-images" rows="3" placeholder="Paste additional Google Drive share links, one per line"></textarea></div>
     <div class="field"><label>Project Notes</label><textarea id="cs-notes" rows="10" placeholder="Dump everything here — what the client needed, what you built, tools used, how it turned out. Claude will handle the formatting."></textarea></div>
     <button class="submit-btn" onclick="optimize('cs')">Optimize Case Study</button>
   </div>
@@ -333,8 +335,30 @@ function renderOutput(type, data) {
   out.scrollIntoView({ behavior: 'smooth' });
 }
 
+function driveToEmbed(url) {
+  if (!url) return '';
+  // Extract file ID from various Google Drive URL formats
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /id=([a-zA-Z0-9_-]+)/,
+    /\/d\/([a-zA-Z0-9_-]+)/
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+  }
+  return url; // Return as-is if not a Drive link
+}
+
 async function publishCase() {
   const d = document.getElementById('outputPanel')._data;
+  const heroImg = driveToEmbed(document.getElementById('cs-hero-img').value.trim());
+  const extraImgs = document.getElementById('cs-images').value.trim()
+    .split('\n').map(l => driveToEmbed(l.trim())).filter(Boolean).join(',');
+  
+  d.hero_image = heroImg;
+  d.extra_images = extraImgs;
+  
   const btn = event.target;
   const status = document.getElementById('publishStatus');
   
