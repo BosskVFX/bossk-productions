@@ -356,7 +356,7 @@ function renderOutput(type, data) {
           <button class="copy-btn" onclick="copyHTML('cs')">Copy HTML</button>
         </div>
       </div>
-      ${heroImg ? `<img src="${heroImg}" style="width:100%;max-height:400px;object-fit:cover;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
+      ${heroImg ? `<img src="${heroImg}" style="width:100%;object-fit:contain;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
       <div class="output-title">${data.title}</div>
       <div class="output-subtitle">${data.subtitle}</div>
       <div class="output-section"><div class="output-section-label">Challenge</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${data.challenge}</div></div>
