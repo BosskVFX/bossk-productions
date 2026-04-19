@@ -317,8 +317,10 @@
   .w-item:hover .play { border-color:var(--accent); transform:scale(1.1); }
   .play svg { width:18px; height:18px; fill:var(--text); margin-left:3px; }
   .w-meta {
-    position:absolute; bottom:0; left:0; right:0; padding:1.75rem;
-    background:linear-gradient(to top,rgba(10,10,10,0.95),transparent);
+    position:absolute; bottom:0; left:0; right:0; padding:1.5rem 1.75rem;
+    background:linear-gradient(to top, rgba(10,10,10,1) 0%, rgba(10,10,10,0.85) 40%, transparent 100%);
+    min-height:30%;
+    display:flex; flex-direction:column; justify-content:flex-end;
   }
   .w-type { font-family:var(--mono); font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); }
   .w-title { font-family:var(--display); font-size:1.3rem; letter-spacing:0.05em; margin-top:0.2rem; }
