@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     // Fetch published case studies
     try {
-      const sheetRes = await fetch('https://script.google.com/macros/s/AKfycbzIbheoTc2SZgcFODz70eqyAknf6xcHGJrx5clHh7_vN96aJO1_tMBJfuQh7CYbKLNt/exec', {
+      const sheetRes = await fetch('https://script.google.com/macros/s/AKfycby7DtYXIMy4H1Qs4zCHUM0hWmgASz-wOfHA1klGufu_8iukBHj3njyfEYu2IFfIjkpn/exec', {
         redirect: 'follow'
       });
       const data = await sheetRes.text();
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     }
 
     try {
-      await fetch('https://script.google.com/macros/s/AKfycbzIbheoTc2SZgcFODz70eqyAknf6xcHGJrx5clHh7_vN96aJO1_tMBJfuQh7CYbKLNt/exec', {
+      await fetch('https://script.google.com/macros/s/AKfycby7DtYXIMy4H1Qs4zCHUM0hWmgASz-wOfHA1klGufu_8iukBHj3njyfEYu2IFfIjkpn/exec', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(isNewsletter ? {
