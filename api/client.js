@@ -8,9 +8,16 @@ export default async function handler(req, res) {
     try {
       const r = await fetch(SHEET_URL + '?sheet=Clients', { redirect: 'follow' });
       const data = await r.json();
-      const project = data.find(d => d.Slug === slug && (String(d.Active).toUpperCase() === 'TRUE'));
+      const project = data.find(d => {
+        const rowSlug = (d['Slug'] || d['Slug '] || '').trim();
+        const active = String(d['Active'] || d['Active '] || '').trim().toUpperCase();
+        return rowSlug === slug && active === 'TRUE';
+      });
       if (!project) return res.status(404).json({ error: 'Project not found' });
-      return res.status(200).json(project);
+      // Trim all keys
+      const clean = {};
+      for (const k in project) clean[k.trim()] = project[k];
+      return res.status(200).json(clean);
     } catch (e) {
       return res.status(500).json({ error: e.message });
     }
