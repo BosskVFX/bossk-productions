@@ -484,7 +484,7 @@ function renderOutput(type, data) {
       })()}
       <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;">
         <button class="submit-btn" style="flex:1;min-width:150px;margin:0;background:#888;" onclick="saveNewsletter('draft')">Save Draft</button>
-        <button class="submit-btn" style="flex:1;min-width:150px;margin:0;" onclick="saveNewsletter('publish')">Publish to Beehiiv</button>
+        <button class="submit-btn" style="flex:1;min-width:150px;margin:0;" onclick="saveNewsletter('publish')">Send Newsletter</button>
       </div>
       <div id="nlPublishStatus" style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--accent);margin-top:0.75rem;display:none;"></div>
     `;
@@ -947,7 +947,7 @@ async function saveNewsletter(action) {
         status.style.display = 'block';
         status.style.color = 'var(--dim)';
       } else {
-        status.textContent = 'Published to Beehiiv!';
+        status.textContent = 'Newsletter sent!';
         status.style.display = 'block';
         status.style.color = '#00ff88';
       }

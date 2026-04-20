@@ -21,6 +21,8 @@ export default async function handler(req, res) {
         subject, preview_text: preview_text || '', body,
         cta_text: cta_text || '', cta_url: cta_url || '',
         header_image: header_image || '',
+        body_images: body_images || '',
+        video_url: video_url || '',
         status: action || 'draft'
       }),
       redirect: 'follow'
@@ -119,7 +121,7 @@ export default async function handler(req, res) {
           'Authorization': `Bearer ${RESEND_KEY}`
         },
         body: JSON.stringify({
-          from: 'The Bossk Brief <onboarding@resend.dev>',
+          from: 'The Bossk Brief <newsletter@bosskproductions.com>',
           to: email,
           subject: subject,
           html: fullHtml
