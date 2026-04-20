@@ -861,63 +861,42 @@ async function saveNewsletter(action) {
 
   // Save to sheet regardless of action
   try {
-    const saveRes = await fetch('/api/cases', {
+    const saveRes = await fetch('/api/newsletter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        _sheet: 'Newsletter',
         subject: d.subject_line,
         preview_text: d.preview_text,
         body: d.body,
         cta_text: d.cta_text,
         cta_url: d.cta_url,
         header_image: d._headerImg || '',
-        status: action
+        action: action
       })
     });
     const saveResult = await saveRes.json();
     console.log('Newsletter save:', saveRes.status, saveResult);
-  } catch (e) {
-    console.error('Failed to save newsletter to sheet:', e);
-  }
 
-  if (action === 'draft') {
-    status.textContent = 'Draft saved.';
-    status.style.display = 'block';
-    status.style.color = 'var(--dim)';
-    btns.forEach(b => { b.disabled = false; });
-    loadSavedPosts();
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/newsletter', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subject: d.subject_line,
-        preview_text: d.preview_text,
-        body: d.body,
-        cta_text: d.cta_text,
-        cta_url: d.cta_url,
-        header_image: d._headerImg || ''
-      })
-    });
-
-    const result = await res.json();
-    if (res.ok && result.success) {
-      status.textContent = 'Published to Beehiiv!';
-      status.style.display = 'block';
-      status.style.color = '#00ff88';
+    if (saveRes.ok) {
+      if (action === 'draft') {
+        status.textContent = 'Draft saved.';
+        status.style.display = 'block';
+        status.style.color = 'var(--dim)';
+      } else {
+        status.textContent = 'Published to Beehiiv!';
+        status.style.display = 'block';
+        status.style.color = '#00ff88';
+      }
       loadSavedPosts();
     } else {
-      status.textContent = 'Failed: ' + (result.error || 'Unknown error');
+      status.textContent = 'Failed: ' + (saveResult.error || 'Unknown error');
       status.style.display = 'block';
       status.style.color = '#ff4444';
-      btns.forEach(b => { b.disabled = false; });
     }
+    btns.forEach(b => { b.disabled = false; });
   } catch (e) {
-    status.textContent = 'Failed to publish: ' + e.message;
+    console.error('Newsletter error:', e);
+    status.textContent = 'Failed: ' + e.message;
     status.style.display = 'block';
     status.style.color = '#ff4444';
     btns.forEach(b => { b.disabled = false; });
