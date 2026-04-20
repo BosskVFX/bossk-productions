@@ -315,6 +315,7 @@
 
 <script>
 // Auth
+let currentAdminTab = 'cs';
 const PASS_HASH = '5a39bead318f306939acb1d016647be2e38c6501c58571fa37f0e780e137e';
 
 async function hashPass(p) {
@@ -351,7 +352,6 @@ if (sessionStorage.getItem('bossk_admin')==='1') {
 }
 
 // Tabs
-let currentAdminTab = 'cs';
 
 function switchTab(id, btn) {
   currentAdminTab = id;

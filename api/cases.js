@@ -16,32 +16,44 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    // Publish a new case study
-    const { title, subtitle, client_type, services_used, challenge, solution, result, pull_quote, seo_description, hero_image, extra_images, video_url, status, schedule_date } = req.body;
+    const body = req.body;
+    const isNewsletter = body._sheet === 'Newsletters';
 
-    if (!title) {
+    if (!isNewsletter && !body.title) {
       return res.status(400).json({ error: 'Title is required' });
+    }
+    if (isNewsletter && !body.subject) {
+      return res.status(400).json({ error: 'Subject is required' });
     }
 
     try {
       await fetch('https://script.google.com/macros/s/AKfycbzIbheoTc2SZgcFODz70eqyAknf6xcHGJrx5clHh7_vN96aJO1_tMBJfuQh7CYbKLNt/exec', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          title,
-          subtitle,
-          client_type,
-          services: Array.isArray(services_used) ? services_used.join(', ') : services_used || '',
-          challenge,
-          solution,
-          result,
-          quote: pull_quote,
-          seo_description,
-          hero_image: hero_image || '',
-          extra_images: extra_images || '',
-          video_url: video_url || '',
-          status: status || 'publish',
-          schedule_date: schedule_date || ''
+        body: JSON.stringify(isNewsletter ? {
+          _sheet: 'Newsletters',
+          subject: body.subject || '',
+          preview_text: body.preview_text || '',
+          body: body.body || '',
+          cta_text: body.cta_text || '',
+          cta_url: body.cta_url || '',
+          header_image: body.header_image || '',
+          status: body.status || 'draft'
+        } : {
+          title: body.title,
+          subtitle: body.subtitle,
+          client_type: body.client_type,
+          services: Array.isArray(body.services_used) ? body.services_used.join(', ') : body.services_used || '',
+          challenge: body.challenge,
+          solution: body.solution,
+          result: body.result,
+          quote: body.pull_quote,
+          seo_description: body.seo_description,
+          hero_image: body.hero_image || '',
+          extra_images: body.extra_images || '',
+          video_url: body.video_url || '',
+          status: body.status || 'publish',
+          schedule_date: body.schedule_date || ''
         }),
         redirect: 'follow'
       });
