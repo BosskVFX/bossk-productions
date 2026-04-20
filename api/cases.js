@@ -5,10 +5,14 @@ export default async function handler(req, res) {
       const sheetRes = await fetch('https://script.google.com/macros/s/AKfycbwEylrOTVMnky-UyvMZL19HDokXjNdRhKCy_KC_7Y6eH7xg9Q47Qq191_zbW5HILY9h/exec', {
         redirect: 'follow'
       });
-      const data = await sheetRes.text();
+      const allData = await sheetRes.json();
+      const published = allData.filter(r => {
+        const pub = r.Published || r['Published '];
+        return pub === true || pub === 'TRUE' || String(pub).toUpperCase() === 'TRUE';
+      });
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
-      return res.status(200).send(data);
+      return res.status(200).json(published);
     } catch (e) {
       console.error('Fetch case studies error:', e.message);
       return res.status(500).json({ error: 'Failed to fetch case studies' });
