@@ -282,8 +282,20 @@
 
   <!-- NEWSLETTER -->
   <div class="form-panel" id="panel-nl">
-    <div class="field"><label>Topic / Subject</label><input id="nl-topic" placeholder="e.g. We just built a full commercial in 5 days"></div>
-    <div class="field"><label>Notes / Content</label><textarea id="nl-notes" rows="10" placeholder="Paste your blog post or raw notes. Claude will condense into a punchy newsletter."></textarea></div>
+    <div class="field"><label>Subject Line</label><input id="nl-topic" placeholder="e.g. We just built a full commercial in 5 days"></div>
+    <div class="field">
+      <label>Header Image</label>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+        <button class="copy-btn" onclick="loadDriveImagesNL()" style="padding:0.5rem 1rem;">Load Images from Drive</button>
+        <button class="copy-btn" onclick="clearNLImage()" style="padding:0.5rem 1rem;">Clear</button>
+      </div>
+      <div id="driveLoadingNL" style="display:none;font-family:var(--mono);font-size:0.7rem;color:var(--dim);">Loading...</div>
+      <div id="driveGridNL" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;"></div>
+      <div id="nlImgPreview" style="font-size:0.75rem;color:var(--dim);margin-top:0.5rem;">No image selected</div>
+      <input type="hidden" id="nl-header-img">
+    </div>
+    <div class="field"><label>Newsletter Content</label><textarea id="nl-notes" rows="10" placeholder="Write your main points, news, updates. Claude will structure it into a clean newsletter."></textarea></div>
+    <div class="field"><label>CTA Link (optional)</label><input id="nl-cta-url" placeholder="e.g. https://www.bosskproductions.com/case-studies.html"></div>
     <button class="submit-btn" onclick="optimize('nl')">Optimize Newsletter</button>
   </div>
 
@@ -389,8 +401,9 @@ async function optimize(type) {
   } else {
     const t = document.getElementById('nl-topic').value;
     const n = document.getElementById('nl-notes').value;
-    if (!t || !n) return alert('Fill in the topic and notes.');
-    userContent = `Topic: ${t}\nNotes:\n${n}`;
+    const ctaUrl = document.getElementById('nl-cta-url').value;
+    if (!t || !n) return alert('Fill in the subject and content.');
+    userContent = `Subject: ${t}\nCTA URL: ${ctaUrl || 'https://www.bosskproductions.com'}\nNotes:\n${n}`;
   }
 
   btn.disabled = true;
@@ -425,19 +438,30 @@ function renderOutput(type, data) {
   out.style.display = 'block';
 
   if (type === 'nl') {
+    const headerImg = document.getElementById('nl-header-img').value;
     out.innerHTML = `
       <div class="output-header">
-        <span class="output-label">Optimized Newsletter</span>
+        <span class="output-label">Newsletter Preview</span>
         <div class="copy-btns"><button class="copy-btn" onclick="copyText('nl')">Copy Text</button></div>
       </div>
+      ${headerImg ? `<img src="${headerImg}" style="width:100%;height:250px;object-fit:cover;object-position:top;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
       <div class="nl-out-field"><div class="nl-out-label">Subject Line</div><div style="font-size:1.1rem;font-weight:600">${data.subject_line}</div></div>
       <div class="nl-out-field"><div class="nl-out-label">Preview Text</div><div style="color:var(--dim);font-size:0.88rem">${data.preview_text}</div></div>
-      <div class="nl-out-label">Email Body</div>
-      <div class="output-body" id="nlBody">${data.body}</div>
-      <div class="nl-out-cta">${data.cta_text}</div>
-      <div style="font-family:var(--mono);font-size:0.55rem;color:var(--dim);margin-top:0.5rem">${data.cta_url}</div>
+      <div style="padding:1.5rem;background:var(--bg);border:1px solid var(--line);margin:1rem 0;">
+        <div style="color:var(--text);font-size:0.9rem;line-height:1.8;white-space:pre-wrap;">${data.body}</div>
+      </div>
+      <div style="text-align:center;margin:1rem 0;">
+        <div class="nl-out-cta">${data.cta_text}</div>
+        <div style="font-family:var(--mono);font-size:0.55rem;color:var(--dim);margin-top:0.5rem;">${data.cta_url}</div>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;">
+        <button class="submit-btn" style="flex:1;min-width:150px;margin:0;background:#888;" onclick="saveNewsletter('draft')">Save Draft</button>
+        <button class="submit-btn" style="flex:1;min-width:150px;margin:0;" onclick="saveNewsletter('publish')">Publish to Beehiiv</button>
+      </div>
+      <div id="nlPublishStatus" style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--accent);margin-top:0.75rem;display:none;"></div>
     `;
     out._data = data;
+    out._data._headerImg = headerImg;
   } else if (type === 'cs') {
     const heroImg = document.getElementById('cs-hero-img').value;
     const extraImgs = document.getElementById('cs-images').value.trim().split('\n').filter(Boolean);
@@ -730,6 +754,118 @@ function clearSelectedImages() {
     el.querySelector('.badge').textContent = '';
   });
   updateImageInputs();
+}
+
+// Newsletter image picker
+let nlSelectedImg = null;
+
+async function loadDriveImagesNL() {
+  const grid = document.getElementById('driveGridNL');
+  const loading = document.getElementById('driveLoadingNL');
+  loading.style.display = 'block';
+  grid.innerHTML = '';
+
+  try {
+    const res = await fetch('/api/images');
+    const images = await res.json();
+
+    if (!images.length) {
+      grid.innerHTML = '<div style="color:var(--dim);font-size:0.8rem;grid-column:1/-1;">No images found.</div>';
+      loading.style.display = 'none';
+      return;
+    }
+
+    grid.innerHTML = images.map((img, i) => `
+      <div class="drive-thumb" id="nl-thumb-${i}" onclick="selectNLImage(${i})" style="aspect-ratio:16/10;">
+        <img src="${img.thumbnail}" alt="${img.name}" loading="lazy">
+        <div class="badge"></div>
+      </div>
+    `).join('');
+    window._nlDriveImages = images;
+  } catch (e) {
+    grid.innerHTML = '<div style="color:#ff4444;font-size:0.8rem;grid-column:1/-1;">Failed to load images.</div>';
+  }
+  loading.style.display = 'none';
+}
+
+function selectNLImage(idx) {
+  const img = window._nlDriveImages[idx];
+  // Deselect previous
+  document.querySelectorAll('#driveGridNL .drive-thumb').forEach(el => {
+    el.classList.remove('selected');
+    el.querySelector('.badge').textContent = '';
+  });
+
+  if (nlSelectedImg === idx) {
+    nlSelectedImg = null;
+    document.getElementById('nl-header-img').value = '';
+    document.getElementById('nlImgPreview').textContent = 'No image selected';
+    return;
+  }
+
+  nlSelectedImg = idx;
+  const el = document.getElementById('nl-thumb-' + idx);
+  el.classList.add('selected');
+  el.querySelector('.badge').textContent = 'HEADER';
+  document.getElementById('nl-header-img').value = img.full;
+  document.getElementById('nlImgPreview').innerHTML = `<img src="${img.thumbnail}" style="height:50px;border:2px solid var(--accent);margin-top:0.25rem;">`;
+}
+
+function clearNLImage() {
+  nlSelectedImg = null;
+  document.querySelectorAll('#driveGridNL .drive-thumb').forEach(el => {
+    el.classList.remove('selected');
+    el.querySelector('.badge').textContent = '';
+  });
+  document.getElementById('nl-header-img').value = '';
+  document.getElementById('nlImgPreview').textContent = 'No image selected';
+}
+
+async function saveNewsletter(action) {
+  const d = document.getElementById('outputPanel')._data;
+  const status = document.getElementById('nlPublishStatus');
+  const btns = document.querySelectorAll('.submit-btn');
+  btns.forEach(b => { b.disabled = true; });
+
+  if (action === 'draft') {
+    status.textContent = 'Draft saved locally. Copy the text to publish later.';
+    status.style.display = 'block';
+    status.style.color = 'var(--dim)';
+    btns.forEach(b => { b.disabled = false; });
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/newsletter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subject: d.subject_line,
+        preview_text: d.preview_text,
+        body: d.body,
+        cta_text: d.cta_text,
+        cta_url: d.cta_url,
+        header_image: d._headerImg || ''
+      })
+    });
+
+    const result = await res.json();
+    if (res.ok && result.success) {
+      status.textContent = 'Published to Beehiiv!';
+      status.style.display = 'block';
+      status.style.color = '#00ff88';
+    } else {
+      status.textContent = 'Failed: ' + (result.error || 'Unknown error');
+      status.style.display = 'block';
+      status.style.color = '#ff4444';
+      btns.forEach(b => { b.disabled = false; });
+    }
+  } catch (e) {
+    status.textContent = 'Failed to publish: ' + e.message;
+    status.style.display = 'block';
+    status.style.color = '#ff4444';
+    btns.forEach(b => { b.disabled = false; });
+  }
 }
 
 function driveToEmbed(url) {
