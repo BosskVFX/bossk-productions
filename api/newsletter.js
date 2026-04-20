@@ -89,17 +89,12 @@ export default async function handler(req, res) {
     if (thumbImg) {
       htmlBody += `
         <div style="margin:24px 0;text-align:center;">
-          <a href="${video_url}" target="_blank" style="display:block;max-width:600px;margin:0 auto;text-decoration:none;">
-            <div style="position:relative;display:inline-block;width:100%;">
-              <img src="${thumbImg}" alt="Watch video" style="width:100%;max-width:600px;height:auto;display:block;opacity:0.85;">
-              <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;">
-                <div style="width:72px;height:72px;background:rgba(255,107,53,0.9);border-radius:50%;text-align:center;line-height:72px;">
-                  <span style="font-size:28px;color:#fff;margin-left:4px;">&#9654;</span>
-                </div>
-              </div>
-            </div>
+          <a href="${video_url}" target="_blank" style="text-decoration:none;">
+            <img src="${thumbImg}" alt="Watch video" style="width:100%;max-width:600px;height:auto;display:block;margin:0 auto;border:2px solid #222;">
           </a>
-          <p style="color:#8a8680;font-size:13px;margin-top:8px;">Click to watch</p>
+          <div style="margin-top:12px;">
+            <a href="${video_url}" target="_blank" style="background:#ff6b35;color:#0a0a0a;padding:12px 28px;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;display:inline-block;">&#9654; Watch Video</a>
+          </div>
         </div>`;
     }
   }
