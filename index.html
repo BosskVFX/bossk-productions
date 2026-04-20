@@ -453,18 +453,14 @@
   .v-modal-overlay {
     display:none; position:fixed; inset:0; z-index:200;
     background:rgba(0,0,0,0.95); backdrop-filter:blur(10px);
-    padding:1.5rem 2rem;
+    padding:1.5rem; overflow-y:auto;
   }
-  .v-modal-overlay.active { display:flex; flex-direction:column; }
-  .v-modal-top {
-    display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:1rem; flex-shrink:0;
+  .v-modal-overlay.active { display:flex; flex-direction:column; align-items:center; }
+  .v-modal-wrap {
+    width:100%; max-width:1000px; margin:0 auto;
   }
-  .v-modal-title {
-    font-family:var(--display); font-size:2rem; letter-spacing:0.05em;
-  }
-  .v-modal-desc {
-    font-size:0.85rem; color:var(--dim); padding:0.75rem 0; line-height:1.5; text-align:center;
+  .v-modal-header {
+    display:flex; justify-content:flex-end; margin-bottom:0.5rem;
   }
   .v-modal-close {
     background:none; border:none; color:var(--dim);
@@ -473,23 +469,40 @@
   }
   .v-modal-close:hover { color:var(--text); }
   .v-modal-player {
-    flex:1; display:flex; align-items:center; justify-content:center;
-    min-height:0;
+    width:100%; aspect-ratio:16/9; background:#000;
   }
   .v-modal-player iframe {
-    width:100%; max-width:1200px; aspect-ratio:16/9; border:none;
+    width:100%; height:100%; border:none;
+  }
+  .v-modal-info {
+    background:var(--card); border:1px solid var(--line); border-top:none;
+    padding:1.75rem 2rem;
+  }
+  .v-modal-info-top {
+    display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;
+  }
+  .v-modal-title {
+    font-family:var(--display); font-size:2rem; letter-spacing:0.05em; color:var(--text);
+  }
+  .v-modal-type {
+    font-family:var(--mono); font-size:0.6rem; letter-spacing:0.15em;
+    text-transform:uppercase; color:var(--accent); flex-shrink:0;
+    border:1px solid rgba(255,107,53,0.25); padding:0.3rem 0.75rem;
+    margin-top:0.4rem;
+  }
+  .v-modal-desc {
+    font-size:0.9rem; color:var(--text); line-height:1.7; margin-top:1rem;
+    padding-top:1rem; border-top:1px solid var(--line);
   }
   .v-modal-playlist {
-    display:flex; gap:1rem; margin-top:1.5rem;
-    justify-content:center;
-    flex-shrink:0; padding-bottom:0.5rem;
+    display:flex; gap:0.5rem; margin-top:1.25rem;
     flex-wrap:wrap;
   }
   .v-thumb {
-    flex-shrink:0; cursor:pointer;
-    background:var(--card); border:2px solid var(--line);
-    padding:0.85rem 1.5rem; transition:border-color 0.2s, background 0.2s;
-    min-width:160px; text-align:center;
+    flex:1; min-width:140px; cursor:pointer;
+    background:var(--bg); border:2px solid var(--line);
+    padding:0.65rem 1rem; transition:border-color 0.2s, background 0.2s;
+    text-align:center;
   }
   .v-thumb:hover { border-color:rgba(255,107,53,0.3); }
   .v-thumb.active {
@@ -497,14 +510,15 @@
     background:rgba(255,107,53,0.08);
   }
   .v-thumb-type {
-    font-family:var(--mono); font-size:0.55rem;
+    font-family:var(--mono); font-size:0.5rem;
     letter-spacing:0.15em; text-transform:uppercase;
-    color:var(--accent); margin-bottom:0.3rem;
+    color:var(--accent); margin-bottom:0.2rem;
   }
   .v-thumb-title {
-    font-family:var(--display); font-size:1.05rem;
+    font-family:var(--display); font-size:0.9rem;
     letter-spacing:0.03em;
   }
+
 
   /* CTA */
   .cta {
@@ -825,8 +839,10 @@
     .t-grid{grid-template-columns:1fr}
     .form-row{flex-direction:column;gap:0}
     .statement p strong::after{display:none}
-    .v-modal-overlay{padding:1rem}
-    .v-modal-playlist{flex-direction:column;align-items:center}
+    .v-modal-overlay{padding:0.75rem}
+    .v-modal-info{padding:1.25rem}
+    .v-modal-info-top{flex-direction:column;gap:0.5rem}
+    .v-modal-playlist{flex-direction:column}
     .v-thumb{min-width:200px;width:100%}
     .originals-banner{height:150px}
     .modal{max-height:85vh}
@@ -1093,15 +1109,22 @@
 
 <!-- VIDEO MODAL -->
 <div class="v-modal-overlay" id="reelModal" onclick="if(event.target===this)closeReel()">
-  <div class="v-modal-top">
-    <div class="v-modal-title" id="reelTitle"></div>
-    <button class="v-modal-close" onclick="closeReel()">&times;</button>
+  <div class="v-modal-wrap">
+    <div class="v-modal-header">
+      <button class="v-modal-close" onclick="closeReel()">&times;</button>
+    </div>
+    <div class="v-modal-player">
+      <iframe id="reelPlayer" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    </div>
+    <div class="v-modal-info">
+      <div class="v-modal-info-top">
+        <div class="v-modal-title" id="reelTitle"></div>
+        <div class="v-modal-type" id="reelType"></div>
+      </div>
+      <div class="v-modal-desc" id="reelDesc"></div>
+      <div class="v-modal-playlist" id="reelPlaylist"></div>
+    </div>
   </div>
-  <div class="v-modal-player">
-    <iframe id="reelPlayer" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
-  </div>
-  <div class="v-modal-desc" id="reelDesc"></div>
-  <div class="v-modal-playlist" id="reelPlaylist"></div>
 </div>
 
 <!-- BIO MODAL -->
@@ -1155,13 +1178,17 @@ function buildPlaylist(activeIdx) {
   `).join('');
 }
 
+function setReelInfo(r) {
+  document.getElementById('reelTitle').textContent = r.title;
+  document.getElementById('reelType').textContent = r.type;
+  document.getElementById('reelDesc').textContent = r.desc || '';
+  document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
+}
+
 function openReel(tileIdx) {
   activePlaylist = showreels;
   currentReel = tileIdx;
-  const r = activePlaylist[tileIdx];
-  document.getElementById('reelTitle').textContent = r.title;
-  document.getElementById('reelDesc').textContent = r.desc || '';
-  document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
+  setReelInfo(activePlaylist[tileIdx]);
   buildPlaylist(tileIdx);
   document.getElementById('reelModal').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -1170,10 +1197,7 @@ function openReel(tileIdx) {
 function openOriginal(idx) {
   activePlaylist = originals;
   currentReel = idx;
-  const r = activePlaylist[idx];
-  document.getElementById('reelTitle').textContent = r.title;
-  document.getElementById('reelDesc').textContent = r.desc || '';
-  document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
+  setReelInfo(activePlaylist[idx]);
   buildPlaylist(idx);
   document.getElementById('reelModal').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -1181,10 +1205,7 @@ function openOriginal(idx) {
 
 function switchReel(idx) {
   currentReel = idx;
-  const r = activePlaylist[idx];
-  document.getElementById('reelTitle').textContent = r.title;
-  document.getElementById('reelDesc').textContent = r.desc || '';
-  document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
+  setReelInfo(activePlaylist[idx]);
   buildPlaylist(idx);
 }
 
