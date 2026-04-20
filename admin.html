@@ -861,7 +861,7 @@ async function saveNewsletter(action) {
 
   // Save to sheet regardless of action
   try {
-    await fetch('/api/cases', {
+    const saveRes = await fetch('/api/cases', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -875,6 +875,8 @@ async function saveNewsletter(action) {
         status: action
       })
     });
+    const saveResult = await saveRes.json();
+    console.log('Newsletter save:', saveRes.status, saveResult);
   } catch (e) {
     console.error('Failed to save newsletter to sheet:', e);
   }
