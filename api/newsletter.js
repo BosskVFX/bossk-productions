@@ -87,7 +87,20 @@ export default async function handler(req, res) {
   if (video_url) {
     const thumbImg = header_image || (bodyImgList.length ? bodyImgList[0] : '');
     if (thumbImg) {
-      htmlBody += `<div style="margin:24px 0;text-align:center;"><a href="${video_url}" target="_blank" style="display:inline-block;text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr><td style="position:relative;background:#000;"><img src="${thumbImg}" alt="Watch video" style="width:100%;max-width:600px;height:auto;display:block;opacity:0.85;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:72px;background:rgba(255,107,53,0.9);border-radius:50%;text-align:center;line-height:72px;"><span style="font-size:28px;color:#fff;margin-left:4px;">&#9654;</span></div></td></tr></table></a><p style="color:#8a8680;font-size:13px;margin-top:8px;">Click to watch</p></div>`;
+      htmlBody += `
+        <div style="margin:24px 0;text-align:center;">
+          <a href="${video_url}" target="_blank" style="display:block;max-width:600px;margin:0 auto;text-decoration:none;">
+            <div style="position:relative;display:inline-block;width:100%;">
+              <img src="${thumbImg}" alt="Watch video" style="width:100%;max-width:600px;height:auto;display:block;opacity:0.85;">
+              <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;">
+                <div style="width:72px;height:72px;background:rgba(255,107,53,0.9);border-radius:50%;text-align:center;line-height:72px;">
+                  <span style="font-size:28px;color:#fff;margin-left:4px;">&#9654;</span>
+                </div>
+              </div>
+            </div>
+          </a>
+          <p style="color:#8a8680;font-size:13px;margin-top:8px;">Click to watch</p>
+        </div>`;
     }
   }
 
