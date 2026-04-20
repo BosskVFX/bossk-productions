@@ -524,7 +524,8 @@ async function loadSavedPosts() {
     }
 
     list.innerHTML = [...posts].reverse().map((p, i) => {
-      const status = (p.Status || 'publish').toLowerCase();
+      const rawStatus = p.Status;
+      const status = (typeof rawStatus === 'string' ? rawStatus : rawStatus === true ? 'publish' : 'draft').toLowerCase();
       const statusLabel = status === 'draft' ? 'Draft' : status === 'scheduled' ? 'Scheduled' : 'Published';
       const statusClass = status === 'draft' ? 'draft' : status === 'scheduled' ? 'scheduled' : 'published';
       const date = p.Date ? new Date(p.Date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
