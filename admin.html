@@ -539,7 +539,7 @@ function renderOutput(type, data) {
 // Load saved posts
 async function loadSavedPosts() {
   const list = document.getElementById('savedList');
-  const sheetParam = currentAdminTab === 'nl' ? 'Newsletters' : 'CaseStudy';
+  const sheetParam = currentAdminTab === 'nl' ? 'Newsletter' : 'CaseStudy';
   document.getElementById('savedTitle').textContent = currentAdminTab === 'nl' ? 'Saved Newsletters' : 'Saved Case Studies';
   try {
     const res = await fetch('/api/all-cases?sheet=' + sheetParam);
@@ -865,7 +865,7 @@ async function saveNewsletter(action) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        _sheet: 'Newsletters',
+        _sheet: 'Newsletter',
         subject: d.subject_line,
         preview_text: d.preview_text,
         body: d.body,

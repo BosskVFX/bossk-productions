@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = req.body;
-    const isNewsletter = body._sheet === 'Newsletters';
+    const isNewsletter = body._sheet === 'Newsletter';
 
     if (!isNewsletter && !body.title) {
       return res.status(400).json({ error: 'Title is required' });
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(isNewsletter ? {
-          _sheet: 'Newsletters',
+          _sheet: 'Newsletter',
           subject: body.subject || '',
           preview_text: body.preview_text || '',
           body: body.body || '',
