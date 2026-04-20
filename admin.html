@@ -293,6 +293,7 @@
       <div id="driveGridNL" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;"></div>
       <div id="nlImgPreview" style="font-size:0.75rem;color:var(--dim);margin-top:0.5rem;">No image selected</div>
       <input type="hidden" id="nl-header-img">
+      <input type="hidden" id="nl-body-imgs">
     </div>
     <div class="field"><label>Newsletter Content</label><textarea id="nl-notes" rows="10" placeholder="Write your main points, news, updates. Claude will structure it into a clean newsletter."></textarea></div>
     <div class="field"><label>CTA Link (optional)</label><input id="nl-cta-url" placeholder="e.g. https://www.bosskproductions.com/case-studies.html"></div>
@@ -452,7 +453,20 @@ function renderOutput(type, data) {
       <div class="nl-out-field"><div class="nl-out-label">Subject Line</div><div style="font-size:1.1rem;font-weight:600">${data.subject_line}</div></div>
       <div class="nl-out-field"><div class="nl-out-label">Preview Text</div><div style="color:var(--dim);font-size:0.88rem">${data.preview_text}</div></div>
       <div style="padding:1.5rem;background:var(--bg);border:1px solid var(--line);margin:1rem 0;">
-        <div style="color:var(--text);font-size:0.9rem;line-height:1.8;white-space:pre-wrap;">${data.body}</div>
+        <div style="color:var(--text);font-size:0.9rem;line-height:1.8;white-space:pre-wrap;">${(() => {
+          const bodyImgs = document.getElementById('nl-body-imgs').value.split(',').filter(Boolean);
+          if (!bodyImgs.length) return data.body;
+          const paras = data.body.split('\n\n');
+          let imgI = 0;
+          return paras.map((p, i) => {
+            let out = p;
+            if (imgI < bodyImgs.length && (i + 1) % 2 === 0) {
+              out += '</div><img src="' + bodyImgs[imgI] + '" style="width:100%;margin:1rem 0;border:1px solid var(--line);"><div style="color:var(--text);font-size:0.9rem;line-height:1.8;white-space:pre-wrap;">';
+              imgI++;
+            }
+            return out;
+          }).join('\n\n');
+        })()}</div>
       </div>
       <div style="text-align:center;margin:1rem 0;">
         <div class="nl-out-cta">${data.cta_text}</div>
@@ -789,7 +803,8 @@ function clearSelectedImages() {
 }
 
 // Newsletter image picker
-let nlSelectedImg = null;
+let nlSelectedHeader = null;
+let nlSelectedBody = [];
 
 async function loadDriveImagesNL() {
   const grid = document.getElementById('driveGridNL');
@@ -821,36 +836,73 @@ async function loadDriveImagesNL() {
 }
 
 function selectNLImage(idx) {
-  const img = window._nlDriveImages[idx];
-  // Deselect previous
-  document.querySelectorAll('#driveGridNL .drive-thumb').forEach(el => {
-    el.classList.remove('selected');
-    el.querySelector('.badge').textContent = '';
-  });
+  const el = document.getElementById('nl-thumb-' + idx);
 
-  if (nlSelectedImg === idx) {
-    nlSelectedImg = null;
-    document.getElementById('nl-header-img').value = '';
-    document.getElementById('nlImgPreview').textContent = 'No image selected';
+  // If already header, deselect
+  if (nlSelectedHeader === idx) {
+    nlSelectedHeader = null;
+    el.classList.remove('hero');
+    el.querySelector('.badge').textContent = '';
+    updateNLImageInputs();
     return;
   }
 
-  nlSelectedImg = idx;
-  const el = document.getElementById('nl-thumb-' + idx);
-  el.classList.add('selected');
-  el.querySelector('.badge').textContent = 'HEADER';
-  document.getElementById('nl-header-img').value = img.full;
-  document.getElementById('nlImgPreview').innerHTML = `<img src="${img.thumbnail}" style="height:50px;border:2px solid var(--accent);margin-top:0.25rem;">`;
+  // If already body image, deselect
+  const bodyIdx = nlSelectedBody.indexOf(idx);
+  if (bodyIdx > -1) {
+    nlSelectedBody.splice(bodyIdx, 1);
+    el.classList.remove('selected');
+    el.querySelector('.badge').textContent = '';
+    updateNLImageInputs();
+    return;
+  }
+
+  // If no header yet, make it header
+  if (nlSelectedHeader === null) {
+    nlSelectedHeader = idx;
+    el.classList.add('hero');
+    el.querySelector('.badge').textContent = 'HEADER';
+  } else {
+    // Add as body image
+    nlSelectedBody.push(idx);
+    el.classList.add('selected');
+    el.querySelector('.badge').textContent = (nlSelectedBody.length).toString();
+  }
+
+  updateNLImageInputs();
+}
+
+function updateNLImageInputs() {
+  const preview = document.getElementById('nlImgPreview');
+  const headerInput = document.getElementById('nl-header-img');
+  const bodyInput = document.getElementById('nl-body-imgs');
+
+  if (nlSelectedHeader !== null) {
+    const h = window._nlDriveImages[nlSelectedHeader];
+    headerInput.value = h.full;
+    let html = '<div style="font-family:var(--mono);font-size:0.55rem;color:#00ff88;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.25rem;">Header</div>';
+    html += `<img src="${h.thumbnail}" style="height:50px;border:2px solid #00ff88;margin-right:0.5rem;">`;
+    if (nlSelectedBody.length) {
+      html += '<div style="font-family:var(--mono);font-size:0.55rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin:0.5rem 0 0.25rem;">Body Images</div>';
+      html += nlSelectedBody.map(i => `<img src="${window._nlDriveImages[i].thumbnail}" style="height:40px;border:2px solid var(--accent);margin:0 0.25rem 0.25rem 0;">`).join('');
+    }
+    preview.innerHTML = html;
+    bodyInput.value = nlSelectedBody.map(i => window._nlDriveImages[i].full).join(',');
+  } else {
+    headerInput.value = '';
+    bodyInput.value = '';
+    preview.textContent = 'No image selected — first click becomes the header';
+  }
 }
 
 function clearNLImage() {
-  nlSelectedImg = null;
+  nlSelectedHeader = null;
+  nlSelectedBody = [];
   document.querySelectorAll('#driveGridNL .drive-thumb').forEach(el => {
-    el.classList.remove('selected');
+    el.classList.remove('hero', 'selected');
     el.querySelector('.badge').textContent = '';
   });
-  document.getElementById('nl-header-img').value = '';
-  document.getElementById('nlImgPreview').textContent = 'No image selected';
+  updateNLImageInputs();
 }
 
 async function saveNewsletter(action) {
@@ -871,6 +923,7 @@ async function saveNewsletter(action) {
         cta_text: d.cta_text,
         cta_url: d.cta_url,
         header_image: d._headerImg || '',
+        body_images: document.getElementById('nl-body-imgs').value || '',
         action: action
       })
     });
