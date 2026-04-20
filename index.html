@@ -1388,6 +1388,16 @@ async function submitForm() {
     transition:transform 0.2s,box-shadow 0.2s;
   }
   .chat-btn:hover { transform:scale(1.08); box-shadow:0 6px 30px rgba(255,107,53,0.4); }
+  .chat-btn::before {
+    content:'Message us now';
+    position:absolute; right:68px; top:50%; transform:translateY(-50%);
+    background:var(--card); color:var(--text); border:1px solid var(--line);
+    font-family:var(--mono); font-size:0.65rem; letter-spacing:0.05em;
+    padding:0.5rem 0.75rem; white-space:nowrap;
+    opacity:0; pointer-events:none; transition:opacity 0.2s;
+  }
+  .chat-btn:hover::before { opacity:1; }
+  .chat-btn.active::before { display:none; }
   .chat-btn svg { width:24px; height:24px; fill:#0a0a0a; }
   .chat-btn.active svg.icon-chat { display:none; }
   .chat-btn:not(.active) svg.icon-close { display:none; }
