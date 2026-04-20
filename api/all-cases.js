@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxcWN1RPDyte8p_L_VtPfl7Nau3ATCGj2Jd9EUP4kNS2XYF2L8Cc1LfdOaOxcwp2gQ_/exec';
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwEylrOTVMnky-UyvMZL19HDokXjNdRhKCy_KC_7Y6eH7xg9Q47Qq191_zbW5HILY9h/exec';
   const sheet = req.query.sheet || 'CaseStudy';
 
   try {

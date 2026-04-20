@@ -245,6 +245,7 @@
   <div class="tabs">
     <button class="tab active" onclick="switchTab('cs',this)">Case Study</button>
     <button class="tab" onclick="switchTab('nl',this)">Newsletter</button>
+    <button class="tab" onclick="switchTab('cp',this)">Client Portal</button>
   </div>
 
   <div class="admin-body">
@@ -299,6 +300,34 @@
     <div class="field"><label>CTA Link (optional)</label><input id="nl-cta-url" placeholder="e.g. https://www.bosskproductions.com/case-studies.html"></div>
     <div class="field"><label>Video Link (optional)</label><input id="nl-video-url" placeholder="e.g. https://www.bosskproductions.com/?play=jeepney"></div>
     <button class="submit-btn" onclick="optimize('nl')">Optimize Newsletter</button>
+  </div>
+
+  <!-- CLIENT PORTAL -->
+  <div class="form-panel" id="panel-cp">
+    <div class="field"><label>Client Name</label><input id="cp-client" placeholder="e.g. Coca-Cola"></div>
+    <div class="field"><label>Project Name</label><input id="cp-project" placeholder="e.g. Summer Campaign 2026"></div>
+    <div class="field">
+      <label>Project Image</label>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+        <button class="copy-btn" onclick="loadDriveImagesCP()" style="padding:0.5rem 1rem;">Load Images from Drive</button>
+        <button class="copy-btn" onclick="clearCPImage()" style="padding:0.5rem 1rem;">Clear</button>
+      </div>
+      <div id="driveLoadingCP" style="display:none;font-family:var(--mono);font-size:0.7rem;color:var(--dim);">Loading...</div>
+      <div id="driveGridCP" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;"></div>
+      <div id="cpImgPreview" style="font-size:0.75rem;color:var(--dim);margin-top:0.5rem;">No image selected</div>
+      <input type="hidden" id="cp-image">
+    </div>
+    <div class="field"><label>Frame.io Review Link</label><input id="cp-frameio" placeholder="e.g. https://app.frame.io/reviews/..."></div>
+    <div class="field"><label>Google Docs Link (optional)</label><input id="cp-docs" placeholder="e.g. https://docs.google.com/..."></div>
+    <div class="field"><label>Google Sheets Link (optional)</label><input id="cp-sheets" placeholder="e.g. https://sheets.google.com/..."></div>
+    <div class="field"><label>Additional Links (optional, one per line)</label><textarea id="cp-links" rows="3" placeholder="Label | URL&#10;e.g. Brand Guidelines | https://drive.google.com/..."></textarea></div>
+    <div class="field"><label>Notes for Client (optional)</label><textarea id="cp-notes" rows="4" placeholder="Any message or context for the client"></textarea></div>
+    <button class="submit-btn" onclick="createClientLink()">Generate Client Link</button>
+    <div id="cpResult" style="display:none;margin-top:1.25rem;padding:1.25rem;background:var(--bg);border:1px solid var(--accent);">
+      <div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;">Client Link</div>
+      <div id="cpLink" style="font-size:1rem;font-weight:600;word-break:break-all;"></div>
+      <button class="copy-btn" style="margin-top:0.75rem;padding:0.5rem 1rem;" onclick="navigator.clipboard.writeText(document.getElementById('cpLink').textContent)">Copy Link</button>
+    </div>
   </div>
 
   <!-- OUTPUT -->
@@ -563,8 +592,8 @@ function renderOutput(type, data) {
 // Load saved posts
 async function loadSavedPosts() {
   const list = document.getElementById('savedList');
-  const sheetParam = currentAdminTab === 'nl' ? 'Newsletter' : 'CaseStudy';
-  document.getElementById('savedTitle').textContent = currentAdminTab === 'nl' ? 'Saved Newsletters' : 'Saved Case Studies';
+  const sheetParam = currentAdminTab === 'nl' ? 'Newsletter' : currentAdminTab === 'cp' ? 'Clients' : 'CaseStudy';
+  document.getElementById('savedTitle').textContent = currentAdminTab === 'nl' ? 'Saved Newsletters' : currentAdminTab === 'cp' ? 'Client Projects' : 'Saved Case Studies';
   try {
     const res = await fetch('/api/all-cases?sheet=' + sheetParam);
     const text = await res.text();
@@ -579,15 +608,16 @@ async function loadSavedPosts() {
     }
 
     list.innerHTML = [...posts].reverse().map((p, i) => {
-      const rawStatus = p.Status;
+      const rawStatus = p.Status || p.Active;
       const status = (typeof rawStatus === 'string' ? rawStatus : rawStatus === true ? 'publish' : 'draft').toLowerCase();
-      const statusLabel = status === 'draft' ? 'Draft' : status === 'scheduled' ? 'Scheduled' : 'Published';
-      const statusClass = status === 'draft' ? 'draft' : status === 'scheduled' ? 'scheduled' : 'published';
+      const statusLabel = currentAdminTab === 'cp' ? (status === 'true' || status === 'publish' ? 'Active' : 'Inactive') : status === 'draft' ? 'Draft' : status === 'scheduled' ? 'Scheduled' : 'Published';
+      const statusClass = currentAdminTab === 'cp' ? (status === 'true' || status === 'publish' ? 'published' : 'draft') : status === 'draft' ? 'draft' : status === 'scheduled' ? 'scheduled' : 'published';
       const date = p.Date ? new Date(p.Date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
-      const title = p.Title || p.Subject || 'Untitled';
+      const title = p.Title || p.Subject || p['Project Name'] || 'Untitled';
+      const subtitle = p['Client Name'] ? `<div style="font-size:0.65rem;color:var(--dim);margin-top:0.1rem;">${p['Client Name']}</div>` : '';
       return `
         <div class="saved-item" onclick="viewSavedPost(${posts.length - 1 - i})">
-          <div class="saved-item-title">${title}</div>
+          <div class="saved-item-title">${title}</div>${subtitle}
           <div class="saved-item-meta">
             <span class="${statusClass}">${statusLabel}</span>
             ${date ? ` · ${date}` : ''}
@@ -605,9 +635,37 @@ function viewSavedPost(idx) {
   const p = window._savedPosts[idx];
   if (!p) return;
   const isNL = window._savedPostsType === 'nl';
+  const isCP = window._savedPostsType === 'cp';
   const out = document.getElementById('outputPanel');
 
-  if (isNL) {
+  if (isCP) {
+    document.getElementById('cp-client').value = p['Client Name'] || '';
+    document.getElementById('cp-project').value = p['Project Name'] || '';
+    document.getElementById('cp-image').value = p['Header Image'] || '';
+    document.getElementById('cp-frameio').value = p['Frame IO Link'] || '';
+    document.getElementById('cp-docs').value = p['Docs Link'] || '';
+    document.getElementById('cp-sheets').value = p['Sheets Link'] || '';
+    document.getElementById('cp-notes').value = p.Notes || '';
+    if (p['Header Image']) {
+      document.getElementById('cpImgPreview').innerHTML = `<img src="${p['Header Image']}" style="height:50px;border:2px solid var(--accent);margin-top:0.25rem;">`;
+    }
+
+    const link = 'https://www.bosskproductions.com/client.html?' + (p.Slug || '');
+    out.innerHTML = `
+      <div class="output-header">
+        <span class="output-label">Client Project — ${p.Active === 'TRUE' || p.Active === true ? 'ACTIVE' : 'INACTIVE'}</span>
+      </div>
+      ${p['Header Image'] ? `<img src="${p['Header Image']}" style="width:100%;height:250px;object-fit:cover;object-position:top;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
+      <div class="output-title">${p['Project Name'] || ''}</div>
+      <div class="output-subtitle">${p['Client Name'] || ''}</div>
+      <div style="margin-top:1.25rem;padding:1.25rem;background:var(--bg);border:1px solid var(--accent);">
+        <div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;">Client Link</div>
+        <div style="font-size:0.9rem;font-weight:600;word-break:break-all;">${link}</div>
+        <button class="copy-btn" style="margin-top:0.75rem;padding:0.5rem 1rem;" onclick="navigator.clipboard.writeText('${link}')">Copy Link</button>
+      </div>
+      <div style="margin-top:1.5rem;padding:0.75rem;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);font-family:var(--mono);font-size:0.65rem;color:var(--accent);letter-spacing:0.05em;">Form fields populated above — edit and regenerate if needed</div>
+    `;
+  } else if (isNL) {
     // Populate newsletter form
     document.getElementById('nl-topic').value = p.Subject || '';
     document.getElementById('nl-notes').value = p.Body || '';
@@ -965,6 +1023,84 @@ async function saveNewsletter(action) {
     status.style.color = '#ff4444';
     btns.forEach(b => { b.disabled = false; });
   }
+}
+
+// Client Portal image picker
+let cpSelectedImg = null;
+
+async function loadDriveImagesCP() {
+  const grid = document.getElementById('driveGridCP');
+  const loading = document.getElementById('driveLoadingCP');
+  loading.style.display = 'block';
+  grid.innerHTML = '';
+  try {
+    const res = await fetch('/api/images');
+    const images = await res.json();
+    if (!images.length) { grid.innerHTML = '<div style="color:var(--dim);font-size:0.8rem;grid-column:1/-1;">No images found.</div>'; loading.style.display='none'; return; }
+    grid.innerHTML = images.map((img, i) => `<div class="drive-thumb" id="cp-thumb-${i}" onclick="selectCPImage(${i})" style="aspect-ratio:16/10;"><img src="${img.thumbnail}" alt="${img.name}" loading="lazy"><div class="badge"></div></div>`).join('');
+    window._cpDriveImages = images;
+  } catch (e) { grid.innerHTML = '<div style="color:#ff4444;font-size:0.8rem;grid-column:1/-1;">Failed to load.</div>'; }
+  loading.style.display = 'none';
+}
+
+function selectCPImage(idx) {
+  document.querySelectorAll('#driveGridCP .drive-thumb').forEach(el => { el.classList.remove('selected'); el.querySelector('.badge').textContent = ''; });
+  if (cpSelectedImg === idx) { cpSelectedImg = null; document.getElementById('cp-image').value = ''; document.getElementById('cpImgPreview').textContent = 'No image selected'; return; }
+  cpSelectedImg = idx;
+  const el = document.getElementById('cp-thumb-' + idx);
+  el.classList.add('selected');
+  el.querySelector('.badge').textContent = 'COVER';
+  document.getElementById('cp-image').value = window._cpDriveImages[idx].full;
+  document.getElementById('cpImgPreview').innerHTML = `<img src="${window._cpDriveImages[idx].thumbnail}" style="height:50px;border:2px solid var(--accent);margin-top:0.25rem;">`;
+}
+
+function clearCPImage() {
+  cpSelectedImg = null;
+  document.querySelectorAll('#driveGridCP .drive-thumb').forEach(el => { el.classList.remove('selected'); el.querySelector('.badge').textContent = ''; });
+  document.getElementById('cp-image').value = '';
+  document.getElementById('cpImgPreview').textContent = 'No image selected';
+}
+
+async function createClientLink() {
+  const client = document.getElementById('cp-client').value;
+  const project = document.getElementById('cp-project').value;
+  if (!client || !project) return alert('Fill in client and project name.');
+
+  const slug = Math.random().toString(36).substring(2, 8);
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+
+  try {
+    const res = await fetch('/api/client', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug,
+        client,
+        project,
+        image: document.getElementById('cp-image').value || '',
+        frameio: document.getElementById('cp-frameio').value || '',
+        docs: document.getElementById('cp-docs').value || '',
+        sheets: document.getElementById('cp-sheets').value || '',
+        links: document.getElementById('cp-links').value || '',
+        notes: document.getElementById('cp-notes').value || ''
+      })
+    });
+
+    if (res.ok) {
+      const link = 'https://www.bosskproductions.com/client.html?' + slug;
+      document.getElementById('cpLink').textContent = link;
+      document.getElementById('cpResult').style.display = 'block';
+      loadSavedPosts();
+    } else {
+      alert('Failed to create client link.');
+    }
+  } catch (e) {
+    alert('Failed: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Generate Client Link';
 }
 
 function driveToEmbed(url) {
