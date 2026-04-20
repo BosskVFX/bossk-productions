@@ -194,5 +194,41 @@
   }
 })();
 </script>
+<!-- CHAT WIDGET -->
+<style>
+  .chat-btn{position:fixed;bottom:1.5rem;right:1.5rem;z-index:150;width:56px;height:56px;border-radius:50%;border:none;background:#ff6b35;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,107,53,0.3);transition:transform 0.2s;}
+  .chat-btn:hover{transform:scale(1.08);}
+  .chat-btn svg{width:24px;height:24px;fill:#0a0a0a;}
+  .chat-btn.active svg.icon-chat{display:none;} .chat-btn:not(.active) svg.icon-close{display:none;}
+  .chat-panel{position:fixed;bottom:5.5rem;right:1.5rem;z-index:150;width:340px;background:#161616;border:1px solid rgba(255,255,255,0.06);display:none;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+  .chat-panel.active{display:flex;}
+  .chat-header{padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);}
+  .chat-header-title{font-family:var(--display);font-size:1.2rem;letter-spacing:0.05em;}
+  .chat-header-sub{font-size:0.75rem;color:#8a8680;margin-top:0.15rem;}
+  .chat-body{padding:1.25rem 1.5rem;}
+  .chat-field{width:100%;background:#0a0a0a;color:#f0ede8;border:1px solid rgba(255,255,255,0.06);padding:0.6rem 0.75rem;font-family:var(--body);font-size:0.85rem;outline:none;margin-bottom:0.6rem;}
+  .chat-field:focus{border-color:#ff6b35;} .chat-field::placeholder{color:rgba(138,134,128,0.5);}
+  textarea.chat-field{resize:none;height:80px;}
+  .chat-send{width:100%;background:#ff6b35;color:#0a0a0a;font-family:var(--mono);font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:0.75rem;border:none;cursor:pointer;}
+  .chat-sent{text-align:center;padding:2rem 1.5rem;font-family:var(--mono);font-size:0.7rem;color:#ff6b35;letter-spacing:0.1em;}
+  @media(max-width:600px){.chat-panel{width:calc(100% - 2rem);right:1rem;bottom:5rem;} .chat-btn{bottom:1rem;right:1rem;}}
+</style>
+<button class="chat-btn" id="chatBtn" onclick="toggleChat()">
+  <svg class="icon-chat" viewBox="0 0 24 24"><path d="M20,2H4A2,2,0,0,0,2,4V22l4-4H20a2,2,0,0,0,2-2V4A2,2,0,0,0,20,2Zm0,14H6l-2,2V4H20Z"/></svg>
+  <svg class="icon-close" viewBox="0 0 24 24"><path d="M19,6.41,17.59,5,12,10.59,6.41,5,5,6.41,10.59,12,5,17.59,6.41,19,12,13.41,17.59,19,19,17.59,13.41,12Z"/></svg>
+</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header"><div class="chat-header-title">NEED HELP?</div><div class="chat-header-sub">Message us directly.</div></div>
+  <div class="chat-body" id="chatBody">
+    <input class="chat-field" id="chatName" placeholder="Your name">
+    <input class="chat-field" id="chatEmail" placeholder="Your email">
+    <textarea class="chat-field" id="chatMsg" placeholder="What's on your mind?"></textarea>
+    <button class="chat-send" onclick="sendChat()">Send Message</button>
+  </div>
+</div>
+<script>
+function toggleChat(){document.getElementById('chatBtn').classList.toggle('active');document.getElementById('chatPanel').classList.toggle('active');}
+async function sendChat(){const msg=document.getElementById('chatMsg').value;if(!msg.trim())return;const btn=document.querySelector('.chat-send');btn.disabled=true;btn.textContent='Sending...';try{await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('chatName').value,email:document.getElementById('chatEmail').value,message:msg})});document.getElementById('chatBody').innerHTML='<div class="chat-sent">Message sent!<br><br>We\'ll get back to you soon.</div>';}catch(e){btn.textContent='Send Message';btn.disabled=false;}}
+</script>
 </body>
 </html>
