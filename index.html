@@ -1220,6 +1220,31 @@ document.getElementById('watchReelBtn').addEventListener('click', function(e) {
   openReel(0);
 });
 
+// Auto-open video from URL parameter ?play=slug
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const playSlug = params.get('play');
+  if (!playSlug) return;
+
+  const slug = playSlug.toLowerCase();
+  
+  // Check showreels
+  for (let i = 0; i < showreels.length; i++) {
+    if (showreels[i].title.toLowerCase().replace(/[^a-z0-9]+/g, '-').includes(slug)) {
+      setTimeout(() => openReel(i), 500);
+      return;
+    }
+  }
+  
+  // Check originals
+  for (let i = 0; i < originals.length; i++) {
+    if (originals[i].title.toLowerCase().replace(/[^a-z0-9]+/g, '-').includes(slug)) {
+      setTimeout(() => openOriginal(i), 500);
+      return;
+    }
+  }
+})();
+
 // Newsletter subscribe
 async function subscribeNewsletter() {
   const email = document.getElementById('nl-email').value;
