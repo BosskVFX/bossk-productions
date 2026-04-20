@@ -306,7 +306,7 @@
 
     <div class="admin-sidebar">
       <div class="saved-panel">
-        <div class="saved-title">Saved Posts</div>
+        <div class="saved-title" id="savedTitle">Saved Case Studies</div>
         <div id="savedList"><div class="saved-empty">Loading...</div></div>
       </div>
     </div>
@@ -351,12 +351,16 @@ if (sessionStorage.getItem('bossk_admin')==='1') {
 }
 
 // Tabs
+let currentAdminTab = 'cs';
+
 function switchTab(id, btn) {
+  currentAdminTab = id;
   document.querySelectorAll('.form-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   btn.classList.add('active');
   document.getElementById('outputPanel').style.display='none';
+  loadSavedPosts();
 }
 
 // Prompts
@@ -535,12 +539,15 @@ function renderOutput(type, data) {
 // Load saved posts
 async function loadSavedPosts() {
   const list = document.getElementById('savedList');
+  const sheetParam = currentAdminTab === 'nl' ? 'Newsletters' : 'CaseStudy';
+  document.getElementById('savedTitle').textContent = currentAdminTab === 'nl' ? 'Saved Newsletters' : 'Saved Case Studies';
   try {
-    const res = await fetch('/api/all-cases');
+    const res = await fetch('/api/all-cases?sheet=' + sheetParam);
     const text = await res.text();
     console.log('all-cases response:', res.status, text.substring(0, 200));
     const posts = JSON.parse(text);
     window._savedPosts = posts;
+    window._savedPostsType = currentAdminTab;
     
     if (!posts.length) {
       list.innerHTML = '<div class="saved-empty">No posts yet</div>';
@@ -553,9 +560,10 @@ async function loadSavedPosts() {
       const statusLabel = status === 'draft' ? 'Draft' : status === 'scheduled' ? 'Scheduled' : 'Published';
       const statusClass = status === 'draft' ? 'draft' : status === 'scheduled' ? 'scheduled' : 'published';
       const date = p.Date ? new Date(p.Date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
+      const title = p.Title || p.Subject || 'Untitled';
       return `
         <div class="saved-item" onclick="viewSavedPost(${posts.length - 1 - i})">
-          <div class="saved-item-title">${p.Title || 'Untitled'}</div>
+          <div class="saved-item-title">${title}</div>
           <div class="saved-item-meta">
             <span class="${statusClass}">${statusLabel}</span>
             ${date ? ` · ${date}` : ''}
@@ -572,80 +580,104 @@ async function loadSavedPosts() {
 function viewSavedPost(idx) {
   const p = window._savedPosts[idx];
   if (!p) return;
-
-  // Switch to case study tab
-  document.querySelectorAll('.form-panel').forEach(panel => panel.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('panel-cs').classList.add('active');
-  document.querySelectorAll('.tab')[0].classList.add('active');
-
-  // Populate form fields
-  document.getElementById('cs-title').value = p.Title || '';
-  document.getElementById('cs-client').value = (p['Client Type'] || '') + (p.Services ? ' — ' + p.Services : '');
-  document.getElementById('cs-notes').value = [
-    p.Challenge ? 'Challenge: ' + p.Challenge : '',
-    p.Solution ? 'Solution: ' + p.Solution : '',
-    p.Result ? 'Result: ' + p.Result : '',
-    p.Quote ? 'Quote: ' + p.Quote : ''
-  ].filter(Boolean).join('\n\n');
-  document.getElementById('cs-video').value = p['Video URL'] || '';
-  document.getElementById('cs-hero-img').value = p['Hero Image'] || '';
-  document.getElementById('cs-images').value = (p['Extra Images'] || '').split(',').filter(Boolean).join('\n');
-
-  // Update image previews
-  const heroPreview = document.getElementById('heroPreview');
-  const extraPreview = document.getElementById('extraPreview');
-  if (p['Hero Image']) {
-    heroPreview.innerHTML = `<img src="${p['Hero Image']}" style="height:60px;border:2px solid #00ff88;margin-top:0.25rem;">`;
-  } else {
-    heroPreview.textContent = 'None selected';
-  }
-  const extras = (p['Extra Images'] || '').split(',').filter(Boolean);
-  if (extras.length) {
-    extraPreview.innerHTML = extras.map(img => `<img src="${img}" style="height:50px;border:2px solid var(--accent);margin:0.25rem 0.25rem 0 0;">`).join('');
-  } else {
-    extraPreview.textContent = 'Click more images to add them';
-  }
-
-  // Show the preview
+  const isNL = window._savedPostsType === 'nl';
   const out = document.getElementById('outputPanel');
-  const heroImg = p['Hero Image'] || '';
-  const extraImgs = (p['Extra Images'] || '').split(',').filter(Boolean);
-  const videoUrl = p['Video URL'] || '';
-  let videoEmbed = '';
-  if (videoUrl) {
-    const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
-    const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-    const frameMatch = videoUrl.match(/app\.frame\.io/) || videoUrl.match(/f\.io/);
-    if (vimeoMatch) videoEmbed = `<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?title=0&byline=0&portrait=0" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
-    else if (ytMatch) videoEmbed = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
-    else if (frameMatch) videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--accent);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--accent);letter-spacing:0.1em;">REVIEW ON FRAME.IO</span></a>`;
-    else videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--line);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--text);">WATCH VIDEO</span></a>`;
+
+  if (isNL) {
+    // Populate newsletter form
+    document.getElementById('nl-topic').value = p.Subject || '';
+    document.getElementById('nl-notes').value = p.Body || '';
+    document.getElementById('nl-cta-url').value = p['CTA URL'] || '';
+    document.getElementById('nl-header-img').value = p['Header Image'] || '';
+    if (p['Header Image']) {
+      document.getElementById('nlImgPreview').innerHTML = `<img src="${p['Header Image']}" style="height:50px;border:2px solid var(--accent);margin-top:0.25rem;">`;
+    }
+
+    const headerImg = p['Header Image'] || '';
+    const rawStatus = p.Status;
+    const statusStr = (typeof rawStatus === 'string' ? rawStatus : rawStatus === true ? 'publish' : 'draft').toUpperCase();
+
+    out.innerHTML = `
+      <div class="output-header">
+        <span class="output-label">Newsletter — ${statusStr}</span>
+        <div class="copy-btns"><button class="copy-btn" onclick="copyText('nl')">Copy Text</button></div>
+      </div>
+      ${headerImg ? `<img src="${headerImg}" style="width:100%;height:250px;object-fit:cover;object-position:top;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
+      <div class="nl-out-field"><div class="nl-out-label">Subject Line</div><div style="font-size:1.1rem;font-weight:600">${p.Subject || ''}</div></div>
+      <div class="nl-out-field"><div class="nl-out-label">Preview Text</div><div style="color:var(--dim);font-size:0.88rem">${p['Preview Text'] || ''}</div></div>
+      <div style="padding:1.5rem;background:var(--bg);border:1px solid var(--line);margin:1rem 0;">
+        <div style="color:var(--text);font-size:0.9rem;line-height:1.8;white-space:pre-wrap;">${p.Body || ''}</div>
+      </div>
+      ${p['CTA Text'] ? `<div style="text-align:center;margin:1rem 0;"><div class="nl-out-cta">${p['CTA Text']}</div></div>` : ''}
+      <div style="margin-top:1.5rem;padding:0.75rem;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);font-family:var(--mono);font-size:0.65rem;color:var(--accent);letter-spacing:0.05em;">Form fields populated above — edit and hit Optimize to re-process</div>
+    `;
+    out._data = {subject_line:p.Subject,preview_text:p['Preview Text'],body:p.Body,cta_text:p['CTA Text'],cta_url:p['CTA URL'],_headerImg:headerImg};
+  } else {
+    // Case study view
+    document.getElementById('cs-title').value = p.Title || '';
+    document.getElementById('cs-client').value = (p['Client Type'] || '') + (p.Services ? ' — ' + p.Services : '');
+    document.getElementById('cs-notes').value = [
+      p.Challenge ? 'Challenge: ' + p.Challenge : '',
+      p.Solution ? 'Solution: ' + p.Solution : '',
+      p.Result ? 'Result: ' + p.Result : '',
+      p.Quote ? 'Quote: ' + p.Quote : ''
+    ].filter(Boolean).join('\n\n');
+    document.getElementById('cs-video').value = p['Video URL'] || '';
+    document.getElementById('cs-hero-img').value = p['Hero Image'] || '';
+    document.getElementById('cs-images').value = (p['Extra Images'] || '').split(',').filter(Boolean).join('\n');
+
+    const heroPreview = document.getElementById('heroPreview');
+    const extraPreview = document.getElementById('extraPreview');
+    if (p['Hero Image']) {
+      heroPreview.innerHTML = `<img src="${p['Hero Image']}" style="height:60px;border:2px solid #00ff88;margin-top:0.25rem;">`;
+    } else {
+      heroPreview.textContent = 'None selected';
+    }
+    const extras = (p['Extra Images'] || '').split(',').filter(Boolean);
+    if (extras.length) {
+      extraPreview.innerHTML = extras.map(img => `<img src="${img}" style="height:50px;border:2px solid var(--accent);margin:0.25rem 0.25rem 0 0;">`).join('');
+    } else {
+      extraPreview.textContent = 'Click more images to add them';
+    }
+
+    const heroImg = p['Hero Image'] || '';
+    const extraImgs = (p['Extra Images'] || '').split(',').filter(Boolean);
+    const videoUrl = p['Video URL'] || '';
+    let videoEmbed = '';
+    if (videoUrl) {
+      const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
+      const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+      const frameMatch = videoUrl.match(/app\.frame\.io/) || videoUrl.match(/f\.io/);
+      if (vimeoMatch) videoEmbed = `<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?title=0&byline=0&portrait=0" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
+      else if (ytMatch) videoEmbed = `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" style="width:100%;aspect-ratio:16/9;border:1px solid var(--line);margin-bottom:1.5rem;" frameborder="0" allowfullscreen></iframe>`;
+      else if (frameMatch) videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--accent);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--accent);letter-spacing:0.1em;">REVIEW ON FRAME.IO</span></a>`;
+      else videoEmbed = `<a href="${videoUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--line);padding:1.5rem;text-align:center;margin-bottom:1.5rem;text-decoration:none;"><span style="font-family:var(--display);font-size:1.2rem;color:var(--text);">WATCH VIDEO</span></a>`;
+    }
+
+    const rawStatus = p.Status;
+    const statusStr = (typeof rawStatus === 'string' ? rawStatus : rawStatus === true ? 'publish' : 'draft').toUpperCase();
+
+    out.innerHTML = `
+      <div class="output-header">
+        <span class="output-label">Saved — ${statusStr}</span>
+        <div class="copy-btns"><button class="copy-btn" onclick="copyText('cs')">Copy Text</button></div>
+      </div>
+      ${heroImg ? `<img src="${heroImg}" style="width:100%;height:300px;object-fit:cover;object-position:top;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
+      ${videoEmbed}
+      <div class="output-title">${p.Title || ''}</div>
+      <div class="output-subtitle">${p.Subtitle || ''}</div>
+      <div class="output-section"><div class="output-section-label">Challenge</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Challenge || ''}</div></div>
+      <div class="output-section"><div class="output-section-label">Solution</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Solution || ''}</div></div>
+      <div class="output-section"><div class="output-section-label">Result</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Result || ''}</div></div>
+      ${p.Quote ? `<blockquote style="border-left:3px solid var(--accent);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;font-size:1.05rem;line-height:1.6">"${p.Quote}"</blockquote>` : ''}
+      ${extraImgs.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-top:1.5rem;">${extraImgs.map(img => `<img src="${img}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--line);">`).join('')}</div>` : ''}
+      <div style="margin-top:1.5rem;padding:0.75rem;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);font-family:var(--mono);font-size:0.65rem;color:var(--accent);letter-spacing:0.05em;">Form fields populated above — edit and hit Optimize to re-process</div>
+    `;
+    out._data = {title:p.Title,subtitle:p.Subtitle,challenge:p.Challenge,solution:p.Solution,result:p.Result,pull_quote:p.Quote};
   }
 
-  out.innerHTML = `
-    <div class="output-header">
-      <span class="output-label">Saved — ${(p.Status || 'Published').toUpperCase()}</span>
-      <div class="copy-btns">
-        <button class="copy-btn" onclick="copyText('cs')">Copy Text</button>
-      </div>
-    </div>
-    ${heroImg ? `<img src="${heroImg}" style="width:100%;height:300px;object-fit:cover;object-position:top;border:1px solid var(--line);margin-bottom:1.5rem;">` : ''}
-    ${videoEmbed}
-    <div class="output-title">${p.Title || ''}</div>
-    <div class="output-subtitle">${p.Subtitle || ''}</div>
-    <div class="output-section"><div class="output-section-label">Challenge</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Challenge || ''}</div></div>
-    <div class="output-section"><div class="output-section-label">Solution</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Solution || ''}</div></div>
-    <div class="output-section"><div class="output-section-label">Result</div><div style="color:var(--text);font-size:0.9rem;line-height:1.7">${p.Result || ''}</div></div>
-    ${p.Quote ? `<blockquote style="border-left:3px solid var(--accent);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;font-size:1.05rem;line-height:1.6">"${p.Quote}"</blockquote>` : ''}
-    ${extraImgs.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-top:1.5rem;">${extraImgs.map(img => `<img src="${img}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--line);">`).join('')}</div>` : ''}
-    <div style="margin-top:1.5rem;padding:0.75rem;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);font-family:var(--mono);font-size:0.65rem;color:var(--accent);letter-spacing:0.05em;">Form fields populated above — edit and hit Optimize to re-process</div>
-  `;
-  out._data = {title:p.Title,subtitle:p.Subtitle,challenge:p.Challenge,solution:p.Solution,result:p.Result,pull_quote:p.Quote};
   out.style.display = 'block';
-  
-  // Scroll to top of form
-  document.getElementById('panel-cs').scrollIntoView({ behavior: 'smooth' });
+  document.querySelector('.form-panel.active').scrollIntoView({ behavior: 'smooth' });
 }
 
 // Drive image picker
@@ -827,11 +859,32 @@ async function saveNewsletter(action) {
   const btns = document.querySelectorAll('.submit-btn');
   btns.forEach(b => { b.disabled = true; });
 
+  // Save to sheet regardless of action
+  try {
+    await fetch('/api/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        _sheet: 'Newsletters',
+        subject: d.subject_line,
+        preview_text: d.preview_text,
+        body: d.body,
+        cta_text: d.cta_text,
+        cta_url: d.cta_url,
+        header_image: d._headerImg || '',
+        status: action
+      })
+    });
+  } catch (e) {
+    console.error('Failed to save newsletter to sheet:', e);
+  }
+
   if (action === 'draft') {
-    status.textContent = 'Draft saved locally. Copy the text to publish later.';
+    status.textContent = 'Draft saved.';
     status.style.display = 'block';
     status.style.color = 'var(--dim)';
     btns.forEach(b => { b.disabled = false; });
+    loadSavedPosts();
     return;
   }
 
@@ -854,6 +907,7 @@ async function saveNewsletter(action) {
       status.textContent = 'Published to Beehiiv!';
       status.style.display = 'block';
       status.style.color = '#00ff88';
+      loadSavedPosts();
     } else {
       status.textContent = 'Failed: ' + (result.error || 'Unknown error');
       status.style.display = 'block';
