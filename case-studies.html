@@ -244,7 +244,7 @@ loadCases();
 <!-- CHAT WIDGET -->
 <style>
   .chat-btn{position:fixed;bottom:1.5rem;right:1.5rem;z-index:150;width:56px;height:56px;border-radius:50%;border:none;background:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,107,53,0.3);transition:transform 0.2s;}
-  .chat-btn:hover{transform:scale(1.08);} .chat-btn::before{content:"Message us now";position:absolute;right:68px;top:50%;transform:translateY(-50%);background:#161616;color:#f0ede8;border:1px solid rgba(255,255,255,0.06);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.05em;padding:0.5rem 0.75rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;} .chat-btn:hover::before{opacity:1;} .chat-btn.active::before{display:none;}
+  .chat-btn:hover{transform:scale(1.08);} .chat-btn::before{content:"Message us now";position:absolute;right:68px;top:50%;transform:translateY(-50%);background:#ff6b35;color:#0a0a0a;border:none;font-weight:700;font-family:var(--mono);font-size:0.65rem;letter-spacing:0.05em;padding:0.5rem 0.75rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;} .chat-btn:hover::before{opacity:1;} .chat-btn.active::before{display:none;}
   .chat-btn svg{width:24px;height:24px;fill:#0a0a0a;}
   .chat-btn.active svg.icon-chat{display:none;} .chat-btn:not(.active) svg.icon-close{display:none;}
   .chat-panel{position:fixed;bottom:5.5rem;right:1.5rem;z-index:150;width:340px;background:var(--card);border:1px solid var(--line);display:none;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
