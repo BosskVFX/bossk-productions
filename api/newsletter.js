@@ -87,14 +87,13 @@ export default async function handler(req, res) {
   if (video_url) {
     const thumbImg = header_image || (bodyImgList.length ? bodyImgList[0] : '');
     if (thumbImg) {
+      const thumbUrl = `https://www.bosskproductions.com/api/thumb?img=${encodeURIComponent(thumbImg)}`;
       htmlBody += `
         <div style="margin:24px 0;text-align:center;">
           <a href="${video_url}" target="_blank" style="text-decoration:none;">
-            <img src="${thumbImg}" alt="Watch video" style="width:100%;max-width:600px;height:auto;display:block;margin:0 auto;border:2px solid #222;">
+            <img src="${thumbUrl}" alt="Watch video" style="width:100%;max-width:600px;height:auto;display:block;margin:0 auto;">
           </a>
-          <div style="margin-top:12px;">
-            <a href="${video_url}" target="_blank" style="background:#ff6b35;color:#0a0a0a;padding:12px 28px;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;display:inline-block;">&#9654; Watch Video</a>
-          </div>
+          <p style="color:#8a8680;font-size:13px;margin-top:8px;">Click to watch</p>
         </div>`;
     }
   }
