@@ -540,6 +540,7 @@ async function loadSavedPosts() {
       `;
     }).join('');
   } catch (e) {
+    console.error('loadSavedPosts error:', e.message, e.stack);
     list.innerHTML = '<div class="saved-empty">Failed to load</div>';
   }
 }
