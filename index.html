@@ -464,7 +464,7 @@
     font-family:var(--display); font-size:2rem; letter-spacing:0.05em;
   }
   .v-modal-desc {
-    font-size:0.85rem; color:var(--dim); margin-top:0.25rem; line-height:1.5;
+    font-size:0.85rem; color:var(--dim); padding:0.75rem 0; line-height:1.5; text-align:center;
   }
   .v-modal-close {
     background:none; border:none; color:var(--dim);
@@ -1094,15 +1094,13 @@
 <!-- VIDEO MODAL -->
 <div class="v-modal-overlay" id="reelModal" onclick="if(event.target===this)closeReel()">
   <div class="v-modal-top">
-    <div>
-      <div class="v-modal-title" id="reelTitle"></div>
-      <div class="v-modal-desc" id="reelDesc"></div>
-    </div>
+    <div class="v-modal-title" id="reelTitle"></div>
     <button class="v-modal-close" onclick="closeReel()">&times;</button>
   </div>
   <div class="v-modal-player">
     <iframe id="reelPlayer" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
   </div>
+  <div class="v-modal-desc" id="reelDesc"></div>
   <div class="v-modal-playlist" id="reelPlaylist"></div>
 </div>
 
