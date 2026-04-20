@@ -463,6 +463,9 @@
   .v-modal-title {
     font-family:var(--display); font-size:2rem; letter-spacing:0.05em;
   }
+  .v-modal-desc {
+    font-size:0.85rem; color:var(--dim); margin-top:0.25rem; line-height:1.5;
+  }
   .v-modal-close {
     background:none; border:none; color:var(--dim);
     font-size:2.5rem; cursor:pointer; transition:color 0.2s;
@@ -954,7 +957,6 @@
       <div class="w-card-info">
         <div class="w-card-type">AI Production</div>
         <div class="w-card-title">AI REEL 2026</div>
-        <div class="w-card-desc">Our latest AI-generated content — commercials, brand films, and original shorts.</div>
       </div>
     </div>
     <div class="w-card reveal" onclick="openReel(1)">
@@ -963,7 +965,6 @@
       <div class="w-card-info">
         <div class="w-card-type">Visual Effects</div>
         <div class="w-card-title">FEATURE FILM VFX</div>
-        <div class="w-card-desc">VFX work from feature films, television, and streaming projects.</div>
       </div>
     </div>
     <div class="w-card reveal" onclick="openReel(2)">
@@ -972,7 +973,6 @@
       <div class="w-card-info">
         <div class="w-card-type">Post Production</div>
         <div class="w-card-title">COMMERCIAL FINISHING</div>
-        <div class="w-card-desc">Color, editorial, and finishing for national and global ad campaigns.</div>
       </div>
     </div>
     <div class="w-card reveal" onclick="openReel(3)">
@@ -981,7 +981,6 @@
       <div class="w-card-info">
         <div class="w-card-type">Motion Graphics</div>
         <div class="w-card-title">MOTION GRAPHICS REEL</div>
-        <div class="w-card-desc">Branded motion design, title sequences, and animated content.</div>
       </div>
     </div>
   </div>
@@ -1095,7 +1094,10 @@
 <!-- VIDEO MODAL -->
 <div class="v-modal-overlay" id="reelModal" onclick="if(event.target===this)closeReel()">
   <div class="v-modal-top">
-    <div class="v-modal-title" id="reelTitle"></div>
+    <div>
+      <div class="v-modal-title" id="reelTitle"></div>
+      <div class="v-modal-desc" id="reelDesc"></div>
+    </div>
     <button class="v-modal-close" onclick="closeReel()">&times;</button>
   </div>
   <div class="v-modal-player">
@@ -1160,6 +1162,7 @@ function openReel(tileIdx) {
   currentReel = tileIdx;
   const r = activePlaylist[tileIdx];
   document.getElementById('reelTitle').textContent = r.title;
+  document.getElementById('reelDesc').textContent = r.desc || '';
   document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
   buildPlaylist(tileIdx);
   document.getElementById('reelModal').classList.add('active');
@@ -1171,6 +1174,7 @@ function openOriginal(idx) {
   currentReel = idx;
   const r = activePlaylist[idx];
   document.getElementById('reelTitle').textContent = r.title;
+  document.getElementById('reelDesc').textContent = r.desc || '';
   document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
   buildPlaylist(idx);
   document.getElementById('reelModal').classList.add('active');
@@ -1181,6 +1185,7 @@ function switchReel(idx) {
   currentReel = idx;
   const r = activePlaylist[idx];
   document.getElementById('reelTitle').textContent = r.title;
+  document.getElementById('reelDesc').textContent = r.desc || '';
   document.getElementById('reelPlayer').src = `https://player.vimeo.com/video/${r.id}?autoplay=1&title=0&byline=0&portrait=0`;
   buildPlaylist(idx);
 }
