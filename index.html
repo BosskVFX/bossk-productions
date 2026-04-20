@@ -345,6 +345,11 @@
     font-family:var(--display); font-size:1.3rem;
     letter-spacing:0.05em; margin-top:0.2rem; color:var(--text);
   }
+  .w-card-desc {
+    font-size:0.75rem; color:var(--dim); margin-top:0.3rem; line-height:1.5;
+    opacity:0; transition:opacity 0.3s;
+  }
+  .w-card:hover .w-card-desc { opacity:1; }
 
   /* ORIGINALS BANNER */
   .originals-banner {
@@ -949,6 +954,7 @@
       <div class="w-card-info">
         <div class="w-card-type">AI Production</div>
         <div class="w-card-title">AI REEL 2026</div>
+        <div class="w-card-desc">Our latest AI-generated content — commercials, brand films, and original shorts.</div>
       </div>
     </div>
     <div class="w-card reveal" onclick="openReel(1)">
@@ -957,6 +963,7 @@
       <div class="w-card-info">
         <div class="w-card-type">Visual Effects</div>
         <div class="w-card-title">FEATURE FILM VFX</div>
+        <div class="w-card-desc">VFX work from feature films, television, and streaming projects.</div>
       </div>
     </div>
     <div class="w-card reveal" onclick="openReel(2)">
@@ -965,6 +972,7 @@
       <div class="w-card-info">
         <div class="w-card-type">Post Production</div>
         <div class="w-card-title">COMMERCIAL FINISHING</div>
+        <div class="w-card-desc">Color, editorial, and finishing for national and global ad campaigns.</div>
       </div>
     </div>
     <div class="w-card reveal" onclick="openReel(3)">
@@ -973,6 +981,7 @@
       <div class="w-card-info">
         <div class="w-card-type">Motion Graphics</div>
         <div class="w-card-title">MOTION GRAPHICS REEL</div>
+        <div class="w-card-desc">Branded motion design, title sequences, and animated content.</div>
       </div>
     </div>
   </div>
@@ -1120,17 +1129,17 @@
 <script>
 // Reel data - two separate playlists
 const showreels = [
-  { id: '1184456353', type: 'AI Production', title: 'AI REEL 2026' },
-  { id: '1184456832', type: 'Visual Effects', title: 'FEATURE FILM VFX' },
-  { id: '1184456958', type: 'Post Production', title: 'COMMERCIAL FINISHING' },
-  { id: '1184460226', type: 'Motion Graphics', title: 'MOTION GRAPHICS REEL' }
+  { id: '1184456353', type: 'AI Production', title: 'AI REEL 2026', desc: 'Our latest AI-generated content — commercials, brand films, and original shorts.' },
+  { id: '1184456832', type: 'Visual Effects', title: 'FEATURE FILM VFX', desc: 'VFX work from feature films, television, and streaming projects.' },
+  { id: '1184456958', type: 'Post Production', title: 'COMMERCIAL FINISHING', desc: 'Color, editorial, and finishing for national and global ad campaigns.' },
+  { id: '1184460226', type: 'Motion Graphics', title: 'MOTION GRAPHICS REEL', desc: 'Branded motion design, title sequences, and animated content.' }
 ];
 
 const originals = [
-  { id: '1184457836', type: 'AI Short Film', title: 'STONE COLD JUSTICE' },
-  { id: '1184457467', type: 'AI Short Film', title: 'JEEPNEY' },
-  { id: '1184458603', type: 'AI Production', title: "MCDONALD'S WRAP BATTLE" },
-  { id: '1184458926', type: 'AI Production', title: 'TACO BELL FINAL BOSS' }
+  { id: '1184457836', type: 'AI Short Film', title: 'STONE COLD JUSTICE', desc: 'A true homage to the classic action movies of the 1980s.' },
+  { id: '1184457467', type: 'AI Short Film', title: 'JEEPNEY', desc: 'Showcasing Philippines culture through AI-powered anime storytelling.' },
+  { id: '1184458603', type: 'AI Production', title: "MCDONALD'S WRAP BATTLE", desc: 'The first AI music video that took advantage of lip sync.' },
+  { id: '1184458926', type: 'AI Production', title: 'TACO BELL FINAL BOSS', desc: 'An AI-produced branded short for Taco Bell.' }
 ];
 
 let activePlaylist = showreels;
