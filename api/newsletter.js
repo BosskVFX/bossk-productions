@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxrtHey9q4KaeJoXZSaIb-6XWxhXciSHW51gKLpOrrQVhHOXTs_tABBAKanqfRPDIE3/exec';
-  const { subject, preview_text, body, cta_text, cta_url, header_image, body_images, action } = req.body;
+  const { subject, preview_text, body, cta_text, cta_url, header_image, body_images, video_url, action } = req.body;
 
   if (!subject || !body) {
     return res.status(400).json({ error: 'Subject and body are required' });
@@ -73,6 +73,34 @@ export default async function handler(req, res) {
   while (imgIdx < bodyImgList.length) {
     htmlBody += `<img src="${bodyImgList[imgIdx]}" alt="Newsletter image" style="width:100%;max-width:600px;height:auto;margin:16px 0;border-radius:2px;">`;
     imgIdx++;
+  }
+
+  // Video thumbnail with play button
+  if (video_url) {
+    const thumbImg = header_image || (bodyImgList.length ? bodyImgList[0] : '');
+    if (thumbImg) {
+      htmlBody += `
+        <div style="margin:24px 0;text-align:center;">
+          <a href="${video_url}" target="_blank" style="display:inline-block;position:relative;text-decoration:none;">
+            <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+              <tr>
+                <td style="position:relative;background:#000;">
+                  <img src="${thumbImg}" alt="Watch video" style="width:100%;max-width:600px;height:auto;display:block;opacity:0.85;">
+                  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:72px;background:rgba(255,107,53,0.9);border-radius:50%;text-align:center;line-height:72px;">
+                    <span style="font-size:28px;color:#fff;margin-left:4px;">&#9654;</span>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </a>
+          <p style="color:#8a8680;font-size:13px;margin-top:8px;font-family:-apple-system,sans-serif;">Click to watch</p>
+        </div>`;
+    } else {
+      htmlBody += `
+        <div style="text-align:center;margin:24px 0;">
+          <a href="${video_url}" target="_blank" style="background:#ff6b35;color:#0a0a0a;padding:14px 32px;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;display:inline-block;">&#9654; Watch Video</a>
+        </div>`;
+    }
   }
 
   if (cta_text && cta_url) {

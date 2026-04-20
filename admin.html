@@ -297,6 +297,7 @@
     </div>
     <div class="field"><label>Newsletter Content</label><textarea id="nl-notes" rows="10" placeholder="Write your main points, news, updates. Claude will structure it into a clean newsletter."></textarea></div>
     <div class="field"><label>CTA Link (optional)</label><input id="nl-cta-url" placeholder="e.g. https://www.bosskproductions.com/case-studies.html"></div>
+    <div class="field"><label>Video Link (optional)</label><input id="nl-video-url" placeholder="e.g. https://www.bosskproductions.com/?play=jeepney"></div>
     <button class="submit-btn" onclick="optimize('nl')">Optimize Newsletter</button>
   </div>
 
@@ -472,6 +473,15 @@ function renderOutput(type, data) {
         <div class="nl-out-cta">${data.cta_text}</div>
         <div style="font-family:var(--mono);font-size:0.55rem;color:var(--dim);margin-top:0.5rem;">${data.cta_url}</div>
       </div>
+      ${(() => {
+        const vidUrl = document.getElementById('nl-video-url').value;
+        if (!vidUrl) return '';
+        const thumbSrc = headerImg || document.getElementById('nl-body-imgs').value.split(',')[0] || '';
+        if (thumbSrc) {
+          return '<div style="text-align:center;margin:1.5rem 0;"><a href="' + vidUrl + '" target="_blank" style="display:inline-block;position:relative;text-decoration:none;"><img src="' + thumbSrc + '" style="width:100%;max-width:500px;opacity:0.85;border:1px solid var(--line);"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:72px;background:rgba(255,107,53,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;"><span style="font-size:28px;color:#fff;margin-left:4px;">&#9654;</span></div></a><div style="font-family:var(--mono);font-size:0.6rem;color:var(--dim);margin-top:0.5rem;">Click to watch</div></div>';
+        }
+        return '<div style="text-align:center;margin:1rem 0;"><a href="' + vidUrl + '" target="_blank" class="nl-out-cta">&#9654; Watch Video</a></div>';
+      })()}
       <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;">
         <button class="submit-btn" style="flex:1;min-width:150px;margin:0;background:#888;" onclick="saveNewsletter('draft')">Save Draft</button>
         <button class="submit-btn" style="flex:1;min-width:150px;margin:0;" onclick="saveNewsletter('publish')">Publish to Beehiiv</button>
@@ -924,6 +934,7 @@ async function saveNewsletter(action) {
         cta_url: d.cta_url,
         header_image: d._headerImg || '',
         body_images: document.getElementById('nl-body-imgs').value || '',
+        video_url: document.getElementById('nl-video-url').value || '',
         action: action
       })
     });
