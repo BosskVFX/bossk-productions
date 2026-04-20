@@ -650,7 +650,7 @@ function viewSavedPost(idx) {
       document.getElementById('cpImgPreview').innerHTML = `<img src="${p['Header Image']}" style="height:50px;border:2px solid var(--accent);margin-top:0.25rem;">`;
     }
 
-    const link = 'https://www.bosskproductions.com/client.html?' + (p.Slug || '');
+    const link = 'https://bossk.co/' + (p.Slug || '');
     out.innerHTML = `
       <div class="output-header">
         <span class="output-label">Client Project — ${p.Active === 'TRUE' || p.Active === true ? 'ACTIVE' : 'INACTIVE'}</span>
@@ -1066,7 +1066,7 @@ async function createClientLink() {
   const project = document.getElementById('cp-project').value;
   if (!client || !project) return alert('Fill in client and project name.');
 
-  const slug = Math.random().toString(36).substring(2, 8);
+  const slug = client.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '').replace(/^-+/, '');
   const btn = event.target;
   btn.disabled = true;
   btn.textContent = 'Creating...';
@@ -1089,7 +1089,7 @@ async function createClientLink() {
     });
 
     if (res.ok) {
-      const link = 'https://www.bosskproductions.com/client.html?' + slug;
+      const link = 'https://bossk.co/' + slug;
       document.getElementById('cpLink').textContent = link;
       document.getElementById('cpResult').style.display = 'block';
       loadSavedPosts();

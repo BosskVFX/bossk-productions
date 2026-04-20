@@ -106,10 +106,10 @@
 
 <script>
 (async function() {
-  const slug = window.location.search.substring(1);
+  const slug = window.location.pathname.replace(/^\//, '').replace(/\.html$/, '').toLowerCase();
   const container = document.getElementById('portalContent');
 
-  if (!slug) {
+  if (!slug || slug === 'client') {
     container.innerHTML = '<div class="error"><h2>INVALID LINK</h2><p>This project link is not valid.</p></div>';
     return;
   }
