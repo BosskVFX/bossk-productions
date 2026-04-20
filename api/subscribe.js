@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email is required' });
   }
 
-  const SHEET_URL = 'PLACEHOLDER_URL';
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyH_DS8OZnJHqkXDeWTxJGPN-vohIMWtrnpRQNOjyxpRseMSQu35h0rXmVzCiXxWWyL/exec';
 
   try {
     const r = await fetch(SHEET_URL, {

@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const SHEET_URL = 'PLACEHOLDER_URL';
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyH_DS8OZnJHqkXDeWTxJGPN-vohIMWtrnpRQNOjyxpRseMSQu35h0rXmVzCiXxWWyL/exec';
   const RESEND_KEY = process.env.RESEND_API_KEY;
   const { subject, preview_text, body, cta_text, cta_url, header_image, body_images, video_url, action } = req.body;
 

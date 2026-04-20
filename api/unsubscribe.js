@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const SHEET_URL = 'PLACEHOLDER_URL';
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyH_DS8OZnJHqkXDeWTxJGPN-vohIMWtrnpRQNOjyxpRseMSQu35h0rXmVzCiXxWWyL/exec';
   const { email } = req.body;
 
   if (!email) {
