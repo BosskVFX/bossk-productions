@@ -513,7 +513,9 @@ async function loadSavedPosts() {
   const list = document.getElementById('savedList');
   try {
     const res = await fetch('/api/all-cases');
-    const posts = await res.json();
+    const text = await res.text();
+    console.log('all-cases response:', res.status, text.substring(0, 200));
+    const posts = JSON.parse(text);
     window._savedPosts = posts;
     
     if (!posts.length) {
