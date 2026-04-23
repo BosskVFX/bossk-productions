@@ -115,6 +115,14 @@
   .saved-item-meta .published{color:#00ff88;}
   .saved-item-meta .scheduled{color:#ffd700;}
   .saved-empty{color:var(--dim);font-size:0.8rem;text-align:center;padding:1rem 0;}
+  .sub-item{
+    padding:0.5rem 0;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .sub-item:last-child{border-bottom:none;}
+  .sub-email{font-size:0.75rem;color:var(--text);word-break:break-all;}
+  .sub-date{font-family:var(--mono);font-size:0.5rem;color:var(--dim);letter-spacing:0.05em;white-space:nowrap;margin-left:0.5rem;}
+  .sub-inactive{opacity:0.4;}
 
   @media(max-width:900px){
     .admin-body{flex-direction:column-reverse;}
@@ -340,6 +348,13 @@
         <div class="saved-title" id="savedTitle">Saved Case Studies</div>
         <div id="savedList"><div class="saved-empty">Loading...</div></div>
       </div>
+      <div class="saved-panel" style="margin-top:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+          <div class="saved-title" style="margin-bottom:0;">Subscribers</div>
+          <div id="subCount" style="font-family:var(--mono);font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;"></div>
+        </div>
+        <div id="subList"><div class="saved-empty">Loading...</div></div>
+      </div>
     </div>
   </div><!-- end admin-body -->
 </div>
@@ -362,6 +377,7 @@ async function tryLogin() {
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('adminPanel').style.display='block';
     loadSavedPosts();
+    loadSubscribers();
   } else {
     document.getElementById('loginError').style.display='block';
   }
@@ -380,6 +396,7 @@ if (sessionStorage.getItem('bossk_admin')==='1') {
   document.getElementById('loginWrap').style.display='none';
   document.getElementById('adminPanel').style.display='block';
   loadSavedPosts();
+  loadSubscribers();
 }
 
 // Tabs
@@ -590,6 +607,39 @@ function renderOutput(type, data) {
 }
 
 // Load saved posts
+// Load saved posts
+async function loadSubscribers() {
+  const list = document.getElementById('subList');
+  const count = document.getElementById('subCount');
+  try {
+    const res = await fetch('/api/all-cases?sheet=Subscribers');
+    const subs = await res.json();
+    const active = subs.filter(s => String(s.Active || s['Active ']).toUpperCase() === 'TRUE');
+    count.textContent = active.length + ' active';
+
+    if (!subs.length) {
+      list.innerHTML = '<div class="saved-empty">No subscribers yet</div>';
+      return;
+    }
+
+    list.innerHTML = subs.map(s => {
+      const email = (s.Email || s['Email '] || '').trim();
+      const isActive = String(s.Active || s['Active ']).toUpperCase() === 'TRUE';
+      const date = s.Date || s['Date '];
+      const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
+      return `
+        <div class="sub-item${isActive ? '' : ' sub-inactive'}">
+          <div class="sub-email">${email}</div>
+          <div class="sub-date">${dateStr}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error('Load subscribers error:', e);
+    list.innerHTML = '<div class="saved-empty">Failed to load</div>';
+  }
+}
+
 async function loadSavedPosts() {
   const list = document.getElementById('savedList');
   const sheetParam = currentAdminTab === 'nl' ? 'Newsletter' : currentAdminTab === 'cp' ? 'Clients' : 'CaseStudy';
