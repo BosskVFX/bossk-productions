@@ -193,7 +193,7 @@ async function loadCases() {
       }
       return `
         <div class="case-card" id="${slug}">
-          ${c['Hero Image'] ? `<img class="case-hero" src="${c['Hero Image']}" alt="${c.Title}">` : ''}
+          ${c['Hero Image'] ? `<img class="case-hero" src="${c['Hero Image']}" alt="${c.Title}" loading="lazy">` : ''}
           ${videoEmbed}
           <div class="case-top">
             <div>
@@ -220,7 +220,7 @@ async function loadCases() {
             </div>
           </div>
           ${c.Quote ? `<div class="case-quote">"${c.Quote}"</div>` : ''}
-          ${extraImgs.length ? `<div class="case-images">${extraImgs.map(img => `<img src="${img}" alt="${c.Title}">`).join('')}</div>` : ''}
+          ${extraImgs.length ? `<div class="case-images">${extraImgs.map(img => `<img src="${img}" alt="${c.Title}" loading="lazy">`).join('')}</div>` : ''}
           ${date ? `<div class="case-date">${date}</div>` : ''}
         </div>
       `;

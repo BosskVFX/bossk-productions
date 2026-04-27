@@ -11,7 +11,7 @@ export default async function handler(req, res) {
         return pub === true || pub === 'TRUE' || String(pub).toUpperCase() === 'TRUE';
       });
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
       return res.status(200).json(published);
     } catch (e) {
       console.error('Fetch case studies error:', e.message);
