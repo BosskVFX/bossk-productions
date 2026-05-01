@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PATINA Beta — Bossk Productions</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0a;--bg2:#111;--card:#161616;--text:#f0ede8;
+    --dim:#8a8680;--accent:#ff6b35;--line:rgba(255,255,255,0.06);
+    --display:'Bebas Neue',sans-serif;--mono:'Space Mono',monospace;--body:'DM Sans',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;}
+
+  .patina-header{
+    width:100%;max-height:500px;object-fit:cover;display:block;
+    border-bottom:1px solid var(--line);
+  }
+
+  .patina-content{
+    max-width:640px;margin:0 auto;padding:3rem 2rem 6rem;
+  }
+
+  .patina-title{
+    font-family:var(--display);font-size:clamp(2.5rem,5vw,3.5rem);
+    letter-spacing:0.03em;line-height:1;margin-bottom:0.25rem;
+  }
+  .patina-sub{
+    font-size:0.95rem;color:var(--dim);margin-bottom:2.5rem;line-height:1.6;
+  }
+
+  .patina-form{
+    background:var(--card);border:1px solid var(--line);padding:2rem;
+  }
+  .patina-label{
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem;
+    display:block;
+  }
+  .patina-field{
+    width:100%;background:var(--bg);color:var(--text);
+    border:1px solid var(--line);padding:0.85rem 1rem;
+    font-family:var(--body);font-size:0.9rem;outline:none;
+    margin-bottom:1rem;
+  }
+  .patina-field:focus{border-color:var(--accent);}
+  .patina-field::placeholder{color:rgba(138,134,128,0.5);}
+  .patina-submit{
+    width:100%;background:var(--accent);color:var(--bg);
+    font-family:var(--mono);font-size:0.72rem;font-weight:700;
+    letter-spacing:0.1em;text-transform:uppercase;
+    padding:1rem;border:none;cursor:pointer;margin-top:0.5rem;
+  }
+  .patina-submit:disabled{background:rgba(255,107,53,0.3);cursor:not-allowed;}
+  .patina-fine{
+    font-size:0.7rem;color:var(--dim);text-align:center;
+    margin-top:1rem;line-height:1.5;
+  }
+
+  /* DOWNLOAD SECTION (hidden until submit) */
+  .patina-downloads{
+    display:none;
+  }
+  .patina-downloads.active{display:block;}
+  .patina-success{
+    font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--accent);text-align:center;
+    margin-bottom:2rem;
+  }
+  .patina-success-msg{
+    font-size:0.95rem;color:var(--text);text-align:center;
+    margin-bottom:2.5rem;line-height:1.6;
+  }
+  .dl-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;
+  }
+  .dl-card{
+    background:var(--card);border:1px solid var(--line);
+    padding:2rem 1.5rem;text-align:center;
+    transition:border-color 0.2s,transform 0.2s;
+    cursor:pointer;text-decoration:none;display:block;
+  }
+  .dl-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .dl-icon{font-size:2.5rem;margin-bottom:0.75rem;}
+  .dl-platform{
+    font-family:var(--display);font-size:1.4rem;letter-spacing:0.05em;
+    color:var(--text);margin-bottom:0.25rem;
+  }
+  .dl-version{
+    font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--dim);
+  }
+  .dl-btn{
+    display:inline-block;margin-top:1.25rem;
+    background:var(--accent);color:var(--bg);
+    font-family:var(--mono);font-size:0.65rem;font-weight:700;
+    letter-spacing:0.1em;text-transform:uppercase;
+    padding:0.65rem 1.5rem;text-decoration:none;
+  }
+
+  .patina-footer{
+    max-width:640px;margin:0 auto;padding:0 2rem;
+    font-family:var(--mono);font-size:0.55rem;color:var(--dim);
+    letter-spacing:0.1em;text-align:center;
+  }
+
+  @media(max-width:600px){
+    .patina-content{padding:2rem 1.5rem 4rem;}
+    .dl-grid{grid-template-columns:1fr;}
+    .patina-header{max-height:300px;}
+  }
+</style>
+</head>
+<body>
+
+<img class="patina-header" src="/patina-header.jpg" alt="PATINA — Production Color Conform for AI Generated Video">
+
+<div class="patina-content">
+
+  <!-- SIGNUP FORM -->
+  <div id="signupSection">
+    <div class="patina-title">PATINA BETA</div>
+    <p class="patina-sub">Production Color Conform for AI Generated Video. Sign up below to access the beta download.</p>
+
+    <div class="patina-form">
+      <span class="patina-label">Beta Access</span>
+      <input class="patina-field" id="patinaName" placeholder="Your name" autocomplete="name">
+      <input class="patina-field" id="patinaEmail" type="email" placeholder="Your email" autocomplete="email">
+      <button class="patina-submit" id="patinaBtn" onclick="submitPatina()">Get Beta Access</button>
+      <p class="patina-fine">Your info is only used to notify you of updates. No spam.</p>
+    </div>
+  </div>
+
+  <!-- DOWNLOAD SECTION -->
+  <div class="patina-downloads" id="downloadSection">
+    <div class="patina-success">You're in</div>
+    <p class="patina-success-msg">Thanks for signing up for the PATINA beta. Choose your platform below to download.</p>
+
+    <div class="dl-grid">
+      <a href="#" class="dl-card" id="dlWindows" onclick="alert('Download coming soon');return false;">
+        <div class="dl-icon">🪟</div>
+        <div class="dl-platform">WINDOWS 11</div>
+        <div class="dl-version">Beta 0.0</div>
+        <div class="dl-btn">Download</div>
+      </a>
+      <a href="#" class="dl-card" id="dlMac" onclick="alert('Download coming soon');return false;">
+        <div class="dl-icon">🍎</div>
+        <div class="dl-platform">MAC OS</div>
+        <div class="dl-version">Beta 0.0</div>
+        <div class="dl-btn">Download</div>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<div class="patina-footer">&copy; 2026 BOSSK PRODUCTIONS, LLC</div>
+
+<script>
+async function submitPatina() {
+  const name = document.getElementById('patinaName').value.trim();
+  const email = document.getElementById('patinaEmail').value.trim();
+
+  if (!name || !email) return alert('Please fill in both fields.');
+  if (!email.includes('@')) return alert('Please enter a valid email.');
+
+  const btn = document.getElementById('patinaBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    await fetch('/api/patina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email })
+    });
+
+    document.getElementById('signupSection').style.display = 'none';
+    document.getElementById('downloadSection').classList.add('active');
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Get Beta Access';
+    alert('Something went wrong. Please try again.');
+  }
+}
+</script>
+</body>
+</html>
