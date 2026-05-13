@@ -127,14 +127,14 @@
 
   <!-- SIGNUP FORM -->
   <div id="signupSection">
-    <div class="patina-title">PATINA BETA</div>
-    <p class="patina-sub">Production Color Conform for AI Generated Video. Sign up below to access the beta download.</p>
+    <div class="patina-title">PATINA v1.0.0</div>
+    <p class="patina-sub">Production Color Conform for AI Generated Video. Sign up below to access the download.</p>
 
     <div class="patina-form">
       <span class="patina-label">Beta Access</span>
       <input class="patina-field" id="patinaName" placeholder="Your name" autocomplete="name">
       <input class="patina-field" id="patinaEmail" type="email" placeholder="Your email" autocomplete="email">
-      <button class="patina-submit" id="patinaBtn" onclick="submitPatina()">Get Beta Access</button>
+      <button class="patina-submit" id="patinaBtn" onclick="submitPatina()">Get Access</button>
       <p class="patina-fine">Your info is only used to notify you of updates. No spam.</p>
     </div>
   </div>
@@ -142,19 +142,19 @@
   <!-- DOWNLOAD SECTION -->
   <div class="patina-downloads" id="downloadSection">
     <div class="patina-success">You're in</div>
-    <p class="patina-success-msg">Thanks for signing up for the PATINA beta. Choose your platform below to download.</p>
+    <p class="patina-success-msg">Thanks for signing up for PATINA v1.0.0. Choose your platform below to download.</p>
 
     <div class="dl-grid">
-      <a href="https://github.com/BosskVFX/bossk-productions/releases/download/patina-beta-0.0/BOSSK_PATINA_BETA_00.zip" class="dl-card" id="dlWindows">
+      <a href="https://github.com/BosskVFX/bossk-productions/releases/download/patina-v1.0.0/BOSSK_PATINA_v1.0.0.zip" class="dl-card" id="dlWindows">
         <div class="dl-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="#f0ede8"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg></div>
         <div class="dl-platform">WINDOWS 11</div>
-        <div class="dl-version">Beta 0.0</div>
+        <div class="dl-version">v1.0.0</div>
         <div class="dl-btn">Download</div>
       </a>
-      <a href="https://github.com/BosskVFX/bossk-productions/releases/download/patina-beta-0.0/Patina-arm64.dmg" class="dl-card" id="dlMac">
+      <a href="https://github.com/BosskVFX/bossk-productions/releases/download/patina-v1.0.0/Patina-arm64.dmg" class="dl-card" id="dlMac">
         <div class="dl-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="#f0ede8"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg></div>
         <div class="dl-platform">MAC OS</div>
-        <div class="dl-version">Beta 0.0</div>
+        <div class="dl-version">v1.0.0</div>
         <div class="dl-note">*Requires Apple Silicon (M1–M5)</div>
         <div class="dl-btn">Download</div>
       </a>
@@ -188,7 +188,7 @@ async function submitPatina() {
     document.getElementById('downloadSection').classList.add('active');
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = 'Get Beta Access';
+    btn.textContent = 'Get Access';
     alert('Something went wrong. Please try again.');
   }
 }
