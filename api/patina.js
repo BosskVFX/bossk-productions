@@ -40,6 +40,7 @@ export default async function handler(req, res) {
             <a href="https://github.com/BosskVFX/bossk-productions/releases/download/patina-v1.0.0/Patina-arm64.dmg" style="display:inline-block;background:#ff6b35;color:#0a0a0a;padding:12px 24px;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:0.5px;margin:0 8px 8px 0;">MAC OS (M1–M5)</a>
           </div>
           <p style="color:#f0ede8;font-size:16px;line-height:1.7;margin:0 0 16px;">If you run into any issues or have feedback, reply directly to this email. We read everything.</p>
+          <p style="color:#f0ede8;font-size:14px;line-height:1.7;margin:0 0 16px;background:rgba(255,107,53,0.1);padding:12px 16px;border-left:3px solid #ff6b35;"><strong>Important:</strong> Please read the included install file before running PATINA for the first time.</p>
           <div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:30px;padding-top:20px;">
             <p style="color:#8a8680;font-size:13px;margin:0;">— The Bossk Productions Team</p>
             <p style="color:#8a8680;font-size:12px;margin:4px 0 0;"><a href="https://www.bosskproductions.com" style="color:#8a8680;">bosskproductions.com</a></p>
