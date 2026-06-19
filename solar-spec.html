@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar System Spec Sheet — Bossk Productions</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0F1923; --card: #1A2B3C; --border: #243447; --border2: #1E3048;
+    --amber: #F59E0B; --emerald: #10B981; --blue: #3B82F6; --purple: #A855F7;
+    --red: #EF4444; --text: #F1F5F9; --muted: #94A3B8; --dim: #64748B; --dimmer: #475569;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .header { background: linear-gradient(135deg, #0F1923, #162030); border-bottom: 1px solid #1E3048; padding: 24px 28px; }
+  .eyebrow { color: var(--amber); font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 4px; }
+  .title { color: var(--text); font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
+  .subtitle { color: var(--dim); font-size: 12px; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .06em; }
+
+  .content { padding: 24px 28px; }
+  .section { margin-bottom: 28px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .section-bar { width: 4px; height: 20px; border-radius: 2px; flex-shrink: 0; }
+  .section-title { color: var(--text); font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-sm { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  .eq-card { background: var(--card); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 0; }
+  .eq-tag { font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 8px; }
+  .eq-name { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 4px; line-height: 1.2; }
+  .eq-model { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+  .eq-specs { border-top: 1px solid var(--border2); padding-top: 12px; margin-bottom: 12px; }
+  .spec-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border2); }
+  .spec-row:last-child { border-bottom: none; }
+  .spec-label { color: var(--dim); font-size: 11px; }
+  .spec-val { color: var(--text); font-size: 11px; font-weight: 600; text-align: right; max-width: 55%; }
+  .eq-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border2); }
+  .btn { display: inline-block; padding: 7px 14px; border-radius: 8px; font-size: 11px; font-weight: 700; letter-spacing: .05em; cursor: pointer; text-decoration: none; }
+  .btn-buy { background: var(--amber); color: #0F1923; }
+  .btn-buy:hover { background: #D97706; text-decoration: none; }
+  .btn-spec { background: var(--border); color: var(--muted); }
+  .btn-spec:hover { background: #2D3F55; text-decoration: none; }
+
+  .str-diagram { display: flex; flex-direction: column; gap: 10px; }
+  .str-row { display: flex; align-items: center; gap: 8px; }
+  .str-label { color: var(--amber); font-size: 11px; font-weight: 700; width: 56px; flex-shrink: 0; }
+  .panels-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .panel-box { width: 28px; height: 40px; background: #1E3A5F; border: 1px solid var(--blue); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--blue); font-weight: 700; }
+  .arrow { color: var(--dim); font-size: 14px; margin: 0 4px; }
+  .mppt-box { background: #1a2a1a; border: 1px solid var(--emerald); border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 700; color: var(--emerald); white-space: nowrap; }
+  .inv-box { background: #1a2a3a; border: 2px solid var(--blue); border-radius: 8px; padding: 8px 16px; font-size: 11px; font-weight: 700; color: var(--blue); white-space: nowrap; }
+
+  .note-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border2); align-items: flex-start; }
+  .note-row:last-child { border-bottom: none; }
+  .note-icon { color: var(--amber); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .note-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .note-text strong { color: var(--text); }
+
+  .roof-wrap { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+  .roof-wrap iframe { display: block; width: 100%; height: 400px; border: 0; }
+  .roof-label { background: var(--card); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border2); }
+
+  .bos-table { width: 100%; border-collapse: collapse; }
+  .bos-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--border); }
+  .bos-table td { padding: 9px 12px; font-size: 12px; border-bottom: 1px solid var(--border2); color: var(--muted); }
+  .bos-table td:first-child { color: var(--text); font-weight: 500; }
+  .bos-table tr:last-child td { border-bottom: none; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="eyebrow">Bossk Productions LLC — Equipment Specification Sheet</div>
+      <div class="title">12 kW Solar System Build</div>
+      <div class="subtitle">5541 Willis Ave, Sherman Oaks, CA 91411 &nbsp;·&nbsp; LADWP NEM 2.0 &nbsp;·&nbsp; June 2026</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <span class="badge" style="background:#1a3a2a;color:var(--emerald);border:1px solid var(--emerald)">12 kW System</span>
+      <span class="badge" style="background:#1a2a3a;color:var(--blue);border:1px solid var(--blue)">24 Panels</span>
+      <span class="badge" style="background:#2a1a3a;color:var(--purple);border:1px solid var(--purple)">EG4 18kPV Hybrid</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- SYSTEM OVERVIEW -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-bar" style="background:var(--amber)"></div>
+      <div class="section-title">System Overview</div>
+    </div>
+    <div class="grid-4" style="margin-bottom:12px">
+      <div class="card-sm" style="text-align:center">
+        <div style="color:var(--dim);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">System Size</div>
+        <div style="color:var(--blue);font-size:24px;font-weight:900">12 kW</div>
+        <div style="color:var(--dimmer);font-size:11px">DC nameplate</div>
+      </div>
+      <div class="card-sm" style="text-align:center">
+        <div style="color:var(--dim);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Panel Count</div>
+        <div style="color:var(--blue);font-size:24px;font-weight:900">24</div>
+        <div style="color:var(--dimmer);font-size:11px">500W each</div>
+      </div>
+      <div class="card-sm" style="text-align:center">
+        <div style="color:var(--dim);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Est. Annual Output</div>
+        <div style="color:var(--amber);font-size:24px;font-weight:900">19,578</div>
+        <div style="color:var(--dimmer);font-size:11px">kWh/year</div>
+      </div>
+      <div class="card-sm" style="text-align:center">
+        <div style="color:var(--dim);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Roof Area Needed</div>
+        <div style="color:var(--amber);font-size:24px;font-weight:900">~600</div>
+        <div style="color:var(--dimmer);font-size:11px">sq ft</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOF AERIAL -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-bar" style="background:var(--blue)"></div>
+      <div class="section-title">Installation Site — Aerial View</div>
+    </div>
+    <div class="roof-wrap">
+      <iframe
+        src="https://maps.google.com/maps?q=5541+Willis+Ave+Sherman+Oaks+CA+91411&t=k&z=19&output=embed"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+      <div class="roof-label">
+        <span style="color:var(--muted);font-size:12px">📍 5541 Willis Ave, Sherman Oaks, CA 91411</span>
+        <a href="https://maps.google.com/maps?q=5541+Willis+Ave+Sherman+Oaks+CA+91411&t=k&z=19" target="_blank" style="font-size:11px;color:var(--blue)">Open in Google Maps ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STRING CONFIGURATION -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-bar" style="background:var(--emerald)"></div>
+      <div class="section-title">String Configuration</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:20px">
+        <div>
+          <div style="color:var(--dim);font-size:11px;margin-bottom:4px">Configuration</div>
+          <div style="color:var(--text);font-size:18px;font-weight:800">3 strings × 8 panels</div>
+          <div style="color:var(--dim);font-size:12px">One string per MPPT</div>
+        </div>
+        <div>
+          <div style="color:var(--dim);font-size:11px;margin-bottom:4px">String Voltage (Voc)</div>
+          <div style="color:var(--emerald);font-size:18px;font-weight:800">~336V per string</div>
+          <div style="color:var(--dim);font-size:12px">Well within 600V max input</div>
+        </div>
+        <div>
+          <div style="color:var(--dim);font-size:11px;margin-bottom:4px">Operating Voltage (Vmp)</div>
+          <div style="color:var(--blue);font-size:18px;font-weight:800">~272V per string</div>
+          <div style="color:var(--dim);font-size:12px">8 × ~34V Vmp per panel</div>
+        </div>
+        <div>
+          <div style="color:var(--dim);font-size:11px;margin-bottom:4px">MPPT Count</div>
+          <div style="color:var(--amber);font-size:18px;font-weight:800">3 independent</div>
+          <div style="color:var(--dim);font-size:12px">One per string — no combiner box</div>
+        </div>
+      </div>
+      <div class="str-diagram">
+        <div class="str-row">
+          <div class="str-label">String 1</div>
+          <div class="panels-row">
+            <div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div>
+            <div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="mppt-box">MPPT 1</div>
+          <div class="arrow">→</div>
+          <div class="inv-box" style="visibility:hidden">EG4 18kPV</div>
+        </div>
+        <div class="str-row">
+          <div class="str-label">String 2</div>
+          <div class="panels-row">
+            <div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div>
+            <div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="mppt-box">MPPT 2</div>
+          <div class="arrow">→</div>
+          <div class="inv-box">EG4 18kPV</div>
+        </div>
+        <div class="str-row">
+          <div class="str-label">String 3</div>
+          <div class="panels-row">
+            <div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div>
+            <div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div><div class="panel-box">PV</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="mppt-box">MPPT 3</div>
+          <div class="arrow">→</div>
+          <div class="inv-box" style="visibility:hidden">EG4 18kPV</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EQUIPMENT SPECS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-bar" style="background:var(--purple)"></div>
+      <div class="section-title">Equipment Specifications</div>
+    </div>
+    <div class="grid-2" style="margin-bottom:12px">
+
+      <!-- PANELS -->
+      <div class="eq-card" style="border:1px solid var(--blue)">
+        <div class="eq-tag" style="color:var(--blue)">Solar Panels × 24</div>
+        <div class="eq-name">Jinko Tiger Neo</div>
+        <div class="eq-model">JKM500N-60HL4-V · N-Type TOPCon · 500W</div>
+        <div class="eq-specs">
+          <div class="spec-row"><span class="spec-label">Wattage (STC)</span><span class="spec-val">500W</span></div>
+          <div class="spec-row"><span class="spec-label">Technology</span><span class="spec-val">N-Type TOPCon HOT 3.0</span></div>
+          <div class="spec-row"><span class="spec-label">Efficiency</span><span class="spec-val">23.17%</span></div>
+          <div class="spec-row"><span class="spec-label">Voc (open circuit)</span><span class="spec-val">~42V</span></div>
+          <div class="spec-row"><span class="spec-label">Vmp (operating)</span><span class="spec-val">~34V</span></div>
+          <div class="spec-row"><span class="spec-label">Isc (short circuit)</span><span class="spec-val">~14.2A</span></div>
+          <div class="spec-row"><span class="spec-label">Dimensions</span><span class="spec-val">1906 × 1134 × 30mm</span></div>
+          <div class="spec-row"><span class="spec-label">Weight</span><span class="spec-val">22.5 kg (49.6 lbs)</span></div>
+          <div class="spec-row"><span class="spec-label">Temp Coefficient</span><span class="spec-val">−0.29%/°C</span></div>
+          <div class="spec-row"><span class="spec-label">Annual Degradation</span><span class="spec-val">0.40%/yr</span></div>
+          <div class="spec-row"><span class="spec-label">Performance Warranty</span><span class="spec-val">30 years / 87.4% at yr 30</span></div>
+          <div class="spec-row"><span class="spec-label">Connector Type</span><span class="spec-val">MC4</span></div>
+          <div class="spec-row"><span class="spec-label">Quantity Required</span><span class="spec-val" style="color:var(--amber)">24 panels</span></div>
+        </div>
+        <div class="eq-links">
+          <a href="https://tsolar.top/products/jinko-500w-solar-panel" target="_blank" class="btn btn-buy">Buy — TSolar</a>
+          <a href="https://a1solarstore.com/solar-panels/jinko-solar-panels.html" target="_blank" class="btn btn-buy">Buy — A1 Solar</a>
+          <a href="https://jinkosolar.com/en/products/tiger-neo/" target="_blank" class="btn btn-spec">Datasheet ↗</a>
+        </div>
+      </div>
+
+      <!-- INVERTER -->
+      <div class="eq-card" style="border:1px solid var(--emerald)">
+        <div class="eq-tag" style="color:var(--emerald)">Hybrid Inverter × 1</div>
+        <div class="eq-name">EG4 18kPV-12LV</div>
+        <div class="eq-model">All-In-One Hybrid Inverter · 48V · Split Phase 120/240V</div>
+        <div class="eq-specs">
+          <div class="spec-row"><span class="spec-label">AC Output</span><span class="spec-val">12,000W continuous</span></div>
+          <div class="spec-row"><span class="spec-label">AC Surge</span><span class="spec-val">14,700W (10 min)</span></div>
+          <div class="spec-row"><span class="spec-label">PV Input</span><span class="spec-val">18,000W max</span></div>
+          <div class="spec-row"><span class="spec-label">MPPT Count</span><span class="spec-val">3 independent</span></div>
+          <div class="spec-row"><span class="spec-label">Max PV Voltage</span><span class="spec-val">600V DC</span></div>
+          <div class="spec-row"><span class="spec-label">Battery Voltage</span><span class="spec-val">48V nominal</span></div>
+          <div class="spec-row"><span class="spec-label">Output Voltage</span><span class="spec-val">120/240V split phase</span></div>
+          <div class="spec-row"><span class="spec-label">Output Frequency</span><span class="spec-val">60Hz</span></div>
+          <div class="spec-row"><span class="spec-label">Operating Modes</span><span class="spec-val">Off-grid / Grid-tie / Hybrid</span></div>
+          <div class="spec-row"><span class="spec-label">Rapid Shutdown</span><span class="spec-val">Built-in NEC 2020:690.12</span></div>
+          <div class="spec-row"><span class="spec-label">Grid Certifications</span><span class="spec-val">UL1741, California Rule 21</span></div>
+          <div class="spec-row"><span class="spec-label">Monitoring</span><span class="spec-val">Built-in WiFi · EG4 App</span></div>
+          <div class="spec-row"><span class="spec-label">EMP Hardened</span><span class="spec-val">Yes</span></div>
+        </div>
+        <div class="eq-links">
+          <a href="https://offgridstores.com/products/eg4-18kpv-48v-split-phase-hybrid-inverter" target="_blank" class="btn btn-buy">Buy — Off Grid Stores</a>
+          <a href="https://signaturesolar.com/eg4-18kpv-hybrid-inverter-eg4-18kpv-12lv-48v-split-phase-120-240vac-ul1741-cec/" target="_blank" class="btn btn-buy">Buy — Signature Solar</a>
+          <a href="https://eg4electronics.com/categories/inverters/eg4-18kpv-12lv-all-in-one-hybrid-inverter/" target="_blank" class="btn btn-spec">Specs ↗</a>
+        </div>
+      </div>
+
+      <!-- RACKING -->
+      <div class="eq-card" style="border:1px solid var(--amber)">
+        <div class="eq-tag" style="color:var(--amber)">Roof Mounting System</div>
+        <div class="eq-name">IronRidge XR Series</div>
+        <div class="eq-model">XR Flush Mount · Pitched Roof · 24-Panel Array</div>
+        <div class="eq-specs">
+          <div class="spec-row"><span class="spec-label">Rail System</span><span class="spec-val">XR-100 or XR-1000 depending on span</span></div>
+          <div class="spec-row"><span class="spec-label">Roof Attachment</span><span class="spec-val">FlashFoot2 (24 points minimum)</span></div>
+          <div class="spec-row"><span class="spec-label">Clamps</span><span class="spec-val">Grounding Mid + End Clamps</span></div>
+          <div class="spec-row"><span class="spec-label">Grounding</span><span class="spec-val">Integrated UL 2703 bonding</span></div>
+          <div class="spec-row"><span class="spec-label">Fire Rating</span><span class="spec-val">Class A</span></div>
+          <div class="spec-row"><span class="spec-label">Wind/Snow Load</span><span class="spec-val">UL 2703 certified</span></div>
+          <div class="spec-row"><span class="spec-label">Material</span><span class="spec-val">Anodized aluminum · Made in USA</span></div>
+          <div class="spec-row"><span class="spec-label">Tilt</span><span class="spec-val">Flush mount (roof pitch)</span></div>
+          <div class="spec-row"><span class="spec-label">Min Gap to Roof</span><span class="spec-val">2" min / 10" max</span></div>
+          <div class="spec-row"><span class="spec-label">PE Certified</span><span class="spec-val">Pre-stamped letters available</span></div>
+          <div class="spec-row"><span class="spec-label">Warranty</span><span class="spec-val">25 years</span></div>
+        </div>
+        <div class="eq-links">
+          <a href="https://www.solarelectricsupply.com/solar-panel-mounts/roof-mounts/ironridge" target="_blank" class="btn btn-buy">Buy — Solar Electric Supply</a>
+          <a href="https://ironridge.com/solar-racking/xr-roof-mount/" target="_blank" class="btn btn-spec">Specs + Design Tool ↗</a>
+        </div>
+      </div>
+
+      <!-- BATTERY (OPTIONAL) -->
+      <div class="eq-card" style="border:1px solid var(--purple)">
+        <div class="eq-tag" style="color:var(--purple)">Battery Storage — Optional / Future</div>
+        <div class="eq-name">EG4 LL-S</div>
+        <div class="eq-model">48V 100Ah LiFePO4 · Server Rack · 5.12 kWh per unit</div>
+        <div class="eq-specs">
+          <div class="spec-row"><span class="spec-label">Capacity</span><span class="spec-val">5.12 kWh per unit</span></div>
+          <div class="spec-row"><span class="spec-label">Voltage</span><span class="spec-val">51.2V nominal (48V)</span></div>
+          <div class="spec-row"><span class="spec-label">Chemistry</span><span class="spec-val">LiFePO4 (lithium iron phosphate)</span></div>
+          <div class="spec-row"><span class="spec-label">Cycle Life</span><span class="spec-val">7,000+ cycles at 80% DoD</span></div>
+          <div class="spec-row"><span class="spec-label">Design Life</span><span class="spec-val">15+ years</span></div>
+          <div class="spec-row"><span class="spec-label">Communication</span><span class="spec-val">Closed-loop CAN/RS-485 with EG4</span></div>
+          <div class="spec-row"><span class="spec-label">Certifications</span><span class="spec-val">UL1973 · UL9540A · UL9540</span></div>
+          <div class="spec-row"><span class="spec-label">Safety</span><span class="spec-val">E-Stop · Dual fire arrestors · EMP</span></div>
+          <div class="spec-row"><span class="spec-label">Max Parallel</span><span class="spec-val">Up to 64 units</span></div>
+          <div class="spec-row"><span class="spec-label">Warranty</span><span class="spec-val">10 years</span></div>
+          <div class="spec-row"><span class="spec-label">Planned Quantity</span><span class="spec-val" style="color:var(--amber)">2–6 units (Tier 1–3)</span></div>
+        </div>
+        <div class="eq-links">
+          <a href="https://offgridstores.com/products/eg4-ll-s-48v-100ah-lithium-iron-phosphate-server-rack-battery-2-6-battery-bundles" target="_blank" class="btn btn-buy">Buy — Off Grid Stores</a>
+          <a href="https://signaturesolar.com/eg4-ll-s-lithium-battery-48v-100ah-server-rack-battery-ul1973-ul9540a-10-year-warranty" target="_blank" class="btn btn-buy">Buy — Signature Solar</a>
+          <a href="https://eg4electronics.com/categories/batteries/eg4-ll-s-48v-100ah-lithium-iron-phosphate-battery/" target="_blank" class="btn btn-spec">Specs ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-bar" style="background:var(--dim)"></div>
+      <div class="section-title">Balance of System — Contractor to Source</div>
+    </div>
+    <div class="card">
+      <table class="bos-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Spec</th>
+            <th>Qty</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>DC PV Wire</td><td>12 AWG USE-2 / PV Wire</td><td>~200 ft</td><td>UV rated for roof runs</td></tr>
+          <tr><td>MC4 Connectors</td><td>Standard MC4 male/female pairs</td><td>25 pairs</td><td>For string connections at roof</td></tr>
+          <tr><td>DC Disconnect</td><td>600V rated, lockable</td><td>1</td><td>Between array and inverter</td></tr>
+          <tr><td>AC Disconnect / Breaker</td><td>240V, 60A minimum</td><td>1</td><td>At main panel — LADWP required</td></tr>
+          <tr><td>AC Wire</td><td>#4 or #6 AWG copper THWN</td><td>~50 ft</td><td>Inverter to main panel run</td></tr>
+          <tr><td>Conduit</td><td>EMT or PVC schedule 40</td><td>TBD on run</td><td>Roof penetration to inverter</td></tr>
+          <tr><td>Conduit Fittings</td><td>Couplings, connectors, straps</td><td>TBD</td><td>Per conduit layout</td></tr>
+          <tr><td>Roof Penetration Seal</td><td>Waterproof conduit boot</td><td>1–2</td><td>At roof entry point(s)</td></tr>
+          <tr><td>Grounding Wire</td><td>#6 AWG bare copper</td><td>~50 ft</td><td>Equipment grounding conductor</td></tr>
+          <tr><td>Ground Rods</td><td>5/8" copper-clad, 8 ft</td><td>2</td><td>Per NEC grounding requirements</td></tr>
+          <tr><td>Wire Management</td><td>UV-rated cable ties / clips</td><td>1 lot</td><td>Roof wire management</td></tr>
+          <tr><td>Junction Box</td><td>NEMA 3R outdoor rated</td><td>1</td><td>For roof-to-conduit transition</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- INSTALL NOTES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-bar" style="background:var(--red)"></div>
+      <div class="section-title">Installation Notes & Requirements</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div style="color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Electrical Requirements</div>
+        <div class="note-row"><span class="note-icon">⚡</span><span class="note-text"><strong>C-10 Licensed Electrician required</strong> — must hold valid CSLB C-10 license for all electrical work including inverter wiring, panel interconnection, and LADWP application.</span></div>
+        <div class="note-row"><span class="note-icon">⚡</span><span class="note-text"><strong>Rapid Shutdown built into EG4 18kPV</strong> — meets NEC 2020:690.12 and California Rule 21. No separate RSD device needed.</span></div>
+        <div class="note-row"><span class="note-icon">⚡</span><span class="note-text"><strong>AFCI built in</strong> — EG4 18kPV includes arc-fault protection per NEC 2020:690.11.</span></div>
+        <div class="note-row"><span class="note-icon">⚡</span><span class="note-text"><strong>LADWP NEM 2.0 interconnection</strong> — electrician to submit interconnection application to LADWP. System is below 20kW so no upgrade fees expected.</span></div>
+        <div class="note-row"><span class="note-icon">⚡</span><span class="note-text"><strong>PE-stamped plans required</strong> — single-line diagram and structural calculations to be signed by California licensed electrical engineer or C-10 licensee.</span></div>
+      </div>
+      <div class="card">
+        <div style="color:var(--blue);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Mounting Requirements</div>
+        <div class="note-row"><span class="note-icon">🔩</span><span class="note-text"><strong>Roof type verification required</strong> — confirm roof material (asphalt, tile, etc.) before ordering specific IronRidge flashfoots. Tile roof requires different attachment hardware.</span></div>
+        <div class="note-row"><span class="note-icon">🔩</span><span class="note-text"><strong>24 attachment points minimum</strong> — one FlashFoot2 per panel, staggered to existing rafters. Rafter locate before drilling.</span></div>
+        <div class="note-row"><span class="note-icon">🔩</span><span class="note-text"><strong>Panel gap: 2" min, 10" max</strong> from underside of module to roof surface per LADBS code.</span></div>
+        <div class="note-row"><span class="note-icon">🔩</span><span class="note-text"><strong>No overhang</strong> — panels must not extend past ridge, hips, gable ends, or eaves.</span></div>
+        <div class="note-row"><span class="note-icon">🔩</span><span class="note-text"><strong>~600 sq ft roof area required</strong> — confirm available clear south/west-facing roof space via aerial view above before finalizing panel layout.</span></div>
+        <div class="note-row"><span class="note-icon">🔩</span><span class="note-text"><strong>Cable run from roof to inverter</strong> — owner will confirm inverter location (garage/utility room). DC run should stay under 50 ft where possible; use 10 AWG if over 30 ft.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase">Bossk Productions LLC</div>
+      <div style="color:var(--dim);font-size:11px">5541 Willis Ave · Sherman Oaks, CA 91411 · team@bosskproductions.com</div>
+    </div>
+    <div style="color:var(--dimmer);font-size:11px">Spec sheet generated June 2026 · Subject to final engineering review</div>
+  </div>
+
+</div>
+</body>
+</html>
