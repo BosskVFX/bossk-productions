@@ -146,7 +146,7 @@ a{color:#3B82F6}
     <div class="g4" style="margin-bottom:10px">
       <div class="card kpi"><div class="kpi-lbl">System Size</div><div class="kpi-val" style="color:#3B82F6">9–12 kW</div><div class="kpi-sub">18–24 panels confirmed on site</div></div>
       <div class="card kpi"><div class="kpi-lbl">Annual Production</div><div class="kpi-val" style="color:#F59E0B">~19,578 kWh</div><div class="kpi-sub">vs 19,120 kWh usage</div></div>
-      <div class="card kpi"><div class="kpi-lbl">Your Build Cost</div><div class="kpi-val" style="color:#10B981">$25,105</div><div class="kpi-sub">hardware + labor + permits</div></div>
+      <div class="card kpi"><div class="kpi-lbl">Equipment Cost</div><div class="kpi-val" style="color:#10B981">$16,063</div><div class="kpi-sub">equipment + permits · labor quoted by contractor</div></div>
       <div class="card kpi"><div class="kpi-lbl">Current LADWP Bill</div><div class="kpi-val" style="color:#EF4444">~$450/mo</div><div class="kpi-sub">$5,400/yr · drops to ~$15/mo after solar</div></div>
     </div>
   </div>
@@ -408,7 +408,8 @@ initCharts();
 // HARDWARE LIST
 const hw = [
   {name:'Sunplus 445W N-Type × 36-panel pallet (use 24)',base:4997,buf:5747,pct:15,color:'#3B82F6',buy:'https://clearenergypartners.store/products/36-pack-445w-sunplus-n-type-monofacial-tier-1-panels-16-02kw-pallet-sr4-54htb-445m-wholesale-pallet-deal',buyLbl:'Clear Energy Partners',spec:'https://clearenergypartners.store/products/36-pack-445w-sunplus-n-type-monofacial-tier-1-panels-16-02kw-pallet-sr4-54htb-445m-wholesale-pallet-deal',deal:'$4,997 full pallet · $138.80/panel · use 24 keep 12'},
-  {name:'EG4 18kPV Hybrid Inverter',base:4898,buf:5633,pct:15,color:'#10B981',buy:'https://offgridstores.com/products/eg4-18kpv-48v-split-phase-hybrid-inverter',buyLbl:'Off Grid Stores',spec:'https://eg4electronics.com/categories/inverters/eg4-18kpv-12lv-all-in-one-hybrid-inverter/',deal:'$4,898 confirmed'},
+  {name:'EG4 18kPV Hybrid Inverter — 12kW AC / 3 MPPTs / California Rule 21',base:4898,buf:5633,pct:15,color:'#10B981',buy:'https://offgridstores.com/products/eg4-18kpv-48v-split-phase-hybrid-inverter',buyLbl:'Off Grid Stores',spec:'https://eg4electronics.com/categories/inverters/eg4-18kpv-12lv-all-in-one-hybrid-inverter/',deal:'$4,898 confirmed · primary choice'},
+  {name:'ALT INVERTER — Sol-Ark Limitless 12K-2P-LL — 12kW grid-tied / 2 MPPTs / CA Rule 21 (just launched June 2026)',base:3999,buf:3999,pct:0,color:'#06B6D4',buy:'https://shopsolarkits.com/products/sol-ark-limitless-12k-2p-ll',buyLbl:'Shop Solar Kits',spec:'https://sol-ark.com/residential-energy-solutions/essentials-12k-2p-hybrid-inverter/',deal:'Saves $899 vs EG4 · VERIFY: Sunplus Voc \u226441V for 12-panel strings · confirm EG4 LL-S closed-loop comms'},
   {name:'IronRidge XR100 Roof Mount',base:1920,buf:2208,pct:15,color:'#F59E0B',buy:'https://www.solarelectricsupply.com/solar-panel-mounts/roof-mounts/ironridge',buyLbl:'Solar Electric Supply',spec:'https://ironridge.com/solar-racking/xr-roof-mount/',deal:'~$0.16/W · call for price'},
   {name:'BOS — wire, conduit, disconnects, MC4, grounding',base:1020,buf:1275,pct:25,color:'#A855F7',buy:null,buyLbl:null,spec:null,deal:'Source locally'},
   {name:'OPTIONAL — Tigo TS4-A-O optimizers ×8 + CCA + TAP (string nearest tree)',base:893,buf:893,pct:0,color:'#475569',buy:'https://signaturesolar.com/tigo-ts4-a-o-optimization-monitoring-rapid-shutdown/',buyLbl:'Signature Solar',spec:'https://www.tigoenergy.com/product/ts4-a-o/',deal:'Prevents shade on 1 panel dragging whole string · panel-level monitoring bonus'},
