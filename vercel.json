@@ -2,6 +2,6 @@
   "rewrites": [
     { "source": "/solar-q26", "destination": "/solar-q26.html" },
     { "source": "/solar-spec", "destination": "/solar-spec.html" },
-    { "source": "/:slug", "destination": "/client.html" }
+    { "source": "/:slug([^.]+)", "destination": "/client.html" }
   ]
 }
