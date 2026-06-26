@@ -472,10 +472,19 @@ document.getElementById('bid-form').addEventListener('submit', async function(e)
   btn.disabled = true; btn.textContent = 'Sending...'; err.style.display='none';
   const fd = new FormData(e.target);
   const data = Object.fromEntries(fd.entries());
-  data.c10 = e.target.querySelector('[name=c10]').checked;
-  data.eg4cert = e.target.querySelector('[name=eg4cert]').checked;
+  const c10 = e.target.querySelector('[name=c10]').checked;
+  const eg4cert = e.target.querySelector('[name=eg4cert]').checked;
+  const elec = parseFloat(data.elecBid||0);
+  const mount = parseFloat(data.mountBid||0);
+  const permit = parseFloat(data.permitBid||0);
+  const total = elec + mount + permit;
+  const contactData = {
+    name: data.name, email: data.email, company: data.company||'—',
+    service: 'Solar Bid — 5541 Willis Ave',
+    message: 'CSLB: '+data.license+' | C10: '+(c10?'Yes':'No')+' | EG4: '+(eg4cert?'Yes':'No')+'\nPhone: '+data.phone+'\nLabor Only: '+(data.laborOnly||'—')+'\nProposed Panels: '+(data.panels||'—')+'\nElectrician: $'+elec.toLocaleString()+'\nMounting: $'+mount.toLocaleString()+'\nPermits: $'+permit.toLocaleString()+'\nTOTAL BID: $'+total.toLocaleString()+'\nTimeline: '+(data.timeline||'—')+' weeks\nNotes: '+(data.notes||'—')
+  };
   try {
-    const res = await fetch('/api/solar-bid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const res = await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(contactData)});
     const json = await res.json();
     if(json.success){
       document.getElementById('bid-form').style.display='none';
