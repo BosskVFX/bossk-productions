@@ -14,143 +14,167 @@ export default async function handler(req, res) {
   const BEEHIIV_KEY = process.env.BEEHIIV_API_KEY;
   const BEEHIIV_PUB = process.env.BEEHIIV_PUB_ID;
 
-  const results = {
-    emailSent: false,
-    autoReplySent: false,
-    sheetLogged: false,
-    newsletterAdded: false,
-    errors: []
-  };
+  const isSolarBid = service && service.startsWith('Solar Bid');
 
-  // 1. Send notification email to Bossk team
+  const results = { emailSent: false, autoReplySent: false, sheetLogged: false, errors: [] };
+
+  // ─── BUILD EMAILS ────────────────────────────────────────────────────────────
+  let teamSubject, teamHtml, replyHtml;
+
+  if (isSolarBid) {
+    const b = req.body;
+    const fmt = (n) => n > 0 ? '$' + Number(n).toLocaleString() : '—';
+    const cell = (label, val, highlight) =>
+      `<tr style="${highlight ? 'background:#1a2a1a;' : ''}">
+        <td style="padding:10px 14px;color:#94A3B8;font-size:12px;font-weight:600;white-space:nowrap;width:200px;border-bottom:1px solid #1E3048;">${label}</td>
+        <td style="padding:10px 14px;color:${highlight ? '#10B981' : '#F1F5F9'};font-size:${highlight ? '16px' : '13px'};font-weight:${highlight ? '900' : '500'};border-bottom:1px solid #1E3048;">${val}</td>
+      </tr>`;
+
+    const bidTable = `
+      <table style="width:100%;border-collapse:collapse;border:1px solid #243447;border-radius:10px;overflow:hidden;">
+        ${cell('Contractor', `${name}${b.company && b.company !== '—' ? ' — ' + b.company : ''}`)}
+        ${cell('CSLB License', b.bid_license||'—')}
+        ${cell('C-10 Licensed', b.bid_c10 === 'Yes' ? '✓ Yes' : '✗ No')}
+        ${cell('EG4 Certified', b.bid_eg4cert === 'Yes' ? '✓ Yes' : '✗ No')}
+        ${cell('Phone', b.bid_phone||'—')}
+        ${cell('Email', email)}
+        ${cell('Labor Only?', b.bid_laborOnly||'—')}
+        <tr><td colspan="2" style="padding:6px 14px;background:#0F1923;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#F59E0B;">BID BREAKDOWN</td></tr>
+        ${cell('Electrician Labor', fmt(b.bid_elec))}
+        ${cell('Mounting Crew', fmt(b.bid_mount))}
+        ${cell('Permits + PE Engineering', fmt(b.bid_permit))}
+        ${cell('TOTAL LABOR BID', fmt(b.bid_total), true)}
+        ${cell('Timeline', b.bid_timeline||'—')}
+        ${b.bid_notes && b.bid_notes !== '—' ? cell('Notes', b.bid_notes) : ''}
+      </table>`;
+
+    teamSubject = `Solar Bid — ${name}${b.company && b.company !== '—' ? ' / ' + b.company : ''} — ${fmt(b.bid_total)}`;
+
+    teamHtml = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#0F1923;padding:24px;max-width:600px;margin:0 auto;">
+        <div style="background:#F59E0B;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+          <div style="color:#0F1923;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:2px;">New Submission</div>
+          <div style="color:#0F1923;font-size:20px;font-weight:900;">Solar Bid — 5541 Willis Ave</div>
+        </div>
+        ${bidTable}
+        <div style="margin-top:16px;padding:12px 14px;background:#1A2B3C;border-radius:8px;border:1px solid #243447;">
+          <a href="mailto:${email}" style="color:#3B82F6;font-size:13px;">Reply directly to contractor →</a>
+        </div>
+      </div>`;
+
+    replyHtml = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#0F1923;padding:24px;max-width:600px;margin:0 auto;">
+        <div style="background:#10B981;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+          <div style="color:#0F1923;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:2px;">Bid Received</div>
+          <div style="color:#0F1923;font-size:20px;font-weight:900;">Thanks, ${name}.</div>
+        </div>
+        <p style="color:#94A3B8;font-size:13px;line-height:1.7;margin-bottom:20px;">
+          We received your bid for <strong style="color:#F1F5F9;">5541 Willis Ave, Sherman Oaks, CA 91411</strong>. 
+          Here's a summary of what you submitted. We'll be in touch within 24 hours.
+        </p>
+        ${bidTable}
+        <div style="margin-top:20px;padding:16px;background:#1A2B3C;border-radius:8px;border:1px solid #243447;text-align:center;">
+          <div style="color:#64748B;font-size:11px;margin-bottom:8px;">View the full project brief</div>
+          <a href="https://bosskproductions.com/solar-q26" style="display:inline-block;background:#F59E0B;color:#0F1923;padding:10px 24px;border-radius:7px;font-weight:800;font-size:13px;text-decoration:none;">View Project Brief →</a>
+        </div>
+        <div style="margin-top:16px;color:#475569;font-size:11px;text-align:center;">
+          Bossk Productions LLC · 5541 Willis Ave, Sherman Oaks, CA 91411
+        </div>
+      </div>`;
+
+  } else {
+    // Standard contact form
+    teamSubject = `New Inquiry: ${name}${company ? ' — ' + company : ''}`;
+    teamHtml = `
+      <h2 style="color:#ff6b35;">New inquiry from bosskproductions.com</h2>
+      <table style="border-collapse:collapse;width:100%;max-width:500px;">
+        <tr><td style="padding:8px;color:#888;font-size:12px;">NAME</td><td style="padding:8px;">${name}</td></tr>
+        <tr><td style="padding:8px;color:#888;font-size:12px;">COMPANY</td><td style="padding:8px;">${company || '—'}</td></tr>
+        <tr><td style="padding:8px;color:#888;font-size:12px;">EMAIL</td><td style="padding:8px;"><a href="mailto:${email}">${email}</a></td></tr>
+        <tr><td style="padding:8px;color:#888;font-size:12px;">SERVICE</td><td style="padding:8px;">${service || '—'}</td></tr>
+        <tr><td style="padding:8px;color:#888;font-size:12px;">MESSAGE</td><td style="padding:8px;">${message || '—'}</td></tr>
+      </table>`;
+    replyHtml = `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#333;">
+        <h2 style="color:#ff6b35;margin-bottom:4px;">Thanks for reaching out, ${name}.</h2>
+        <p style="color:#666;font-size:15px;line-height:1.7;">We received your inquiry and will get back to you within 24 hours.</p>
+        <p style="color:#666;font-size:15px;line-height:1.7;">In the meantime, check out our latest work at <a href="https://www.bosskproductions.com/#work" style="color:#ff6b35;">bosskproductions.com</a>.</p>
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+        <p style="color:#999;font-size:12px;">Bossk Productions — Content at the Speed of Thought<br>Los Angeles, CA • Worldwide</p>
+      </div>`;
+  }
+
+  // ─── SEND TEAM EMAIL ─────────────────────────────────────────────────────────
   try {
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'Bossk Productions <notifications@bosskproductions.com>',
         to: 'team@bosskproductions.com',
-        subject: `New Inquiry: ${name}${company ? ' — ' + company : ''}`,
-        html: `
-          <h2 style="color:#ff6b35;">New inquiry from bosskproductions.com</h2>
-          <table style="border-collapse:collapse;width:100%;max-width:500px;">
-            <tr><td style="padding:8px;color:#888;font-size:12px;">NAME</td><td style="padding:8px;">${name}</td></tr>
-            <tr><td style="padding:8px;color:#888;font-size:12px;">COMPANY</td><td style="padding:8px;">${company || '—'}</td></tr>
-            <tr><td style="padding:8px;color:#888;font-size:12px;">EMAIL</td><td style="padding:8px;"><a href="mailto:${email}">${email}</a></td></tr>
-            <tr><td style="padding:8px;color:#888;font-size:12px;">SERVICE</td><td style="padding:8px;">${service || '—'}</td></tr>
-            <tr><td style="padding:8px;color:#888;font-size:12px;">MESSAGE</td><td style="padding:8px;">${message || '—'}</td></tr>
-          </table>
-        `
+        reply_to: email,
+        subject: teamSubject,
+        html: teamHtml
       })
     });
     const emailData = await emailRes.json();
-    console.log('TEAM EMAIL:', JSON.stringify(emailData));
     results.emailSent = emailRes.ok;
     if (!emailRes.ok) results.errors.push('team_email: ' + JSON.stringify(emailData));
   } catch (e) {
-    console.error('TEAM EMAIL ERROR:', e.message);
     results.errors.push('team_email_catch: ' + e.message);
   }
 
-  // 2. Send auto-reply to the person who submitted
+  // ─── SEND AUTO-REPLY ─────────────────────────────────────────────────────────
   try {
     const replyRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Bossk Productions <hello@bosskproductions.com>',
+        from: isSolarBid
+          ? 'Bossk Productions Solar <hello@bosskproductions.com>'
+          : 'Bossk Productions <hello@bosskproductions.com>',
         to: email,
-        subject: 'We got your message — Bossk Productions',
-        html: `
-          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#333;">
-            <h2 style="color:#ff6b35;margin-bottom:4px;">Thanks for reaching out, ${name}.</h2>
-            <p style="color:#666;font-size:15px;line-height:1.7;">
-              We received your inquiry and will get back to you within 24 hours.
-            </p>
-            <p style="color:#666;font-size:15px;line-height:1.7;">
-              In the meantime, check out our latest work at
-              <a href="https://www.bosskproductions.com/#work" style="color:#ff6b35;">bosskproductions.com</a>.
-            </p>
-            <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-            <p style="color:#999;font-size:12px;">
-              Bossk Productions — Content at the Speed of Thought<br>
-              Los Angeles, CA • Worldwide
-            </p>
-          </div>
-        `
+        subject: isSolarBid
+          ? 'Your Solar Bid — 5541 Willis Ave, Sherman Oaks'
+          : 'We got your message — Bossk Productions',
+        html: replyHtml
       })
     });
     const replyData = await replyRes.json();
-    console.log('AUTO REPLY:', JSON.stringify(replyData));
     results.autoReplySent = replyRes.ok;
     if (!replyRes.ok) results.errors.push('auto_reply: ' + JSON.stringify(replyData));
   } catch (e) {
-    console.error('AUTO REPLY ERROR:', e.message);
     results.errors.push('auto_reply_catch: ' + e.message);
   }
 
-  // 3. Log to Google Sheet
-  console.log('SHEET_URL value:', SHEET_URL ? 'SET (' + SHEET_URL.substring(0, 50) + '...)' : 'NOT SET');
+  // ─── LOG TO GOOGLE SHEET ─────────────────────────────────────────────────────
   if (SHEET_URL) {
     try {
-      const sheetRes = await fetch(SHEET_URL, {
+      await fetch(SHEET_URL, {
         method: 'POST',
         body: JSON.stringify({ name, email, company, service, message }),
         headers: { 'Content-Type': 'text/plain' },
         redirect: 'follow'
       });
-      const sheetText = await sheetRes.text();
-      console.log('SHEET RESPONSE:', sheetRes.status, sheetText);
       results.sheetLogged = true;
     } catch (e) {
-      console.error('SHEET ERROR:', e.message);
       results.errors.push('sheet: ' + e.message);
     }
-  } else {
-    results.errors.push('GOOGLE_SHEET_URL env var not set');
   }
 
-  // 4. Add to Beehiiv newsletter
-  console.log('BEEHIIV KEY:', BEEHIIV_KEY ? 'SET' : 'NOT SET');
-  console.log('BEEHIIV PUB:', BEEHIIV_PUB ? BEEHIIV_PUB : 'NOT SET');
-  if (BEEHIIV_KEY && BEEHIIV_PUB) {
+  // ─── NEWSLETTER (non-bids only) ──────────────────────────────────────────────
+  if (!isSolarBid && BEEHIIV_KEY && BEEHIIV_PUB) {
     try {
-      const bhRes = await fetch(`https://api.beehiiv.com/v2/publications/${BEEHIIV_PUB}/subscriptions`, {
+      await fetch(`https://api.beehiiv.com/v2/publications/${BEEHIIV_PUB}/subscriptions`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${BEEHIIV_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: email,
-          utm_source: 'website_contact_form',
-          referring_site: 'bosskproductions.com',
-          double_opt_override: 'off',
-          send_welcome_email: false
-        })
+        headers: { 'Authorization': `Bearer ${BEEHIIV_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, utm_source: 'website_contact_form', referring_site: 'bosskproductions.com', double_opt_override: 'off', send_welcome_email: false })
       });
-      const bhData = await bhRes.json();
-      console.log('BEEHIIV RESPONSE:', JSON.stringify(bhData));
-      results.newsletterAdded = bhRes.ok || bhRes.status === 201;
-      if (!bhRes.ok && bhRes.status !== 201) results.errors.push('beehiiv: ' + JSON.stringify(bhData));
+      results.newsletterAdded = true;
     } catch (e) {
-      console.error('BEEHIIV ERROR:', e.message);
       results.errors.push('beehiiv: ' + e.message);
     }
-  } else {
-    results.errors.push('BEEHIIV env vars not set');
   }
 
-  console.log('FINAL RESULTS:', JSON.stringify(results));
-
-  return res.status(200).json({
-    success: true,
-    ...results
-  });
+  return res.status(200).json({ success: true, ...results });
 }

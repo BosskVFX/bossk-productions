@@ -325,11 +325,6 @@ a{color:#3B82F6}
         </div>
         <div class="divider"></div>
         <div style="color:#F59E0B;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Your Bid</div>
-        <div class="fg">
-          <label class="fl">After site visit — proposed panel count</label>
-          <input class="fi" name="panels" placeholder="e.g. 20 panels">
-          <div class="fn">Layout shows 18–22 realistic. Maximize Zone B (south slope).</div>
-        </div>
         <div class="fr">
           <div class="fg"><label class="fl">Electrician labor ($)</label><input class="fi" name="elecBid" type="number" placeholder="0" oninput="calcTotal()"><div class="fn">Permits, wiring, commissioning, LADWP interconnect</div></div>
           <div class="fg"><label class="fl">Mounting crew labor ($)</label><input class="fi" name="mountBid" type="number" placeholder="0" oninput="calcTotal()"><div class="fn">Racking, panel install, roof work</div></div>
@@ -437,9 +432,22 @@ document.getElementById('bid-form').addEventListener('submit', async function(e)
   const permit = parseFloat(data.permitBid||0);
   const total = elec + mount + permit;
   const contactData = {
-    name: data.name, email: data.email, company: data.company||'—',
+    name: data.name,
+    email: data.email,
+    company: data.company||'—',
     service: 'Solar Bid — 5541 Willis Ave',
-    message: 'CSLB: '+data.license+' | C10: '+(c10?'Yes':'No')+' | EG4: '+(eg4cert?'Yes':'No')+'\nPhone: '+data.phone+'\nLabor Only: '+(data.laborOnly||'—')+'\nProposed Panels: '+(data.panels||'—')+'\nElectrician: $'+elec.toLocaleString()+'\nMounting: $'+mount.toLocaleString()+'\nPermits: $'+permit.toLocaleString()+'\nTOTAL BID: $'+total.toLocaleString()+'\nTimeline: '+(data.timeline||'—')+' weeks\nNotes: '+(data.notes||'—')
+    message: 'Solar bid from '+data.name,
+    bid_license: data.license||'—',
+    bid_c10: c10 ? 'Yes' : 'No',
+    bid_eg4cert: eg4cert ? 'Yes' : 'No',
+    bid_phone: data.phone||'—',
+    bid_laborOnly: data.laborOnly||'—',
+    bid_elec: elec,
+    bid_mount: mount,
+    bid_permit: permit,
+    bid_total: total,
+    bid_timeline: (data.timeline||'—')+' weeks',
+    bid_notes: data.notes||'—'
   };
   try {
     const res = await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(contactData)});
