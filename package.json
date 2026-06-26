@@ -1,9 +1,9 @@
 {
   "type": "module",
-  "dependencies": {
-    "sharp": "^0.34.5"
-  },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.34.5"
   }
 }
