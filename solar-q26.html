@@ -2,622 +2,222 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Solar Build Quote — Bossk Productions</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0F1923; --card: #1A2B3C; --border: #243447; --border2: #1E3048;
-    --amber: #F59E0B; --emerald: #10B981; --blue: #3B82F6; --purple: #A855F7;
-    --red: #EF4444; --text: #F1F5F9; --muted: #94A3B8; --dim: #64748B; --dimmer: #475569;
-  }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
-  a { color: var(--blue); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  .header { background: linear-gradient(135deg, #0F1923, #162030); border-bottom: 1px solid #1E3048; padding: 24px 28px 0; }
-  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-  .eyebrow { color: var(--amber); font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 4px; }
-  .title { color: var(--text); font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
-  .subtitle { color: var(--dim); font-size: 12px; }
-
-  .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { background: transparent; color: var(--muted); border: none; border-radius: 8px 8px 0 0; padding: 8px 16px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; cursor: pointer; white-space: nowrap; transition: all .15s; }
-  .tab:hover { color: var(--text); }
-  .tab.active { background: var(--amber); color: #0F1923; }
-
-  .content { padding: 24px 28px; }
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-
-  .section { margin-bottom: 28px; }
-  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-  .section-bar { width: 4px; height: 20px; border-radius: 2px; flex-shrink: 0; }
-  .section-title { color: var(--text); font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .card-sm { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
-
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-
-  .kpi-label { color: var(--dim); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
-  .kpi-val { font-size: 22px; font-weight: 900; letter-spacing: -.02em; margin-bottom: 4px; }
-  .kpi-sub { color: var(--dim); font-size: 11px; }
-
-  .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border2); }
-  .row:last-child { border-bottom: none; }
-  .row-label { color: var(--muted); font-size: 13px; }
-  .row-val { font-size: 13px; font-weight: 700; }
-
-  /* HARDWARE ITEM */
-  .hw-item { padding: 14px 0; border-bottom: 1px solid var(--border2); }
-  .hw-item:last-child { border-bottom: none; }
-  .hw-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
-  .hw-name { color: var(--text); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .hw-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-  .hw-prices { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
-  .hw-base { color: var(--dim); font-size: 12px; }
-  .hw-buffered { font-size: 14px; font-weight: 700; }
-  .hw-details { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-  .hw-source { font-size: 11px; }
-  .hw-bar { height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; margin-top: 8px; }
-  .hw-bar-fill { height: 100%; border-radius: 2px; }
-  .hw-links { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .btn-buy { background: var(--amber); color: #0F1923; padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: 800; letter-spacing: .05em; text-decoration: none; }
-  .btn-buy:hover { background: #D97706; text-decoration: none; }
-  .btn-alt { background: var(--border); color: var(--muted); padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: 700; text-decoration: none; }
-  .btn-alt:hover { text-decoration: none; color: var(--text); }
-  .deal-badge { background: #0f2a1f; color: var(--emerald); border: 1px solid var(--emerald); font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 12px; letter-spacing: .06em; }
-
-  /* BATTERY */
-  .bat-card { background: var(--card); border-radius: 12px; padding: 20px; }
-  .bat-tier { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 12px; }
-  .bat-kwh { font-size: 30px; font-weight: 900; margin-bottom: 2px; }
-  .bat-coverage { color: var(--dim); font-size: 11px; margin-bottom: 16px; }
-  .bat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
-  .bat-label { color: var(--dim); }
-  .bat-divider { border-top: 1px solid var(--border2); padding-top: 12px; }
-
-  /* USAGE */
-  .usage-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
-
-  /* LOAN */
-  .loan-card { background: var(--card); border-radius: 12px; padding: 18px; text-align: center; }
-  .loan-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
-
-  /* CONTACT */
-  .contact-ask { background: #243447; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
-
-  /* FLAG */
-  .flag { border-radius: 10px; padding: 14px 16px; margin-top: 12px; }
-
-  /* OPTIMIZER */
-  .opt-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border2); font-size: 12px; }
-  .opt-row:last-child { border-bottom: none; }
-
-  /* SUMMARY TABLE */
-  .sum-table { width: 100%; border-collapse: collapse; }
-  .sum-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--border); }
-  .sum-table td { padding: 9px 12px; font-size: 12px; border-bottom: 1px solid var(--border2); color: var(--muted); }
-  .sum-table td:first-child { color: var(--text); font-weight: 500; }
-  .sum-table tr:last-child td { border-bottom: none; font-weight: 700; color: var(--text); }
-
-  @media (max-width: 768px) {
-    .grid-4, .grid-3, .grid-6 { grid-template-columns: repeat(2, 1fr); }
-    .grid-2 { grid-template-columns: 1fr; }
-    .content { padding: 16px; }
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0F1923;--card:#1A2B3C;--border:#243447;--amber:#F59E0B;--green:#10B981;--blue:#3B82F6;--red:#EF4444;--text:#F1F5F9;--muted:#94A3B8;--dim:#64748B}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;min-height:100vh}
+a{color:var(--blue)}
+.header{background:linear-gradient(135deg,#0F1923,#162030);border-bottom:1px solid #1E3048;padding:24px 28px}
+.eyebrow{color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px}
+.title{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+.sub{color:var(--dim);font-size:12px}
+.wrap{max-width:960px;margin:0 auto;padding:28px}
+.section{margin-bottom:36px}
+.section-title{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{text-align:center}
+.kpi-label{color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.kpi-val{font-size:26px;font-weight:900;letter-spacing:-.02em;margin-bottom:4px}
+.kpi-sub{color:var(--dim);font-size:11px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.row-label{color:var(--muted);font-size:13px}
+.row-val{font-size:13px;font-weight:700}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.photos img{width:100%;border-radius:10px;object-fit:cover;height:260px;border:1px solid var(--border)}
+.photos img.wide{height:280px}
+.hw-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.hw-item:last-child{border-bottom:none}
+.hw-name{font-size:13px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.hw-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hw-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.hw-prices{display:flex;gap:14px;align-items:center}
+.hw-base{color:var(--dim);font-size:12px}
+.hw-buf{font-size:13px;font-weight:700}
+.hw-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn-buy{background:var(--amber);color:#0F1923;padding:4px 12px;border-radius:6px;font-size:10px;font-weight:800;text-decoration:none}
+.btn-spec{background:var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;text-decoration:none}
+.hw-badge{background:#0f2a1f;color:var(--green);border:1px solid var(--green);font-size:9px;font-weight:700;padding:2px 8px;border-radius:12px}
+.bat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.loan-card{background:var(--card);border-radius:12px;padding:18px;text-align:center}
+.usage-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.note{background:#1a2218;border:1px solid #2a4a1a;border-radius:10px;padding:14px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.6}
+@media(max-width:700px){.grid2,.grid3,.grid4,.photos{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
 <div class="header">
-  <div class="header-top">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
     <div>
       <div class="eyebrow">Bossk Productions LLC</div>
-      <div class="title">Solar Build Quote — Verified Pricing</div>
-      <div class="subtitle">EG4 18kPV · Jinko Tiger Neo 500W · 12 kW · Sherman Oaks CA · June 2026</div>
+      <div class="title">Solar Build Quote</div>
+      <div class="sub">EG4 18kPV · Jinko Tiger Neo 500W · Sherman Oaks CA · June 2026</div>
     </div>
     <div style="text-align:right">
       <div style="color:var(--dim);font-size:11px;margin-bottom:2px">Total Build — No Battery</div>
-      <div style="color:var(--emerald);font-size:28px;font-weight:900">$25,105</div>
+      <div style="color:var(--green);font-size:30px;font-weight:900">$25,105</div>
       <div style="color:var(--dim);font-size:11px">incl. 15–25% contingency buffer</div>
     </div>
   </div>
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('overview', this)">Overview</button>
-    <button class="tab" onclick="showTab('hardware', this)">Hardware</button>
-    <button class="tab" onclick="showTab('battery', this)">Battery</button>
-    <button class="tab" onclick="showTab('optimizer', this)">Optimizers</button>
-    <button class="tab" onclick="showTab('labor', this)">Labor & Permits</button>
-    <button class="tab" onclick="showTab('loan', this)">Loan</button>
-    <button class="tab" onclick="showTab('usage', this)">Usage</button>
-    <button class="tab" onclick="showTab('contacts', this)">Contacts</button>
-  </div>
 </div>
 
-<div class="content">
+<div class="wrap">
 
-  <!-- OVERVIEW -->
-  <div id="tab-overview" class="tab-panel active">
-    <div class="section">
-      <div class="grid-4" style="margin-bottom:16px">
-        <div class="card">
-          <div class="kpi-label">System Size</div>
-          <div class="kpi-val" style="color:var(--blue)">12 kW</div>
-          <div class="kpi-sub">24 × Jinko Tiger Neo 500W</div>
-        </div>
-        <div class="card">
-          <div class="kpi-label">Annual Production</div>
-          <div class="kpi-val" style="color:var(--amber)">19,578 kWh</div>
-          <div class="kpi-sub">vs 19,120 kWh usage · +458 surplus</div>
-        </div>
-        <div class="card">
-          <div class="kpi-label">Hardware Base Price</div>
-          <div class="kpi-val" style="color:var(--blue)">$14,054</div>
-          <div class="kpi-sub">Verified live pricing · June 2026</div>
-        </div>
-        <div class="card">
-          <div class="kpi-label">Full Build w/ Buffer</div>
-          <div class="kpi-val" style="color:var(--emerald)">$25,105</div>
-          <div class="kpi-sub">No battery · 15–25% contingency applied</div>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <div style="color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Monthly Impact — 15yr HELOC @ 5.5%</div>
-          <div class="row"><span class="row-label">Current LADWP bill (avg)</span><span class="row-val" style="color:var(--red)">~$475/mo</span></div>
-          <div class="row"><span class="row-label">Loan payment — no battery</span><span class="row-val" style="color:var(--amber)">~$205/mo</span></div>
-          <div class="row"><span class="row-label">LADWP after solar</span><span class="row-val" style="color:var(--dim)">~$15/mo</span></div>
-          <div class="row"><span class="row-label">Net monthly improvement</span><span class="row-val" style="color:var(--emerald)">+$255/mo better</span></div>
-          <div class="row"><span class="row-label">Peak summer improvement</span><span class="row-val" style="color:var(--emerald)">+$470/mo better</span></div>
-        </div>
-        <div class="card">
-          <div style="color:var(--emerald);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Build Summary</div>
-          <div class="row"><span class="row-label">Hardware (verified prices)</span><span class="row-val" style="color:var(--blue)">$14,054</span></div>
-          <div class="row"><span class="row-label">Hardware w/ 15% buffer</span><span class="row-val" style="color:var(--blue)">$16,265</span></div>
-          <div class="row"><span class="row-label">Labor w/ 20% buffer</span><span class="row-val" style="color:var(--amber)">$6,840</span></div>
-          <div class="row"><span class="row-label">Permits w/ 25% buffer</span><span class="row-val" style="color:var(--purple)">$2,000</span></div>
-          <div class="row"><span class="row-label">Total no battery</span><span class="row-val" style="color:var(--emerald)">$25,105</span></div>
-        </div>
-      </div>
-      <div class="flag" style="background:#1a2a1a;border:1px solid #1f4a1f;margin-top:12px">
-        <div style="color:var(--amber);font-size:12px;font-weight:700;margin-bottom:4px">⚠ Roof Note — Left Slope No-Install Zone</div>
-        <div style="color:var(--muted);font-size:12px">Tree on left side of house partially covers left roof slope. All 24 panels go on the right side and front (east-facing) slopes only. Installer must keep all 3 strings entirely off the left slope. If any edge panels on the closest string show late-afternoon shadow creep, add Tigo TS4-A-O optimizers to that string (see Optimizers tab).</div>
-      </div>
+  <!-- PHOTOS -->
+  <div class="section">
+    <div class="section-title">Property</div>
+    <div class="photos">
+      <img src="/house-front.jpeg" alt="Front elevation" class="wide">
+      <img src="/roof-layout.png" alt="Panel placement layout">
     </div>
   </div>
 
-  <!-- HARDWARE -->
-  <div id="tab-hardware" class="tab-panel">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-bar" style="background:var(--blue)"></div>
-        <div class="section-title">Hardware — Verified Live Pricing · June 2026</div>
+  <!-- SYSTEM SNAPSHOT -->
+  <div class="section">
+    <div class="section-title">System Snapshot</div>
+    <div class="grid4" style="margin-bottom:12px">
+      <div class="card kpi">
+        <div class="kpi-label">System Size</div>
+        <div class="kpi-val" style="color:var(--blue)">9–12 kW</div>
+        <div class="kpi-sub">18–24 panels · installer confirms</div>
       </div>
-      <div class="card" style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:8px">
-          <div style="color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Base Price (verified)</div>
-          <div style="color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Buffered (+15–25%)</div>
-        </div>
-        <div id="hw-list"></div>
-        <div style="border-top:2px solid var(--amber);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-          <div>
-            <div style="color:var(--dim);font-size:11px;margin-bottom:2px">Hardware Base Total</div>
-            <div style="color:var(--blue);font-size:22px;font-weight:900">$14,054</div>
-          </div>
-          <div style="text-align:right">
-            <div style="color:var(--dim);font-size:11px;margin-bottom:2px">Hardware Buffered Total</div>
-            <div style="color:var(--emerald);font-size:22px;font-weight:900">$16,265</div>
-          </div>
-        </div>
+      <div class="card kpi">
+        <div class="kpi-label">Annual Production</div>
+        <div class="kpi-val" style="color:var(--amber)">~19,578 kWh</div>
+        <div class="kpi-sub">vs 19,120 kWh usage</div>
       </div>
-      <div class="flag" style="background:#1a2218;border:1px solid #2a4a1a">
-        <div style="color:var(--emerald);font-size:12px;font-weight:700;margin-bottom:4px">💡 Deal Tips</div>
-        <div style="color:var(--muted);font-size:12px;line-height:1.6">
-          <strong style="color:var(--text)">Panels:</strong> TSolar is the best retail source found. Buy in a 24-pack if possible (may require calling directly — minimum orders vary).<br>
-          <strong style="color:var(--text)">Inverter:</strong> $4,898 is the market floor everywhere — no discount exists. Off Grid Stores offers a best-price match if you find lower.<br>
-          <strong style="color:var(--text)">Racking:</strong> IronRidge has MAPP pricing. Call Gexpro or Solar Electric Supply directly — real orders run ~$0.16/watt vs higher MSRP.<br>
-          <strong style="color:var(--text)">Batteries:</strong> EG4 LL-S has MAPP — call before ordering, actual sell price may be below advertised. Watch for 10% sales (~$1,291/unit).
-        </div>
+      <div class="card kpi">
+        <div class="kpi-label">Your Build Cost</div>
+        <div class="kpi-val" style="color:var(--green)">$25,105</div>
+        <div class="kpi-sub">hardware + labor + permits</div>
       </div>
-    </div>
-  </div>
-
-  <!-- BATTERY -->
-  <div id="tab-battery" class="tab-panel">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-bar" style="background:var(--indigo, #6366F1)"></div>
-        <div class="section-title">Battery Storage — EG4 LL-S 48V 100Ah · $1,435/unit · 5.12 kWh each</div>
-      </div>
-      <div class="grid-3" style="margin-bottom:16px">
-        <div class="bat-card" style="border:1px solid var(--blue)">
-          <div class="bat-tier" style="color:var(--blue)">Tier 1 <span style="background:#1a2f4a;color:var(--blue);font-size:10px;padding:2px 8px;border-radius:12px">2 units</span></div>
-          <div class="bat-kwh">10.24 kWh</div>
-          <div class="bat-coverage">1 overnight outage · office + essentials</div>
-          <div class="bat-divider">
-            <div class="bat-row"><span class="bat-label">2× EG4 LL-S</span><span style="font-weight:700;color:var(--blue)">$2,870</span></div>
-            <div class="bat-row"><span class="bat-label">6-slot rack</span><span style="font-weight:700">$400</span></div>
-            <div class="bat-row"><span class="bat-label">BOS + electrician</span><span style="font-weight:700">$653</span></div>
-            <div class="bat-row"><span class="bat-label">Subtotal base</span><span style="font-weight:700;color:var(--text)">$3,923</span></div>
-            <div class="bat-row"><span class="bat-label">Total build (no batt)</span><span style="font-weight:700;color:var(--text)">$25,105</span></div>
-            <div class="bat-row"><span class="bat-label" style="font-weight:700">Total with Tier 1</span><span style="font-weight:900;color:var(--blue);font-size:14px">$29,028</span></div>
-            <div class="bat-row"><span class="bat-label">15yr @ 5.5%</span><span style="font-weight:700;color:var(--amber)">$237/mo</span></div>
-            <div class="bat-row"><span class="bat-label">Net vs bill</span><span style="font-weight:700;color:var(--emerald)">+$223/mo</span></div>
-          </div>
-        </div>
-        <div class="bat-card" style="border:1px solid #6366F1">
-          <div class="bat-tier" style="color:#6366F1">Tier 2 <span style="background:#2a1f4a;color:#6366F1;font-size:10px;padding:2px 8px;border-radius:12px">4 units</span></div>
-          <div class="bat-kwh">20.48 kWh</div>
-          <div class="bat-coverage">1–2 day outage · essentials no AC</div>
-          <div class="bat-divider">
-            <div class="bat-row"><span class="bat-label">4× EG4 LL-S</span><span style="font-weight:700;color:#6366F1">$5,740</span></div>
-            <div class="bat-row"><span class="bat-label">6-slot rack</span><span style="font-weight:700">$400</span></div>
-            <div class="bat-row"><span class="bat-label">BOS + electrician</span><span style="font-weight:700">$844</span></div>
-            <div class="bat-row"><span class="bat-label">Subtotal base</span><span style="font-weight:700;color:var(--text)">$6,984</span></div>
-            <div class="bat-row"><span class="bat-label">Total build (no batt)</span><span style="font-weight:700;color:var(--text)">$25,105</span></div>
-            <div class="bat-row"><span class="bat-label" style="font-weight:700">Total with Tier 2</span><span style="font-weight:900;color:#6366F1;font-size:14px">$32,089</span></div>
-            <div class="bat-row"><span class="bat-label">15yr @ 5.5%</span><span style="font-weight:700;color:var(--amber)">$262/mo</span></div>
-            <div class="bat-row"><span class="bat-label">Net vs bill</span><span style="font-weight:700;color:var(--emerald)">+$198/mo</span></div>
-          </div>
-        </div>
-        <div class="bat-card" style="border:1px solid var(--emerald)">
-          <div class="bat-tier" style="color:var(--emerald)">Tier 3 <span style="background:#0f2a1f;color:var(--emerald);font-size:10px;padding:2px 8px;border-radius:12px">6 units</span></div>
-          <div class="bat-kwh">30.72 kWh</div>
-          <div class="bat-coverage">True off-grid capable · 3+ days essentials</div>
-          <div class="bat-divider">
-            <div class="bat-row"><span class="bat-label">6× LL-S + rack bundle</span><span style="font-weight:700;color:var(--emerald)">$8,713</span></div>
-            <div class="bat-row"><span class="bat-label">BOS + electrician</span><span style="font-weight:700">$1,016</span></div>
-            <div class="bat-row"><span class="bat-label">Subtotal base</span><span style="font-weight:700;color:var(--text)">$9,729</span></div>
-            <div class="bat-row"><span class="bat-label">Total build (no batt)</span><span style="font-weight:700;color:var(--text)">$25,105</span></div>
-            <div class="bat-row"><span class="bat-label" style="font-weight:700">Total with Tier 3</span><span style="font-weight:900;color:var(--emerald);font-size:14px">$34,834</span></div>
-            <div class="bat-row"><span class="bat-label">15yr @ 5.5%</span><span style="font-weight:700;color:var(--amber)">$285/mo</span></div>
-            <div class="bat-row"><span class="bat-label">Net vs bill</span><span style="font-weight:700;color:var(--emerald)">+$175/mo</span></div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div style="color:#6366F1;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Annual Add Plan — Buy Tier 1 now, add one battery per year</div>
-        <div style="display:grid;grid-template-columns:70px 1fr 80px 100px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)">
-          <span style="color:#6366F1;font-size:12px;font-weight:700">Year 0</span>
-          <span style="color:var(--muted);font-size:12px">2× LL-S + 6-unit rack + electrician</span>
-          <span style="color:var(--amber);font-size:12px;font-weight:700">$3,923</span>
-          <span style="color:var(--emerald);font-size:12px;font-weight:700">10.24 kWh</span>
-        </div>
-        <div style="display:grid;grid-template-columns:70px 1fr 80px 100px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)">
-          <span style="color:#6366F1;font-size:12px;font-weight:700">Year 1</span>
-          <span style="color:var(--muted);font-size:12px">+1× LL-S + electrician visit (~$1,635)</span>
-          <span style="color:var(--amber);font-size:12px;font-weight:700">$1,635</span>
-          <span style="color:var(--emerald);font-size:12px;font-weight:700">15.36 kWh</span>
-        </div>
-        <div style="display:grid;grid-template-columns:70px 1fr 80px 100px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)">
-          <span style="color:#6366F1;font-size:12px;font-weight:700">Year 2</span>
-          <span style="color:var(--muted);font-size:12px">+1× LL-S + electrician visit</span>
-          <span style="color:var(--amber);font-size:12px;font-weight:700">$1,635</span>
-          <span style="color:var(--emerald);font-size:12px;font-weight:700">20.48 kWh</span>
-        </div>
-        <div style="display:grid;grid-template-columns:70px 1fr 80px 100px;gap:8px;align-items:center;padding:8px 0">
-          <span style="color:#6366F1;font-size:12px;font-weight:700">Year 3</span>
-          <span style="color:var(--muted);font-size:12px">+2× LL-S + electrician visit</span>
-          <span style="color:var(--amber);font-size:12px;font-weight:700">$3,070</span>
-          <span style="color:var(--emerald);font-size:12px;font-weight:700">30.72 kWh</span>
-        </div>
-        <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted)">
-          <span>Annual add 3yr total: <strong style="color:var(--red)">$10,263</strong></span>
-          <span>Tier 3 all at once: <strong style="color:var(--emerald)">$9,729</strong></span>
-          <span>Spreading premium: <strong style="color:var(--amber)">+$534</strong></span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- OPTIMIZER -->
-  <div id="tab-optimizer" class="tab-panel">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-bar" style="background:var(--purple)"></div>
-        <div class="section-title">Tigo TS4-A-O Power Optimizers — Optional Add-On</div>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <div style="color:var(--purple);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Why Optimizers</div>
-          <div style="color:var(--muted);font-size:12px;line-height:1.7">With a string inverter like the EG4 18kPV, one shaded panel drags down its entire string of 8. Tigo TS4-A-O optimizers make each panel independent so a shaded panel only hurts itself.<br><br>Since all panels are going on the clear right and front slopes, optimizers are optional insurance — not required. But if late-afternoon tree shadow ever creeps onto the string closest to the left slope, you'll want them on that string.</div>
-        </div>
-        <div class="card">
-          <div style="color:var(--purple);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Tigo TS4-A-O Specs</div>
-          <div class="opt-row"><span style="color:var(--muted)">Compatibility</span><span style="color:var(--text);font-weight:600">Works with EG4 18kPV ✓</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Max Module Power</span><span style="color:var(--text);font-weight:600">700W</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Efficiency</span><span style="color:var(--text);font-weight:600">99.6%</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Deployment</span><span style="color:var(--text);font-weight:600">Selective — only shaded panels</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Monitoring</span><span style="color:var(--text);font-weight:600">Panel-level via Tigo app</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Rapid Shutdown</span><span style="color:var(--text);font-weight:600">NEC 2020:690.12 ✓</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Warranty</span><span style="color:var(--text);font-weight:600">25 years</span></div>
-        </div>
-      </div>
-      <div class="grid-2" style="margin-top:12px">
-        <div class="card" style="border-color:var(--purple)">
-          <div style="color:var(--purple);font-size:12px;font-weight:700;margin-bottom:12px">SELECTIVE — 8 Panels on String Nearest Tree</div>
-          <div class="opt-row"><span style="color:var(--muted)">8× Tigo TS4-A-O @ ~$57</span><span style="color:var(--text);font-weight:700">$456</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Cloud Connect Advanced (CCA)</span><span style="color:var(--text);font-weight:700">$139</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">TAP communicator</span><span style="color:var(--text);font-weight:700">$58</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Electrician install (2 hrs)</span><span style="color:var(--text);font-weight:700">$240</span></div>
-          <div class="opt-row" style="border-bottom:none"><span style="color:var(--purple);font-weight:700">Total selective</span><span style="color:var(--purple);font-size:18px;font-weight:900">~$893</span></div>
-          <div style="color:var(--emerald);font-size:10px;font-weight:700;margin-top:8px">✓ RECOMMENDED — shade insurance + panel-level monitoring</div>
-          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-            <a href="https://signaturesolar.com/tigo-ts4-a-o-optimization-monitoring-rapid-shutdown/" target="_blank" class="btn-buy">Buy TS4-A-O</a>
-            <a href="https://www.tigoenergy.com/product/ts4-a-o/" target="_blank" class="btn-alt">Tigo Specs ↗</a>
-          </div>
-        </div>
-        <div class="card">
-          <div style="color:var(--dim);font-size:12px;font-weight:700;margin-bottom:12px">FULL ARRAY — All 24 Panels</div>
-          <div class="opt-row"><span style="color:var(--muted)">24× Tigo TS4-A-O @ ~$57</span><span style="color:var(--text);font-weight:700">$1,368</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">CCA + TAP</span><span style="color:var(--text);font-weight:700">$197</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Electrician install (3 hrs)</span><span style="color:var(--text);font-weight:700">$360</span></div>
-          <div class="opt-row" style="border-bottom:none"><span style="color:var(--muted);font-weight:700">Total full array</span><span style="color:var(--text);font-size:18px;font-weight:900">~$1,925</span></div>
-          <div style="color:var(--dim);font-size:10px;font-weight:700;margin-top:8px">→ Only worth it if multiple strings have shade risk</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- LABOR & PERMITS -->
-  <div id="tab-labor" class="tab-panel">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-bar" style="background:var(--amber)"></div>
-        <div class="section-title">Labor & Permits</div>
-      </div>
-      <div class="grid-2" style="margin-bottom:12px">
-        <div class="card">
-          <div style="color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Electrician — C-10 Licensed (+20% buffer)</div>
-          <div class="opt-row"><span style="color:var(--muted)">Site assessment + design review</span><span style="font-weight:700">$480</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Permit documentation prep</span><span style="font-weight:700">$480</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Conduit runs — roof to inverter</span><span style="font-weight:700">$720</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">DC disconnect + string wiring</span><span style="font-weight:700">$720</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Inverter install + AC wiring</span><span style="font-weight:700">$960</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Main panel breaker + interconnect</span><span style="font-weight:700">$480</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Commissioning + EG4 config</span><span style="font-weight:700">$480</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">LADWP interconnect application</span><span style="font-weight:700">$480</span></div>
-          <div class="opt-row" style="border-bottom:none"><span style="color:var(--muted)">Final inspection + PTO</span><span style="font-weight:700">$240</span></div>
-          <div style="border-top:2px solid var(--amber);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between">
-            <span style="color:var(--amber);font-weight:700">Electrician Total</span>
-            <span style="color:var(--amber);font-size:18px;font-weight:900">$5,040</span>
-          </div>
-        </div>
-        <div class="card">
-          <div style="color:var(--purple);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">GC Mounting Crew (+20% buffer)</div>
-          <div class="opt-row"><span style="color:var(--muted)">Roof survey + panel layout</span><span style="font-weight:700">$180</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">FlashFoot2 install — 24 points</span><span style="font-weight:700">$360</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Rail runs and leveling</span><span style="font-weight:700">$270</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">Panel mounting — 24 panels</span><span style="font-weight:700">$540</span></div>
-          <div class="opt-row"><span style="color:var(--muted)">MC4 string connections on roof</span><span style="font-weight:700">$270</span></div>
-          <div class="opt-row" style="border-bottom:none"><span style="color:var(--muted)">Cleanup + safety walkthrough</span><span style="font-weight:700">$180</span></div>
-          <div style="border-top:2px solid var(--purple);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between">
-            <span style="color:var(--purple);font-weight:700">GC Total</span>
-            <span style="color:var(--purple);font-size:18px;font-weight:900">$1,800</span>
-          </div>
-          <div style="margin-top:20px">
-            <div style="color:#EC4899;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px">Permits & Fees (+25% buffer)</div>
-            <div class="opt-row"><span style="color:var(--muted)">LADBS solar electrical permit</span><span style="font-weight:700">$625</span></div>
-            <div class="opt-row"><span style="color:var(--muted)">LADWP interconnect application</span><span style="font-weight:700">$125</span></div>
-            <div class="opt-row"><span style="color:var(--muted)">PE-stamped engineering plans</span><span style="font-weight:700">$938</span></div>
-            <div class="opt-row" style="border-bottom:none"><span style="color:var(--muted)">Final inspection fee</span><span style="font-weight:700">$188</span></div>
-            <div style="border-top:2px solid #EC4899;margin-top:12px;padding-top:12px;display:flex;justify-content:space-between">
-              <span style="color:#EC4899;font-weight:700">Permits Total</span>
-              <span style="color:#EC4899;font-size:18px;font-weight:900">$1,876</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-        <div><div style="color:var(--dim);font-size:11px;margin-bottom:4px">Hardware (buffered)</div><div style="color:var(--blue);font-size:22px;font-weight:900">$16,265</div></div>
-        <div style="color:var(--dim);font-size:20px">+</div>
-        <div><div style="color:var(--dim);font-size:11px;margin-bottom:4px">Electrician</div><div style="color:var(--amber);font-size:22px;font-weight:900">$5,040</div></div>
-        <div style="color:var(--dim);font-size:20px">+</div>
-        <div><div style="color:var(--dim);font-size:11px;margin-bottom:4px">GC Labor</div><div style="color:var(--purple);font-size:22px;font-weight:900">$1,800</div></div>
-        <div style="color:var(--dim);font-size:20px">+</div>
-        <div><div style="color:var(--dim);font-size:11px;margin-bottom:4px">Permits</div><div style="color:#EC4899;font-size:22px;font-weight:900">$1,876</div></div>
-        <div style="color:var(--dim);font-size:20px">=</div>
-        <div><div style="color:var(--dim);font-size:11px;margin-bottom:4px">TOTAL — NO BATTERY</div><div style="color:var(--emerald);font-size:26px;font-weight:900">$24,981</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- LOAN -->
-  <div id="tab-loan" class="tab-panel">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-bar" style="background:var(--emerald)"></div>
-        <div class="section-title">Loan Scenarios — 15yr Home Equity @ 5.5%</div>
-      </div>
-      <div class="card" style="margin-bottom:12px">
-        <div style="height:220px"><canvas id="loanChart"></canvas></div>
-      </div>
-      <div class="grid-4">
-        <div class="loan-card" style="border:1px solid var(--blue)">
-          <div class="loan-label" style="color:var(--blue)">No Battery</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Cost</div>
-          <div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:8px">$25,105</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Monthly Payment</div>
-          <div style="color:var(--amber);font-size:20px;font-weight:900;margin-bottom:8px">$205/mo</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Interest</div>
-          <div style="color:var(--red);font-size:13px;font-weight:700;margin-bottom:8px">$11,921</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Net vs Current Bill</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">+$255/mo</div>
-        </div>
-        <div class="loan-card" style="border:1px solid #6366F1">
-          <div class="loan-label" style="color:#6366F1">Tier 1 — 10 kWh</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Cost</div>
-          <div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:8px">$29,028</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Monthly Payment</div>
-          <div style="color:var(--amber);font-size:20px;font-weight:900;margin-bottom:8px">$237/mo</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Interest</div>
-          <div style="color:var(--red);font-size:13px;font-weight:700;margin-bottom:8px">$13,796</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Net vs Current Bill</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">+$223/mo</div>
-        </div>
-        <div class="loan-card" style="border:1px solid #8B5CF6">
-          <div class="loan-label" style="color:#8B5CF6">Tier 2 — 20 kWh</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Cost</div>
-          <div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:8px">$32,089</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Monthly Payment</div>
-          <div style="color:var(--amber);font-size:20px;font-weight:900;margin-bottom:8px">$262/mo</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Interest</div>
-          <div style="color:var(--red);font-size:13px;font-weight:700;margin-bottom:8px">$15,257</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Net vs Current Bill</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">+$198/mo</div>
-        </div>
-        <div class="loan-card" style="border:1px solid var(--emerald)">
-          <div class="loan-label" style="color:var(--emerald)">Tier 3 — 31 kWh</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Cost</div>
-          <div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:8px">$34,834</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Monthly Payment</div>
-          <div style="color:var(--amber);font-size:20px;font-weight:900;margin-bottom:8px">$285/mo</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Total Interest</div>
-          <div style="color:var(--red);font-size:13px;font-weight:700;margin-bottom:8px">$16,560</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:2px">Net vs Current Bill</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">+$175/mo</div>
-        </div>
-      </div>
-      <div class="flag" style="background:#1a2a1a;border:1px solid #1f4a1f;margin-top:12px">
-        <div style="color:var(--amber);font-size:12px;font-weight:700;margin-bottom:4px">Current LADWP: ~$475/mo avg · $690/mo peak summer</div>
-        <div style="color:var(--muted);font-size:12px">Every scenario beats your current bill from day one — even Tier 3 at $285/mo is $175/mo less than you pay LADWP today, every month forever.</div>
+      <div class="card kpi">
+        <div class="kpi-label">Monthly vs Current Bill</div>
+        <div class="kpi-val" style="color:var(--green)">+$255/mo</div>
+        <div class="kpi-sub">15yr HELOC @ 5.5% · $205/mo payment</div>
       </div>
     </div>
   </div>
 
   <!-- USAGE -->
-  <div id="tab-usage" class="tab-panel">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-bar" style="background:var(--amber)"></div>
-        <div class="section-title">12-Month LADWP Usage · May 2025 – May 2026</div>
+  <div class="section">
+    <div class="section-title">LADWP Usage — Last 12 Months</div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="card kpi">
+        <div class="kpi-label">Annual Total</div>
+        <div class="kpi-val" style="color:var(--blue)">19,120 kWh</div>
+        <div class="kpi-sub">$5,400/yr · $450/mo avg</div>
       </div>
-      <div class="grid-6" style="margin-bottom:16px">
-        <div class="usage-card" style="border-color:var(--border)">
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px;font-weight:600">May–Jul '25</div>
-          <div style="color:var(--blue);font-size:20px;font-weight:900">3,674</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px">kWh</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">$525/mo</div>
-          <div style="color:var(--dimmer);font-size:10px">60 kWh/day</div>
-        </div>
-        <div class="usage-card" style="border-color:var(--amber);background:#1c2a18">
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px;font-weight:600">Jul–Sep '25</div>
-          <div style="color:var(--amber);font-size:20px;font-weight:900">4,394</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px">kWh</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">$690/mo</div>
-          <div style="color:var(--amber);font-size:9px;font-weight:700">▲ PEAK</div>
-        </div>
-        <div class="usage-card">
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px;font-weight:600">Sep–Nov '25</div>
-          <div style="color:var(--blue);font-size:20px;font-weight:900">3,037</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px">kWh</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">$430/mo</div>
-          <div style="color:var(--dimmer);font-size:10px">50 kWh/day</div>
-        </div>
-        <div class="usage-card">
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px;font-weight:600">Nov–Jan '26</div>
-          <div style="color:var(--blue);font-size:20px;font-weight:900">3,054</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px">kWh</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">$410/mo</div>
-          <div style="color:var(--dimmer);font-size:10px">50 kWh/day</div>
-        </div>
-        <div class="usage-card">
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px;font-weight:600">Jan–Mar '26</div>
-          <div style="color:var(--blue);font-size:20px;font-weight:900">2,717</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px">kWh</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">$355/mo</div>
-          <div style="color:var(--dimmer);font-size:10px">46 kWh/day</div>
-        </div>
-        <div class="usage-card">
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px;font-weight:600">Mar–May '26</div>
-          <div style="color:var(--blue);font-size:20px;font-weight:900">2,244</div>
-          <div style="color:var(--dim);font-size:10px;margin-bottom:4px">kWh</div>
-          <div style="color:var(--emerald);font-size:14px;font-weight:700">$290/mo</div>
-          <div style="color:var(--dimmer);font-size:10px">37 kWh/day</div>
-        </div>
+      <div class="card kpi">
+        <div class="kpi-label">Peak Summer (Jul–Sep)</div>
+        <div class="kpi-val" style="color:var(--amber)">$690/mo</div>
+        <div class="kpi-sub">72 kWh/day avg</div>
       </div>
-      <div class="card" style="margin-bottom:12px">
-        <div style="height:260px"><canvas id="usageChart"></canvas></div>
+      <div class="card kpi">
+        <div class="kpi-label">Low Season (Mar–May)</div>
+        <div class="kpi-val" style="color:var(--green)">$290/mo</div>
+        <div class="kpi-sub">37 kWh/day avg</div>
       </div>
-      <div class="grid-3">
-        <div class="card" style="text-align:center">
-          <div style="color:var(--dim);font-size:11px;margin-bottom:4px">Annual Total</div>
-          <div style="color:var(--blue);font-size:22px;font-weight:900">19,120 kWh</div>
-          <div style="color:var(--dimmer);font-size:11px">$5,400/yr · $450/mo avg</div>
-        </div>
-        <div class="card" style="text-align:center">
-          <div style="color:var(--dim);font-size:11px;margin-bottom:4px">Peak Summer</div>
-          <div style="color:var(--amber);font-size:22px;font-weight:900">$690/mo</div>
-          <div style="color:var(--dimmer);font-size:11px">Jul–Sep · 72 kWh/day avg</div>
-        </div>
-        <div class="card" style="text-align:center">
-          <div style="color:var(--dim);font-size:11px;margin-bottom:4px">System Offset</div>
-          <div style="color:var(--emerald);font-size:22px;font-weight:900">102%</div>
-          <div style="color:var(--dimmer);font-size:11px">19,578 kWh prod vs 19,120 kWh used</div>
-        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px">
+      <div class="usage-card"><div style="color:var(--dim);font-size:10px;margin-bottom:4px">May–Jul '25</div><div style="color:var(--blue);font-size:18px;font-weight:900">3,674</div><div style="color:var(--dim);font-size:10px">kWh</div><div style="color:var(--green);font-weight:700">$525/mo</div></div>
+      <div class="usage-card" style="border-color:var(--amber);background:#1c2a18"><div style="color:var(--dim);font-size:10px;margin-bottom:4px">Jul–Sep '25</div><div style="color:var(--amber);font-size:18px;font-weight:900">4,394</div><div style="color:var(--dim);font-size:10px">kWh</div><div style="color:var(--green);font-weight:700">$690/mo</div><div style="color:var(--amber);font-size:9px;font-weight:700">▲ PEAK</div></div>
+      <div class="usage-card"><div style="color:var(--dim);font-size:10px;margin-bottom:4px">Sep–Nov '25</div><div style="color:var(--blue);font-size:18px;font-weight:900">3,037</div><div style="color:var(--dim);font-size:10px">kWh</div><div style="color:var(--green);font-weight:700">$430/mo</div></div>
+      <div class="usage-card"><div style="color:var(--dim);font-size:10px;margin-bottom:4px">Nov–Jan '26</div><div style="color:var(--blue);font-size:18px;font-weight:900">3,054</div><div style="color:var(--dim);font-size:10px">kWh</div><div style="color:var(--green);font-weight:700">$410/mo</div></div>
+      <div class="usage-card"><div style="color:var(--dim);font-size:10px;margin-bottom:4px">Jan–Mar '26</div><div style="color:var(--blue);font-size:18px;font-weight:900">2,717</div><div style="color:var(--dim);font-size:10px">kWh</div><div style="color:var(--green);font-weight:700">$355/mo</div></div>
+      <div class="usage-card"><div style="color:var(--dim);font-size:10px;margin-bottom:4px">Mar–May '26</div><div style="color:var(--blue);font-size:18px;font-weight:900">2,244</div><div style="color:var(--dim);font-size:10px">kWh</div><div style="color:var(--green);font-weight:700">$290/mo</div></div>
+    </div>
+    <div class="card"><div style="height:220px"><canvas id="usageChart"></canvas></div></div>
+  </div>
+
+  <!-- HARDWARE COSTS -->
+  <div class="section">
+    <div class="section-title">Hardware — Verified Pricing + 15–25% Buffer</div>
+    <div class="card" style="margin-bottom:12px">
+      <div id="hw-list"></div>
+      <div style="border-top:2px solid var(--amber);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div><div style="color:var(--dim);font-size:11px;margin-bottom:2px">Hardware Base (verified)</div><div style="color:var(--blue);font-size:22px;font-weight:900">$14,054</div></div>
+        <div style="text-align:right"><div style="color:var(--dim);font-size:11px;margin-bottom:2px">Hardware + Buffer</div><div style="color:var(--green);font-size:22px;font-weight:900">$16,265</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row"><span class="row-label">Hardware (buffered)</span><span class="row-val" style="color:var(--blue)">$16,265</span></div>
+      <div class="row"><span class="row-label">Electrician labor (+20%)</span><span class="row-val" style="color:var(--amber)">$5,040</span></div>
+      <div class="row"><span class="row-label">GC mounting crew (+20%)</span><span class="row-val" style="color:#A855F7">$1,800</span></div>
+      <div class="row"><span class="row-label">Permits + engineering (+25%)</span><span class="row-val" style="color:#EC4899">$2,000</span></div>
+      <div class="row"><span class="row-label" style="font-weight:700;color:var(--text)">Total — No Battery</span><span class="row-val" style="color:var(--green);font-size:18px">$25,105</span></div>
+    </div>
+  </div>
+
+  <!-- BATTERY -->
+  <div class="section">
+    <div class="section-title">Battery Options — EG4 LL-S · $1,435/unit · 5.12 kWh each</div>
+    <div class="grid3">
+      <div class="bat-card" style="border-color:var(--blue)">
+        <div style="color:var(--blue);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Tier 1 — 2 Units</div>
+        <div style="font-size:26px;font-weight:900;margin-bottom:4px">10.24 kWh</div>
+        <div style="color:var(--dim);font-size:11px;margin-bottom:12px">1 overnight outage</div>
+        <div class="row"><span class="row-label">Add cost</span><span class="row-val" style="color:var(--blue)">$3,923</span></div>
+        <div class="row"><span class="row-label">Total build</span><span class="row-val">$29,028</span></div>
+        <div class="row"><span class="row-label">15yr @ 5.5%</span><span class="row-val" style="color:var(--amber)">$237/mo</span></div>
+        <div class="row"><span class="row-label">Net vs bill</span><span class="row-val" style="color:var(--green)">+$223/mo</span></div>
+      </div>
+      <div class="bat-card" style="border-color:#6366F1">
+        <div style="color:#6366F1;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Tier 2 — 4 Units</div>
+        <div style="font-size:26px;font-weight:900;margin-bottom:4px">20.48 kWh</div>
+        <div style="color:var(--dim);font-size:11px;margin-bottom:12px">1–2 day outage</div>
+        <div class="row"><span class="row-label">Add cost</span><span class="row-val" style="color:#6366F1">$6,984</span></div>
+        <div class="row"><span class="row-label">Total build</span><span class="row-val">$32,089</span></div>
+        <div class="row"><span class="row-label">15yr @ 5.5%</span><span class="row-val" style="color:var(--amber)">$262/mo</span></div>
+        <div class="row"><span class="row-label">Net vs bill</span><span class="row-val" style="color:var(--green)">+$198/mo</span></div>
+      </div>
+      <div class="bat-card" style="border-color:var(--green)">
+        <div style="color:var(--green);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Tier 3 — 6 Units</div>
+        <div style="font-size:26px;font-weight:900;margin-bottom:4px">30.72 kWh</div>
+        <div style="color:var(--dim);font-size:11px;margin-bottom:12px">True off-grid capable</div>
+        <div class="row"><span class="row-label">Add cost</span><span class="row-val" style="color:var(--green)">$9,729</span></div>
+        <div class="row"><span class="row-label">Total build</span><span class="row-val">$34,834</span></div>
+        <div class="row"><span class="row-label">15yr @ 5.5%</span><span class="row-val" style="color:var(--amber)">$285/mo</span></div>
+        <div class="row"><span class="row-label">Net vs bill</span><span class="row-val" style="color:var(--green)">+$175/mo</span></div>
       </div>
     </div>
   </div>
 
-  <!-- CONTACTS -->
-  <div id="tab-contacts" class="tab-panel">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-bar" style="background:var(--purple)"></div>
-        <div class="section-title">Contacts to Call</div>
+  <!-- LOAN -->
+  <div class="section">
+    <div class="section-title">Loan Scenarios — 15yr Home Equity @ 5.5%</div>
+    <div class="card" style="margin-bottom:12px"><div style="height:200px"><canvas id="loanChart"></canvas></div></div>
+    <div class="grid4">
+      <div class="loan-card" style="border:1px solid var(--blue)">
+        <div style="color:var(--blue);font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px">No Battery</div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:2px">Total</div><div style="font-weight:700;margin-bottom:8px">$25,105</div>
+        <div style="color:var(--amber);font-size:22px;font-weight:900;margin-bottom:8px">$205/mo</div>
+        <div style="color:var(--green);font-size:13px;font-weight:700">+$255/mo vs bill</div>
       </div>
-      <div class="grid-2" style="margin-bottom:16px">
-        <div class="card">
-          <div style="color:var(--purple);font-size:14px;font-weight:700;margin-bottom:4px">ReVamp Energy</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Certified EG4 installer · Los Angeles</div>
-          <div style="color:var(--amber);font-size:16px;font-weight:700;margin-bottom:10px">(510) 847-7563</div>
-          <div class="contact-ask">
-            <div style="color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:2px">ASK</div>
-            <div style="color:var(--text);font-size:12px">Labor-only split contract — you supply equipment</div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="color:var(--purple);font-size:14px;font-weight:700;margin-bottom:4px">California Solar & Electric</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Mark Howe · Santa Clarita · serves Valley</div>
-          <div style="color:var(--amber);font-size:16px;font-weight:700;margin-bottom:10px">(949) 637-9108</div>
-          <div class="contact-ask">
-            <div style="color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:2px">ASK</div>
-            <div style="color:var(--text);font-size:12px">Itemized bid · C-10 + EG4 certification</div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="color:var(--purple);font-size:14px;font-weight:700;margin-bottom:4px">High End Power</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Elec + Solar + GC combined · LA</div>
-          <div style="color:var(--amber);font-size:16px;font-weight:700;margin-bottom:10px">Search Yelp LA</div>
-          <div class="contact-ask">
-            <div style="color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:2px">ASK</div>
-            <div style="color:var(--text);font-size:12px">Verify C-10 + EG4 certification · labor-only rate</div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="color:var(--purple);font-size:14px;font-weight:700;margin-bottom:4px">LADWP Solar Program</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Net Metering + SIP rebate</div>
-          <div style="color:var(--amber);font-size:16px;font-weight:700;margin-bottom:10px">(800) 342-5397</div>
-          <div class="contact-ask">
-            <div style="color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:2px">ASK</div>
-            <div style="color:var(--text);font-size:12px">SIP $0.30/W rebate status + any battery incentives</div>
-          </div>
-        </div>
+      <div class="loan-card" style="border:1px solid #6366F1">
+        <div style="color:#6366F1;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px">Tier 1</div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:2px">Total</div><div style="font-weight:700;margin-bottom:8px">$29,028</div>
+        <div style="color:var(--amber);font-size:22px;font-weight:900;margin-bottom:8px">$237/mo</div>
+        <div style="color:var(--green);font-size:13px;font-weight:700">+$223/mo vs bill</div>
       </div>
-      <div class="card">
-        <div style="color:var(--purple);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Key Questions for Every Contractor</div>
-        <div class="row"><span class="row-label">1. Will you do a labor-only contract if I supply equipment?</span></div>
-        <div class="row"><span class="row-label">2. Do you hold C-10 license + EG4 certification?</span></div>
-        <div class="row"><span class="row-label">3. What's your itemized breakdown: electrical, mounting, permits separately?</span></div>
-        <div class="row"><span class="row-label">4. Have you submitted LADWP interconnect applications for sub-20kW systems before?</span></div>
-        <div class="row" style="border:none"><span class="row-label">5. What's your timeline from signed contract to LADWP PTO?</span></div>
+      <div class="loan-card" style="border:1px solid #8B5CF6">
+        <div style="color:#8B5CF6;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px">Tier 2</div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:2px">Total</div><div style="font-weight:700;margin-bottom:8px">$32,089</div>
+        <div style="color:var(--amber);font-size:22px;font-weight:900;margin-bottom:8px">$262/mo</div>
+        <div style="color:var(--green);font-size:13px;font-weight:700">+$198/mo vs bill</div>
+      </div>
+      <div class="loan-card" style="border:1px solid var(--green)">
+        <div style="color:var(--green);font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px">Tier 3</div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:2px">Total</div><div style="font-weight:700;margin-bottom:8px">$34,834</div>
+        <div style="color:var(--amber);font-size:22px;font-weight:900;margin-bottom:8px">$285/mo</div>
+        <div style="color:var(--green);font-size:13px;font-weight:700">+$175/mo vs bill</div>
       </div>
     </div>
   </div>
@@ -625,101 +225,35 @@
 </div>
 
 <script>
-function showTab(id, btn) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (id === 'usage') initUsageChart();
-  if (id === 'loan') initLoanChart();
-}
-
-// Hardware data with verified pricing
-const hwItems = [
-  { name: 'Jinko Tiger Neo 500W N-Type TOPCon × 24', base: 6216, buffered: 7149, pct: 15, color: '#3B82F6', cat: 'Panels', perW: '$0.52/W', source: 'TSolar (tsolar.top)', buyUrl: 'https://tsolar.top/products/jinko-500w-solar-panel', altUrl: 'https://a1solarstore.com/solar-panels/jinko-solar-panels.html', altLabel: 'A1 Solar Store', deal: '$259/panel confirmed' },
-  { name: 'EG4 18kPV Hybrid Inverter — 12kW AC / 18kW PV / 3 MPPTs', base: 4898, buffered: 5633, pct: 15, color: '#10B981', cat: 'Inverter', perW: '$0.41/W', source: 'Off Grid Stores / Signature Solar', buyUrl: 'https://offgridstores.com/products/eg4-18kpv-48v-split-phase-hybrid-inverter', altUrl: 'https://signaturesolar.com/eg4-18kpv-hybrid-inverter-eg4-18kpv-12lv-48v-split-phase-120-240vac-ul1741-cec/', altLabel: 'Signature Solar', deal: '$4,898 market floor — no discount exists' },
-  { name: 'IronRidge XR100 Roof Mount — rails, FlashFoot2, clamps, hardware', base: 1920, buffered: 2208, pct: 15, color: '#F59E0B', cat: 'Racking', perW: '$0.16/W', source: 'Solar Electric Supply / Gexpro', buyUrl: 'https://www.solarelectricsupply.com/solar-panel-mounts/roof-mounts/ironridge', altUrl: 'https://www.ironridge.com/solar-racking/xr-roof-mount/', altLabel: 'IronRidge Design Tool', deal: 'MAPP applies — call for real price, up to 30% off MSRP' },
-  { name: 'BOS — wire, conduit, MC4, disconnects, grounding, misc', base: 1020, buffered: 1275, pct: 25, color: '#A855F7', cat: 'BOS', perW: '$0.09/W', source: 'Local electrical supply', buyUrl: null, altUrl: null, deal: 'Source locally — no single best retailer' },
+const hw = [
+  {name:'Jinko Tiger Neo 500W × 24',base:6216,buf:7149,pct:15,color:'#3B82F6',buyUrl:'https://tsolar.top/products/jinko-500w-solar-panel',buyLabel:'TSolar',specUrl:'https://jinkosolar.com/en/products/tiger-neo/',deal:'$259/panel · TSolar'},
+  {name:'EG4 18kPV Hybrid Inverter',base:4898,buf:5633,pct:15,color:'#10B981',buyUrl:'https://offgridstores.com/products/eg4-18kpv-48v-split-phase-hybrid-inverter',buyLabel:'Off Grid Stores',specUrl:'https://eg4electronics.com/categories/inverters/eg4-18kpv-12lv-all-in-one-hybrid-inverter/',deal:'$4,898 confirmed · market floor'},
+  {name:'IronRidge XR100 Roof Mount',base:1920,buf:2208,pct:15,color:'#F59E0B',buyUrl:'https://www.solarelectricsupply.com/solar-panel-mounts/roof-mounts/ironridge',buyLabel:'Solar Electric Supply',specUrl:'https://ironridge.com/solar-racking/xr-roof-mount/',deal:'~$0.16/W · call for real price'},
+  {name:'BOS — wire, conduit, disconnects, MC4, grounding',base:1020,buf:1275,pct:25,color:'#A855F7',buyUrl:null,buyLabel:null,specUrl:null,deal:'Source locally'},
 ];
-const totalBase = hwItems.reduce((s, i) => s + i.base, 0);
-
 const hwList = document.getElementById('hw-list');
-hwItems.forEach(item => {
-  const pctOfTotal = Math.round((item.buffered / (totalBase * 1.15)) * 100);
-  hwList.innerHTML += `
-    <div class="hw-item">
-      <div class="hw-top">
-        <div class="hw-name"><div class="hw-dot" style="background:${item.color}"></div>${item.name}</div>
-        <div class="hw-prices">
-          <span class="hw-base">Base: $${item.base.toLocaleString()}</span>
-          <span class="hw-buffered" style="color:${item.color}">+${item.pct}% = $${item.buffered.toLocaleString()}</span>
-        </div>
+hw.forEach(item => {
+  hwList.innerHTML += `<div class="hw-item">
+    <div class="hw-name"><div class="hw-dot" style="background:${item.color}"></div>${item.name}</div>
+    <div class="hw-row">
+      <div class="hw-prices">
+        <span class="hw-base">Base: $${item.base.toLocaleString()}</span>
+        <span class="hw-buf" style="color:${item.color}">+${item.pct}% = $${item.buf.toLocaleString()}</span>
       </div>
-      <div class="hw-details">
-        <span style="background:#243447;color:var(--muted);font-size:10px;padding:2px 8px;border-radius:12px">${item.cat}</span>
-        <span style="color:var(--dim);font-size:11px">${item.perW}</span>
-        <span style="color:var(--dim);font-size:11px">Best source: <span style="color:var(--text)">${item.source}</span></span>
-        <span class="deal-badge">${item.deal}</span>
-      </div>
-      <div class="hw-bar"><div class="hw-bar-fill" style="width:${pctOfTotal}%;background:${item.color}"></div></div>
-      <div class="hw-links">
-        ${item.buyUrl ? `<a href="${item.buyUrl}" target="_blank" class="btn-buy">Buy — ${item.source.split('/')[0].trim()}</a>` : ''}
-        ${item.altUrl ? `<a href="${item.altUrl}" target="_blank" class="btn-alt">${item.altLabel} ↗</a>` : ''}
-      </div>
-    </div>`;
+      <span class="hw-badge">${item.deal}</span>
+    </div>
+    <div class="hw-links">
+      ${item.buyUrl ? `<a href="${item.buyUrl}" target="_blank" class="btn-buy">Buy — ${item.buyLabel}</a>` : ''}
+      ${item.specUrl ? `<a href="${item.specUrl}" target="_blank" class="btn-spec">Specs ↗</a>` : ''}
+    </div>
+  </div>`;
 });
 
-Chart.defaults.color = '#64748B';
-Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif";
-Chart.defaults.font.size = 11;
-let usageChartInst, loanChartInst;
+Chart.defaults.color='#64748B';Chart.defaults.font.family="sans-serif";Chart.defaults.font.size=11;
 
-function initUsageChart() {
-  if (usageChartInst) return;
-  const ctx = document.getElementById('usageChart').getContext('2d');
-  usageChartInst = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ["May–Jul '25","Jul–Sep '25","Sep–Nov '25","Nov–Jan '26","Jan–Mar '26","Mar–May '26"],
-      datasets: [
-        { label: 'kWh Used', data: [3674,4394,3037,3054,2717,2244], backgroundColor: ['#3B82F6','#F59E0B','#3B82F6','#3B82F6','#3B82F6','#3B82F6'], borderRadius: 5, yAxisID: 'y1' },
-        { label: 'Monthly Bill', data: [525,690,430,410,355,290], type: 'line', borderColor: '#10B981', backgroundColor: '#10B98166', tension: 0.3, pointBackgroundColor: '#10B981', pointRadius: 4, yAxisID: 'y2' }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#94A3B8', font: { size: 11 } } }, tooltip: { backgroundColor: '#1A2B3C', borderColor: '#243447', borderWidth: 1, titleColor: '#94A3B8', bodyColor: '#F1F5F9' } },
-      scales: {
-        x: { grid: { color: '#1E3048' }, ticks: { color: '#64748B' } },
-        y1: { grid: { color: '#1E3048' }, ticks: { color: '#64748B' }, position: 'left' },
-        y2: { grid: { display: false }, ticks: { color: '#64748B', callback: v => '$'+v }, position: 'right' }
-      }
-    }
-  });
-}
+new Chart(document.getElementById('usageChart'),{type:'bar',data:{labels:["May–Jul '25","Jul–Sep '25","Sep–Nov '25","Nov–Jan '26","Jan–Mar '26","Mar–May '26"],datasets:[{label:'kWh',data:[3674,4394,3037,3054,2717,2244],backgroundColor:['#3B82F6','#F59E0B','#3B82F6','#3B82F6','#3B82F6','#3B82F6'],borderRadius:5,yAxisID:'y1'},{label:'Monthly Bill',data:[525,690,430,410,355,290],type:'line',borderColor:'#10B981',backgroundColor:'#10B98144',tension:0.3,pointBackgroundColor:'#10B981',pointRadius:4,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94A3B8',font:{size:11}}},tooltip:{backgroundColor:'#1A2B3C',borderColor:'#243447',borderWidth:1,titleColor:'#94A3B8',bodyColor:'#F1F5F9'}},scales:{x:{grid:{color:'#1E3048'},ticks:{color:'#64748B'}},y1:{grid:{color:'#1E3048'},ticks:{color:'#64748B'},position:'left'},y2:{grid:{display:false},ticks:{color:'#64748B',callback:v=>'$'+v},position:'right'}}}});
 
-function initLoanChart() {
-  if (loanChartInst) return;
-  const ctx = document.getElementById('loanChart').getContext('2d');
-  loanChartInst = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['No Battery','Tier 1 (10 kWh)','Tier 2 (20 kWh)','Tier 3 (31 kWh)'],
-      datasets: [
-        { label: 'Monthly Payment', data: [205,237,262,285], backgroundColor: '#F59E0B', borderRadius: 5 },
-        { label: 'Net Monthly Savings vs Bill', data: [255,223,198,175], backgroundColor: '#10B981', borderRadius: 5 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#94A3B8', font: { size: 11 } } }, tooltip: { backgroundColor: '#1A2B3C', borderColor: '#243447', borderWidth: 1, titleColor: '#94A3B8', bodyColor: '#F1F5F9', callbacks: { label: ctx => ' $'+ctx.parsed.y+'/mo' } } },
-      scales: {
-        x: { grid: { color: '#1E3048' }, ticks: { color: '#64748B' } },
-        y: { grid: { color: '#1E3048' }, ticks: { color: '#64748B', callback: v => '$'+v } }
-      }
-    }
-  });
-}
+new Chart(document.getElementById('loanChart'),{type:'bar',data:{labels:['No Battery','Tier 1','Tier 2','Tier 3'],datasets:[{label:'Monthly Payment',data:[205,237,262,285],backgroundColor:'#F59E0B',borderRadius:5},{label:'Net Monthly Savings',data:[255,223,198,175],backgroundColor:'#10B981',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94A3B8',font:{size:11}}},tooltip:{backgroundColor:'#1A2B3C',borderColor:'#243447',borderWidth:1,titleColor:'#94A3B8',bodyColor:'#F1F5F9',callbacks:{label:ctx=>' $'+ctx.parsed.y+'/mo'}}},scales:{x:{grid:{color:'#1E3048'},ticks:{color:'#64748B'}},y:{grid:{color:'#1E3048'},ticks:{color:'#64748B',callback:v=>'$'+v}}}}});
 </script>
 </body>
 </html>
