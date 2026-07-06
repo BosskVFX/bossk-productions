@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>DialedAds — 3-Minute Practice Survey</title>
+<style>
+  :root {
+    --ink: #0F172A;
+    --muted: #64748B;
+    --line: #E2E8F0;
+    --accent: #2563EB;
+    --accent-soft: #EFF6FF;
+    --green: #10B981;
+    --bg: #F8FAFC;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .progress-track { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: var(--line); z-index: 50; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width .35s ease; }
+  .wrap { max-width: 620px; margin: 0 auto; padding: 40px 20px 80px; }
+  .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; }
+  .brand-dial {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 3px solid var(--accent); position: relative; flex: none;
+  }
+  .brand-dial::after {
+    content: ''; position: absolute; width: 3px; height: 9px; background: var(--accent);
+    left: 50%; top: 1px; transform: translateX(-50%) rotate(38deg); transform-origin: bottom center; border-radius: 2px;
+  }
+  .brand-name { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
+  .brand-name span { color: var(--accent); }
+  h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 12px; }
+  .lede { color: var(--muted); font-size: 15.5px; margin-bottom: 8px; }
+  .lede strong { color: var(--ink); }
+  .pill-row { display: flex; gap: 8px; margin: 18px 0 0; flex-wrap: wrap; }
+  .pill { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .section-tag {
+    display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent);
+    background: var(--accent-soft); padding: 5px 12px; border-radius: 999px; margin: 44px 0 6px;
+  }
+  .q { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-top: 14px; transition: border-color .2s; }
+  .q.answered { border-color: #BBF7D0; }
+  .q-title { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; }
+  .q-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+  .opt {
+    border: 1.5px solid var(--line); background: #fff; border-radius: 12px;
+    padding: 11px 15px; font-size: 14.5px; font-weight: 600; color: var(--ink);
+    cursor: pointer; user-select: none; transition: all .12s ease;
+    font-family: inherit; text-align: left;
+  }
+  .opt:hover { border-color: #94A3B8; }
+  .opt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .opt.sel::before { content: '✓ '; font-weight: 800; }
+  .reveal { display: none; margin-top: 12px; }
+  .reveal.show { display: block; }
+  input[type="text"], input[type="email"], textarea {
+    width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 13px 15px; font-size: 15px; font-family: inherit; color: var(--ink);
+    background: #fff; outline: none; transition: border-color .15s;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { min-height: 96px; resize: vertical; }
+  .note {
+    margin-top: 44px; background: #FFFBEB; border: 1px solid #FDE68A;
+    border-radius: 16px; padding: 18px 20px; font-size: 14px; color: #92400E;
+  }
+  .note strong { color: #78350F; }
+  .submit-btn {
+    display: block; width: 100%; margin-top: 28px;
+    background: var(--accent); color: #fff; border: none; border-radius: 14px;
+    padding: 17px; font-size: 16.5px; font-weight: 800; font-family: inherit;
+    cursor: pointer; letter-spacing: -0.01em; transition: transform .1s, background .15s;
+  }
+  .submit-btn:hover { background: #1D4ED8; }
+  .submit-btn:active { transform: scale(.99); }
+  .submit-btn:disabled { background: #94A3B8; cursor: wait; }
+  .error-msg { display: none; margin-top: 12px; color: #DC2626; font-size: 14px; font-weight: 600; text-align: center; }
+  .error-msg.show { display: block; }
+  .fine { margin-top: 14px; text-align: center; color: #94A3B8; font-size: 12px; }
+  #success { display: none; text-align: center; padding: 80px 0 40px; }
+  #success.show { display: block; }
+  .check-ring {
+    width: 84px; height: 84px; border-radius: 50%; background: #ECFDF5;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+  }
+  .check-ring svg { width: 44px; height: 44px; }
+  #success h2 { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 10px; }
+  #success p { color: var(--muted); font-size: 15.5px; max-width: 400px; margin: 0 auto; }
+  @media (max-width: 480px) {
+    h1 { font-size: 24px; }
+    .wrap { padding-top: 32px; }
+    .q { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+
+<div class="wrap" id="form-view">
+  <div class="brand">
+    <div class="brand-dial"></div>
+    <div class="brand-name">Dialed<span>Ads</span></div>
+  </div>
+
+  <h1>Help us build your marketing autopilot.</h1>
+  <p class="lede">This takes about <strong>3 minutes</strong> — mostly just tapping. Your answers shape what we build for you. Nothing here is a commitment.</p>
+  <div class="pill-row">
+    <div class="pill">⏱ ~3 min</div>
+    <div class="pill">👆 Mostly taps</div>
+    <div class="pill">🔒 Private — only we see this</div>
+  </div>
+
+  <div id="questions"></div>
+
+  <div class="section-tag">Last thing — who are you?</div>
+  <div class="q" id="contact-card">
+    <div class="q-title">Your name</div>
+    <div style="margin-top:12px"><input type="text" id="c-name" placeholder="Dr. Jane Smith" autocomplete="name"></div>
+    <div class="q-title" style="margin-top:18px">Practice / business name</div>
+    <div style="margin-top:12px"><input type="text" id="c-practice" placeholder="Smith Family Dental"></div>
+    <div class="q-title" style="margin-top:18px">Best email or phone <span style="font-weight:500;color:var(--muted)">(optional)</span></div>
+    <div style="margin-top:12px"><input type="text" id="c-contact" placeholder="you@example.com or (555) 555-5555"></div>
+  </div>
+
+  <div class="note">
+    <strong>Prefer talking to typing?</strong> Totally fine — skip anything above and just send us a voice memo answering three things: how much you spend on marketing and where it goes, what happens to calls you miss, and what would make this a home run for you.
+  </div>
+
+  <!-- honeypot -->
+  <input type="text" id="website" name="website" style="position:absolute;left:-9999px" tabindex="-1" autocomplete="off">
+
+  <button class="submit-btn" id="submit">Send my answers →</button>
+  <div class="error-msg" id="error">Something went wrong — please try again, or just text us your answers.</div>
+  <div class="fine">Powered by DialedAds · We never share your answers.</div>
+</div>
+
+<div class="wrap" id="success">
+  <div class="check-ring">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+  </div>
+  <h2>That's it — thank you!</h2>
+  <p>We'll turn this into a custom plan for your practice and get back to you within a couple of days. No spam, no sales pressure.</p>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ── Part 1: The Money ─────────────────────────────
+  { section: 'Part 1 · The Money', id: 'homerun', type: 'multi', max: 2,
+    title: 'What would make this a home run for you?',
+    sub: 'Pick up to 2.',
+    opts: ['More new patients', 'More high-value cases (implants, Invisalign)', 'Spend less on ads for the same results', 'Stop feeling clueless about where the money goes', 'Less time dealing with marketing'] },
+  { id: 'channels', type: 'multi',
+    title: 'Where do you spend marketing money right now?',
+    sub: 'Check all that apply.',
+    opts: ['Google Ads', 'Yelp', 'Facebook / Instagram', 'SEO or marketing agency retainer', 'Mailers / print / local sponsorships', 'Honestly not sure what we’re on'],
+    other: true },
+  { id: 'spend', type: 'single',
+    title: 'All channels combined, roughly how much per month?',
+    opts: ['Under $1,000', '$1,000–2,500', '$2,500–5,000', 'Over $5,000', 'I’d have to check (also fine — we can find out together)'] },
+  { id: 'manager', type: 'single',
+    title: 'Who actually manages it day to day?',
+    opts: ['Me / someone on staff', 'An outside agency or freelancer', 'Nobody really — it was set up a while ago and runs', 'A mix'] },
+  { id: 'patientvalue', type: 'single',
+    title: 'Do you know what a new patient is worth to your practice per year?',
+    opts: ['Yes, roughly…', 'No idea (totally normal)'],
+    revealOn: 'Yes, roughly…', revealPlaceholder: 'e.g. $1,200 per year' },
+
+  // ── Part 2: The Phones ────────────────────────────
+  { section: 'Part 2 · The Phones', id: 'lunch', type: 'single',
+    title: 'Who answers the phone during lunch?',
+    opts: ['Someone always covers it', 'Voicemail', 'It just rings', 'Not sure'] },
+  { id: 'afterhours', type: 'single',
+    title: 'After 5pm and on weekends?',
+    opts: ['Answering service', 'Voicemail', 'Emergency line', 'Nothing'] },
+  { id: 'textback', type: 'single',
+    title: 'If a missed caller instantly got a text — “Sorry we missed you! Reply to book” — would you want that?',
+    opts: ['Yes, tomorrow', 'Probably', 'Need to think about it', 'No'] },
+  { id: 'aiagent', type: 'single',
+    title: 'Would you let a friendly AI assistant answer overflow calls, take the caller’s info, and text it to your front desk?',
+    opts: ['Yes', 'Yes, but I’d want to hear it first', 'Only after-hours', 'No'] },
+
+  // ── Part 3: What You'd Use ────────────────────────
+  { section: 'Part 3 · What You’d Actually Use', id: 'onenumber', type: 'single',
+    title: 'If the app showed you just ONE number each month, what should it be?',
+    opts: ['New patients from ads', 'Money saved', 'Calls generated', 'Return per dollar spent'] },
+  { id: 'updates', type: 'single',
+    title: 'How do you want updates?',
+    opts: ['Text me', 'Email me', 'Both', 'Only alert me when something’s wrong'] },
+  { id: 'approvals', type: 'single',
+    title: 'Approving changes to your ads: what feels right?',
+    opts: ['Text me a weekly summary, I tap approve', 'Just handle it, alert me on big stuff', 'Show me everything in detail'] },
+
+  // ── Part 4: Brain Dump ────────────────────────────
+  { section: 'Part 4 · The Brain Dump', id: 'annoys', type: 'text',
+    title: 'Complete this sentence:',
+    sub: '“The thing that annoys me most about my current marketing is ______.”',
+    placeholder: 'Type a few words…' },
+  { id: 'dream', type: 'textarea',
+    title: 'Anything you’ve always wished existed for your practice?',
+    sub: 'Dream big, no wrong answers. (Optional)',
+    placeholder: 'Wouldn’t it be great if…' }
+];
+
+const state = {};
+const container = document.getElementById('questions');
+
+QUESTIONS.forEach(q => {
+  if (q.section) {
+    const tag = document.createElement('div');
+    tag.className = 'section-tag';
+    tag.textContent = q.section;
+    container.appendChild(tag);
+  }
+  const card = document.createElement('div');
+  card.className = 'q';
+  card.id = 'q-' + q.id;
+
+  let inner = '<div class="q-title">' + q.title + '</div>';
+  if (q.sub) inner += '<div class="q-sub">' + q.sub + '</div>';
+
+  if (q.type === 'single' || q.type === 'multi') {
+    inner += '<div class="opts">';
+    q.opts.forEach((o, i) => {
+      inner += '<button type="button" class="opt" data-q="' + q.id + '" data-i="' + i + '">' + o + '</button>';
+    });
+    if (q.other) inner += '<button type="button" class="opt" data-q="' + q.id + '" data-i="other">Other…</button>';
+    inner += '</div>';
+    if (q.other) inner += '<div class="reveal" id="reveal-' + q.id + '"><input type="text" id="other-' + q.id + '" placeholder="Tell us where…"></div>';
+    if (q.revealOn) inner += '<div class="reveal" id="reveal-' + q.id + '"><input type="text" id="other-' + q.id + '" placeholder="' + q.revealPlaceholder + '"></div>';
+  } else if (q.type === 'text') {
+    inner += '<div style="margin-top:14px"><input type="text" id="input-' + q.id + '" placeholder="' + q.placeholder + '"></div>';
+  } else if (q.type === 'textarea') {
+    inner += '<div style="margin-top:14px"><textarea id="input-' + q.id + '" placeholder="' + q.placeholder + '"></textarea></div>';
+  }
+  card.innerHTML = inner;
+  container.appendChild(card);
+});
+
+const TAPPABLE = QUESTIONS.filter(q => q.type === 'single' || q.type === 'multi').length;
+
+function updateProgress() {
+  const answered = Object.keys(state).filter(k => {
+    const v = state[k];
+    return Array.isArray(v) ? v.length > 0 : !!v;
+  }).length;
+  document.getElementById('progress').style.width = Math.min(100, (answered / TAPPABLE) * 100) + '%';
+}
+
+container.addEventListener('click', e => {
+  const btn = e.target.closest('.opt');
+  if (!btn) return;
+  const qid = btn.dataset.q;
+  const q = QUESTIONS.find(x => x.id === qid);
+  const card = document.getElementById('q-' + qid);
+  const label = btn.textContent;
+
+  if (q.type === 'single') {
+    card.querySelectorAll('.opt').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    state[qid] = label;
+    const reveal = document.getElementById('reveal-' + qid);
+    if (reveal) reveal.classList.toggle('show', q.revealOn === label);
+  } else {
+    // multi
+    const cur = state[qid] || [];
+    if (btn.classList.contains('sel')) {
+      btn.classList.remove('sel');
+      state[qid] = cur.filter(x => x !== label);
+    } else {
+      if (q.max && cur.length >= q.max) {
+        // deselect oldest
+        const oldest = cur.shift();
+        card.querySelectorAll('.opt').forEach(b => { if (b.textContent === oldest) b.classList.remove('sel'); });
+      }
+      btn.classList.add('sel');
+      state[qid] = [...cur, label];
+    }
+    const reveal = document.getElementById('reveal-' + qid);
+    if (reveal && q.other) reveal.classList.toggle('show', (state[qid] || []).includes('Other…'));
+  }
+  card.classList.toggle('answered', Array.isArray(state[qid]) ? state[qid].length > 0 : !!state[qid]);
+  updateProgress();
+});
+
+document.getElementById('submit').addEventListener('click', async () => {
+  if (document.getElementById('website').value) return; // honeypot
+
+  const answers = QUESTIONS.map(q => {
+    let a;
+    if (q.type === 'text' || q.type === 'textarea') {
+      a = document.getElementById('input-' + q.id).value.trim();
+    } else {
+      a = state[q.id];
+      if (Array.isArray(a)) a = a.join('; ');
+      const otherInput = document.getElementById('other-' + q.id);
+      if (otherInput && otherInput.value.trim()) a = (a || '') + ' → ' + otherInput.value.trim();
+    }
+    return { question: q.title + (q.sub ? ' ' + q.sub : ''), answer: a || '—' };
+  });
+
+  const name = document.getElementById('c-name').value.trim();
+  const practice = document.getElementById('c-practice').value.trim();
+  const contact = document.getElementById('c-contact').value.trim();
+
+  const answeredCount = answers.filter(a => a.answer !== '—').length;
+  if (answeredCount === 0 && !name) {
+    document.getElementById('error').textContent = 'Tap a few answers first — even a couple helps!';
+    document.getElementById('error').classList.add('show');
+    return;
+  }
+
+  const btn = document.getElementById('submit');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  document.getElementById('error').classList.remove('show');
+
+  try {
+    const res = await fetch('/api/survey', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, practice, contact, answers })
+    });
+    if (!res.ok) throw new Error('bad status');
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success').classList.add('show');
+    document.getElementById('progress').style.width = '100%';
+    window.scrollTo(0, 0);
+  } catch (err) {
+    document.getElementById('error').textContent = 'Something went wrong — please try again, or just text us your answers.';
+    document.getElementById('error').classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Send my answers →';
+  }
+});
+</script>
+</body>
+</html>
