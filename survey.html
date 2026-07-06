@@ -4,102 +4,119 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<title>3-Minute Practice Marketing Survey</title>
+<title>Client Intake Survey — Bossk Productions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #0F172A;
-    --muted: #64748B;
-    --line: #E2E8F0;
-    --accent: #2563EB;
-    --accent-soft: #EFF6FF;
-    --green: #10B981;
-    --bg: #F8FAFC;
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --card: #161616;
+    --text: #f0ede8;
+    --dim: #8a8680;
+    --accent: #ff6b35;
+    --glow: rgba(255,107,53,0.15);
+    --accent-soft: rgba(255,107,53,0.1);
+    --green: #00ff88;
+    --line: rgba(255,255,255,0.08);
+    --display: 'Bebas Neue', sans-serif;
+    --mono: 'Space Mono', monospace;
+    --body: 'DM Sans', sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-family: var(--body);
     background: var(--bg);
-    color: var(--ink);
+    color: var(--text);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  .progress-track { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: var(--line); z-index: 50; }
+  .progress-track { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--line); z-index: 50; }
   .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width .35s ease; }
-  .wrap { max-width: 620px; margin: 0 auto; padding: 40px 20px 80px; }
-  .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; }
-  .brand-dial {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 3px solid var(--accent); position: relative; flex: none;
+  .wrap { max-width: 620px; margin: 0 auto; padding: 48px 20px 80px; }
+  .brand { display: flex; align-items: center; margin-bottom: 40px; }
+  .brand-logo-icon { height: 1.5rem; margin-right: 0.4em; vertical-align: middle; }
+  .brand-wordmark { font-family: var(--display); font-size: 1.5rem; letter-spacing: 0.12em; color: var(--text); }
+  .brand-wordmark span { color: var(--accent); }
+  .kicker {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.28em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 0.9rem;
   }
-  .brand-dial::after {
-    content: ''; position: absolute; width: 3px; height: 9px; background: var(--accent);
-    left: 50%; top: 1px; transform: translateX(-50%) rotate(38deg); transform-origin: bottom center; border-radius: 2px;
+  h1 {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    font-size: clamp(2rem, 6vw, 2.7rem); letter-spacing: 0.01em; line-height: 1.05; margin-bottom: 16px;
   }
-  .brand-name { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
-  .brand-name span { color: var(--accent); }
-  h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 12px; }
-  .lede { color: var(--muted); font-size: 15.5px; margin-bottom: 8px; }
-  .lede strong { color: var(--ink); }
-  .pill-row { display: flex; gap: 8px; margin: 18px 0 0; flex-wrap: wrap; }
-  .pill { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .lede { color: var(--dim); font-size: 15.5px; margin-bottom: 8px; }
+  .lede strong { color: var(--text); }
+  .pill-row {
+    display: flex; gap: 10px; margin: 20px 0 0; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dim);
+  }
+  .pill { border-right: 1px solid var(--line); padding-right: 10px; }
+  .pill:last-child { border-right: none; padding-right: 0; }
   .section-tag {
-    display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .14em;
+    font-family: var(--mono); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.25em;
     text-transform: uppercase; color: var(--accent);
-    background: var(--accent-soft); padding: 5px 12px; border-radius: 999px; margin: 44px 0 6px;
+    margin: 48px 0 8px; padding-top: 20px; border-top: 1px solid var(--line);
   }
-  .q { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-top: 14px; transition: border-color .2s; }
-  .q.answered { border-color: #BBF7D0; }
-  .q-title { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; }
-  .q-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .questions > .section-tag:first-child, #questions > .section-tag:first-child { border-top: none; padding-top: 0; }
+  .q { background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 22px; margin-top: 14px; transition: border-color .2s; }
+  .q.answered { border-color: rgba(0,255,136,0.35); }
+  .q-title { font-size: 16.5px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+  .q-sub { font-size: 13px; color: var(--dim); margin-top: 3px; }
   .opts { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
   .opt {
-    border: 1.5px solid var(--line); background: #fff; border-radius: 12px;
-    padding: 11px 15px; font-size: 14.5px; font-weight: 600; color: var(--ink);
+    border: 1px solid var(--line); background: var(--bg2); border-radius: 2px;
+    padding: 11px 15px; font-size: 14px; font-weight: 500; color: var(--text);
     cursor: pointer; user-select: none; transition: all .12s ease;
-    font-family: inherit; text-align: left;
+    font-family: var(--body); text-align: left;
   }
-  .opt:hover { border-color: #94A3B8; }
+  .opt:hover { border-color: var(--dim); }
   .opt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
   .opt.sel::before { content: '✓ '; font-weight: 800; }
   .reveal { display: none; margin-top: 12px; }
   .reveal.show { display: block; }
   input[type="text"], input[type="email"], textarea {
-    width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
-    padding: 13px 15px; font-size: 15px; font-family: inherit; color: var(--ink);
-    background: #fff; outline: none; transition: border-color .15s;
+    width: 100%; border: 1px solid var(--line); border-radius: 2px;
+    padding: 13px 15px; font-size: 15px; font-family: var(--body); color: var(--text);
+    background: var(--bg2); outline: none; transition: border-color .15s;
   }
+  input::placeholder, textarea::placeholder { color: var(--dim); }
   input:focus, textarea:focus { border-color: var(--accent); }
   textarea { min-height: 96px; resize: vertical; }
   .note {
-    margin-top: 44px; background: #FFFBEB; border: 1px solid #FDE68A;
-    border-radius: 16px; padding: 18px 20px; font-size: 14px; color: #92400E;
+    background: var(--accent-soft); border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 2px; padding: 18px 20px; font-size: 14px; color: var(--text); line-height: 1.6;
   }
-  .note strong { color: #78350F; }
+  .note strong { color: var(--accent); }
+  .note a { color: var(--accent); font-weight: 700; }
+  .note-top { margin-top: 24px; }
+  .note-bottom { margin-top: 44px; }
   .submit-btn {
-    display: block; width: 100%; margin-top: 28px;
-    background: var(--accent); color: #fff; border: none; border-radius: 14px;
-    padding: 17px; font-size: 16.5px; font-weight: 800; font-family: inherit;
-    cursor: pointer; letter-spacing: -0.01em; transition: transform .1s, background .15s;
+    display: block; width: 100%; margin-top: 32px;
+    background: var(--accent); color: var(--bg); border: none; border-radius: 2px;
+    padding: 18px; font-size: 0.85rem; font-weight: 700; font-family: var(--mono);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    cursor: pointer; transition: transform .2s, box-shadow .3s;
   }
-  .submit-btn:hover { background: #1D4ED8; }
-  .submit-btn:active { transform: scale(.99); }
-  .submit-btn:disabled { background: #94A3B8; cursor: wait; }
-  .error-msg { display: none; margin-top: 12px; color: #DC2626; font-size: 14px; font-weight: 600; text-align: center; }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 30px var(--glow); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { background: var(--dim); color: var(--bg); cursor: wait; transform: none; box-shadow: none; }
+  .error-msg { display: none; margin-top: 12px; color: #ff6b6b; font-size: 14px; font-weight: 600; text-align: center; }
   .error-msg.show { display: block; }
-  .fine { margin-top: 14px; text-align: center; color: #94A3B8; font-size: 12px; }
+  .fine { margin-top: 16px; text-align: center; color: var(--dim); font-size: 12px; font-family: var(--mono); }
   #success { display: none; text-align: center; padding: 80px 0 40px; }
   #success.show { display: block; }
   .check-ring {
-    width: 84px; height: 84px; border-radius: 50%; background: #ECFDF5;
+    width: 84px; height: 84px; border-radius: 50%; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3);
     display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
   }
   .check-ring svg { width: 44px; height: 44px; }
-  #success h2 { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 10px; }
-  #success p { color: var(--muted); font-size: 15.5px; max-width: 400px; margin: 0 auto; }
+  #success h2 { font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: 2rem; letter-spacing: 0.02em; margin-bottom: 10px; }
+  #success p { color: var(--dim); font-size: 15.5px; max-width: 400px; margin: 0 auto; }
   @media (max-width: 480px) {
-    h1 { font-size: 24px; }
-    .wrap { padding-top: 32px; }
+    .wrap { padding-top: 36px; }
     .q { padding: 18px; }
   }
 </style>
@@ -109,16 +126,23 @@
 
 <div class="wrap" id="form-view">
   <div class="brand">
-    <div class="brand-dial"></div>
-    <div class="brand-name">Practice Marketing <span>Survey</span></div>
+    <a href="https://www.bosskproductions.com" style="display:flex;align-items:center;text-decoration:none;">
+      <img src="/logo-icon.png" alt="B" class="brand-logo-icon">
+      <span class="brand-wordmark">OSSK <span>PRODUCTIONS</span></span>
+    </a>
   </div>
 
-  <h1>Help us build your marketing autopilot.</h1>
+  <div class="kicker">Client Intake</div>
+  <h1>Let's build your<br>marketing plan.</h1>
   <p class="lede">This takes about <strong>3 minutes</strong> — mostly just tapping. Your answers shape what we build for you. Nothing here is a commitment.</p>
   <div class="pill-row">
     <div class="pill">⏱ ~3 min</div>
     <div class="pill">👆 Mostly taps</div>
     <div class="pill">🔒 Private — only we see this</div>
+  </div>
+
+  <div class="note note-top">
+    <strong>Prefer not typing?</strong> Just email <a href="mailto:bosskproductions@gmail.com">bosskproductions@gmail.com</a> or text <a href="sms:+16178521005">617-852-1005</a> and dump everything on your mind — how much you spend on marketing, what happens to missed calls, what would make this a home run. We'll turn it into your plan.
   </div>
 
   <div id="questions"></div>
@@ -129,12 +153,8 @@
     <div style="margin-top:12px"><input type="text" id="c-name" placeholder="Dr. Jane Smith" autocomplete="name"></div>
     <div class="q-title" style="margin-top:18px">Practice / business name</div>
     <div style="margin-top:12px"><input type="text" id="c-practice" placeholder="Smith Family Dental"></div>
-    <div class="q-title" style="margin-top:18px">Best email or phone <span style="font-weight:500;color:var(--muted)">(optional)</span></div>
+    <div class="q-title" style="margin-top:18px">Best email or phone <span style="font-weight:500;color:var(--dim)">(optional)</span></div>
     <div style="margin-top:12px"><input type="text" id="c-contact" placeholder="you@example.com or (555) 555-5555"></div>
-  </div>
-
-  <div class="note">
-    <strong>Prefer talking to typing?</strong> Totally fine — skip anything above and just send us a voice memo answering three things: how much you spend on marketing and where it goes, what happens to calls you miss, and what would make this a home run for you.
   </div>
 
   <!-- honeypot -->
@@ -147,7 +167,7 @@
 
 <div class="wrap" id="success">
   <div class="check-ring">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
   </div>
   <h2>That's it — thank you!</h2>
   <p>We'll turn this into a custom plan for your practice and get back to you within a couple of days. No spam, no sales pressure.</p>
