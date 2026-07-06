@@ -326,7 +326,7 @@ document.getElementById('submit').addEventListener('click', async () => {
   document.getElementById('error').classList.remove('show');
 
   try {
-    const res = await fetch('/api/survey', {
+    const res = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, practice, contact, answers })
