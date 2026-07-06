@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, company, service, message, practice, contact, answers } = req.body;
+  const { name, email, company, service, message, answers } = req.body;
   const isSurvey = Array.isArray(answers);
 
   if (isSurvey && answers.length === 0) {
@@ -35,20 +35,17 @@ export default async function handler(req, res) {
         <td style="padding:10px 14px;color:${val === '—' ? '#94A3B8' : '#0F172A'};font-size:13.5px;font-weight:${highlight ? '800' : '500'};border-bottom:1px solid #E2E8F0;">${esc(val)}</td>
       </tr>`;
     const answerRows = answers.slice(0, 40).map((a) => row(a.question, a.answer)).join('');
-    const who = practice || 'Survey Response';
     const answeredCount = answers.filter((a) => a.answer && a.answer !== '—').length;
 
-    teamSubject = `Survey Response${practice ? ' — ' + practice : ''}`;
+    teamSubject = 'Survey Response';
     teamHtml = `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#F8FAFC;padding:24px;max-width:680px;margin:0 auto;">
         <div style="background:#2563EB;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
           <div style="color:#BFDBFE;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:2px;">New Survey Response</div>
-          <div style="color:#fff;font-size:20px;font-weight:900;">${esc(who)}</div>
+          <div style="color:#fff;font-size:20px;font-weight:900;">Survey Response</div>
           <div style="color:#BFDBFE;font-size:12px;margin-top:4px;">${answeredCount} of ${answers.length} questions answered</div>
         </div>
         <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;">
-          ${row('Practice', practice || '—', true)}
-          ${row('Contact', contact || '—', true)}
           ${answerRows}
         </table>
       </div>`;
@@ -143,7 +140,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: 'Bossk Productions <notifications@bosskproductions.com>',
         to: 'team@bosskproductions.com',
-        ...(email ? { reply_to: email } : (contact && contact.includes('@') ? { reply_to: contact } : {})),
+        ...(email ? { reply_to: email } : {}),
         subject: teamSubject,
         html: teamHtml
       })

@@ -147,14 +147,6 @@
 
   <div id="questions"></div>
 
-  <div class="section-tag">Last thing</div>
-  <div class="q" id="contact-card">
-    <div class="q-title">Practice / business name</div>
-    <div style="margin-top:12px"><input type="text" id="c-practice" placeholder="Smith Family Dental"></div>
-    <div class="q-title" style="margin-top:18px">Best email or phone <span style="font-weight:500;color:var(--dim)">(optional)</span></div>
-    <div style="margin-top:12px"><input type="text" id="c-contact" placeholder="you@example.com or (555) 555-5555"></div>
-  </div>
-
   <!-- honeypot -->
   <input type="text" id="website" name="website" style="position:absolute;left:-9999px" tabindex="-1" autocomplete="off">
 
@@ -327,9 +319,6 @@ document.getElementById('submit').addEventListener('click', async () => {
     return { question: q.title + (q.sub ? ' ' + q.sub : ''), answer: a || '—' };
   });
 
-  const practice = document.getElementById('c-practice').value.trim();
-  const contact = document.getElementById('c-contact').value.trim();
-
   const answeredCount = answers.filter(a => a.answer !== '—').length;
   if (answeredCount === 0) {
     document.getElementById('error').textContent = 'Tap a few answers first — even a couple helps!';
@@ -346,7 +335,7 @@ document.getElementById('submit').addEventListener('click', async () => {
     const res = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ practice, contact, answers })
+      body: JSON.stringify({ answers })
     });
     if (!res.ok) throw new Error('bad status');
     document.getElementById('form-view').style.display = 'none';
