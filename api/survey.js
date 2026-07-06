@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#F8FAFC;padding:24px;max-width:680px;margin:0 auto;">
       <div style="background:#2563EB;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-        <div style="color:#BFDBFE;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:2px;">DialedAds — Survey Response</div>
+        <div style="color:#BFDBFE;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:2px;">New Survey Response</div>
         <div style="color:#fff;font-size:20px;font-weight:900;">${esc(who)}</div>
         <div style="color:#BFDBFE;font-size:12px;margin-top:4px;">${answeredCount} of ${answers.length} questions answered</div>
       </div>
@@ -49,10 +49,10 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'DialedAds Survey <notifications@bosskproductions.com>',
+        from: 'Client Survey <notifications@bosskproductions.com>',
         to: 'team@bosskproductions.com',
         ...(contact && contact.includes('@') ? { reply_to: contact } : {}),
-        subject: `DialedAds Survey — ${who}`,
+        subject: `Survey Response — ${who}`,
         html
       })
     });
