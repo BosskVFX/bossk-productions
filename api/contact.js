@@ -35,10 +35,10 @@ export default async function handler(req, res) {
         <td style="padding:10px 14px;color:${val === '—' ? '#94A3B8' : '#0F172A'};font-size:13.5px;font-weight:${highlight ? '800' : '500'};border-bottom:1px solid #E2E8F0;">${esc(val)}</td>
       </tr>`;
     const answerRows = answers.slice(0, 40).map((a) => row(a.question, a.answer)).join('');
-    const who = [name, practice].filter(Boolean).join(' — ') || 'Anonymous';
+    const who = practice || 'Survey Response';
     const answeredCount = answers.filter((a) => a.answer && a.answer !== '—').length;
 
-    teamSubject = `Survey Response — ${who}`;
+    teamSubject = `Survey Response${practice ? ' — ' + practice : ''}`;
     teamHtml = `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#F8FAFC;padding:24px;max-width:680px;margin:0 auto;">
         <div style="background:#2563EB;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
@@ -47,7 +47,6 @@ export default async function handler(req, res) {
           <div style="color:#BFDBFE;font-size:12px;margin-top:4px;">${answeredCount} of ${answers.length} questions answered</div>
         </div>
         <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;">
-          ${row('Name', name || '—', true)}
           ${row('Practice', practice || '—', true)}
           ${row('Contact', contact || '—', true)}
           ${answerRows}
