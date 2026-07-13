@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxEXavIf3HNYjEY16k28O3MnJv7WQLRwlFaPUDnMZKcsjnWrp3mjSydsU4mPA_UsbtP/exec';
   const RESEND_KEY = process.env.RESEND_API_KEY;
-  const { subject, preview_text, body, cta_text, cta_url, header_image, body_images, video_url, action } = req.body;
+  const { subject, preview_text, body, cta_text, cta_url, header_image, body_images, video_url, action, slack_thread } = req.body;
 
   if (!subject || !body) {
     return res.status(400).json({ error: 'Subject and body are required' });
@@ -23,7 +23,8 @@ export default async function handler(req, res) {
         header_image: header_image || '',
         body_images: body_images || '',
         video_url: video_url || '',
-        status: action || 'draft'
+        status: action || 'draft',
+        slack_thread: slack_thread || ''
       }),
       redirect: 'follow'
     });

@@ -16,7 +16,8 @@ export default async function handler(req, res) {
   }
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-  const SLACK_WEBHOOK = process.env.SLACK_WEBHOOK;
+  const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
+  const SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID;
   const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxEXavIf3HNYjEY16k28O3MnJv7WQLRwlFaPUDnMZKcsjnWrp3mjSydsU4mPA_UsbtP/exec';
 
   if (!ANTHROPIC_KEY) {
@@ -74,7 +75,28 @@ Output ONLY valid JSON, no markdown fences, no preamble:
     const clean = textBlocks.replace(/```json|```/g, '').trim();
     const draft = JSON.parse(clean);
 
-    // Save as a draft — status stays 'draft' so it never auto-sends.
+    // Post to Slack via the bot (not the webhook) so we get back a message
+    // timestamp we can use to identify replies in this thread later.
+    let threadKey = '';
+    if (SLACK_BOT_TOKEN && SLACK_CHANNEL_ID) {
+      const slackRes = await fetch('https://slack.com/api/chat.postMessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SLACK_BOT_TOKEN}`
+        },
+        body: JSON.stringify({
+          channel: SLACK_CHANNEL_ID,
+          text: `📰 *Monthly newsletter draft ready*\n*Subject:* ${draft.subject_line}\n*Preview:* ${draft.preview_text}\n\n${draft.body}\n\nReply "approve" in this thread to send it, or reply with edit notes and I'll revise it.`
+        })
+      });
+      const slackData = await slackRes.json();
+      if (slackData.ok) {
+        threadKey = `${slackData.channel}|${slackData.ts}`;
+      }
+    }
+
+    // Save as a draft — status stays 'pending_review' until approved in Slack.
     await fetch(SHEET_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
@@ -88,37 +110,15 @@ Output ONLY valid JSON, no markdown fences, no preamble:
         header_image: '',
         body_images: '',
         video_url: '',
-        status: 'draft'
+        status: threadKey ? 'pending_review' : 'draft',
+        slack_thread: threadKey
       }),
       redirect: 'follow'
     });
 
-    // Ping Slack so Jason knows a draft is waiting for review.
-    if (SLACK_WEBHOOK) {
-      await fetch(SLACK_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          blocks: [
-            { type: 'header', text: { type: 'plain_text', text: '📰 Monthly newsletter draft ready' } },
-            { type: 'section', text: { type: 'mrkdwn', text: `*Subject:* ${draft.subject_line}\n*Preview:* ${draft.preview_text}` } },
-            { type: 'section', text: { type: 'mrkdwn', text: 'Saved as a draft. Review, add an image, and hit Send from the admin panel when ready.' } },
-            { type: 'context', elements: [{ type: 'mrkdwn', text: '<https://www.bosskproductions.com/admin.html|Open Admin>' }] }
-          ]
-        })
-      });
-    }
-
-    return res.status(200).json({ success: true, draft });
+    return res.status(200).json({ success: true, draft, threadKey });
   } catch (e) {
     console.error('Auto-draft error:', e.message);
-    if (SLACK_WEBHOOK) {
-      await fetch(SLACK_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: `⚠️ Monthly newsletter auto-draft failed: ${e.message}` })
-      }).catch(() => {});
-    }
     return res.status(500).json({ error: e.message });
   }
 }
