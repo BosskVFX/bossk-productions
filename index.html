@@ -280,11 +280,11 @@
   .tech { padding:8rem 3rem; max-width:1200px; margin:0 auto; }
   .tech-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem; }
   .tech-card {
-    background:var(--card); border:1px solid var(--line);
+    background:var(--card); border:1px solid rgba(255,107,53,0.35);
     padding:2.5rem 2rem; transition:transform 0.3s,border-color 0.3s;
     display:flex; flex-direction:column;
   }
-  .tech-card:hover { transform:translateY(-4px); border-color:rgba(255,107,53,0.25); }
+  .tech-card:hover { transform:translateY(-4px); border-color:var(--accent); }
   .tech-logo-row { display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; }
   .tech-logo { width:48px; height:48px; object-fit:contain; flex-shrink:0; }
   .tech-card h3 { font-family:var(--display); font-size:1.6rem; letter-spacing:0.05em; color:var(--accent); }
@@ -871,9 +871,9 @@
 <nav>
   <a href="#" class="logo"><img src="logo-icon.png" alt="B" class="logo-icon">OSSK <span>PRODUCTIONS</span></a>
   <ul class="nav-links">
+    <li><a href="#work">Work</a></li>
     <li><a href="#services">Services</a></li>
     <li><a href="#technology">Technology</a></li>
-    <li><a href="#work">Work</a></li>
     <li><a href="/case-studies.html">Case Studies</a></li>
     <li><a href="#team">Team</a></li>
     <li><a href="#contact" class="nav-cta">Let's Talk</a></li>
@@ -885,9 +885,9 @@
 
 <div class="mobile-menu" id="mobileMenu">
   <button class="mobile-close" onclick="this.parentElement.classList.remove('active')">&times;</button>
+  <a href="#work" onclick="this.parentElement.classList.remove('active')">WORK</a>
   <a href="#services" onclick="this.parentElement.classList.remove('active')">SERVICES</a>
   <a href="#technology" onclick="this.parentElement.classList.remove('active')">TECHNOLOGY</a>
-  <a href="#work" onclick="this.parentElement.classList.remove('active')">WORK</a>
   <a href="/case-studies.html" onclick="this.parentElement.classList.remove('active')">CASE STUDIES</a>
   <a href="#team" onclick="this.parentElement.classList.remove('active')">TEAM</a>
   <a href="#contact" class="nav-cta" onclick="this.parentElement.classList.remove('active')">LET'S TALK</a>
