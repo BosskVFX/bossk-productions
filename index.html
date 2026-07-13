@@ -276,6 +276,28 @@
   .s-card h3 { font-family:var(--display); font-size:1.6rem; letter-spacing:0.05em; color:var(--accent); margin-bottom:0.75rem; }
   .s-card p { color:var(--dim); font-size:0.88rem; line-height:1.7; }
 
+  /* TECHNOLOGY */
+  .tech { padding:8rem 3rem; max-width:1200px; margin:0 auto; }
+  .tech-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem; }
+  .tech-card {
+    background:var(--card); border:1px solid var(--line);
+    padding:2.5rem 2rem; transition:transform 0.3s,border-color 0.3s;
+    display:flex; flex-direction:column;
+  }
+  .tech-card:hover { transform:translateY(-4px); border-color:rgba(255,107,53,0.25); }
+  .tech-logo-row { display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; }
+  .tech-logo { width:48px; height:48px; object-fit:contain; flex-shrink:0; }
+  .tech-card h3 { font-family:var(--display); font-size:1.6rem; letter-spacing:0.05em; color:var(--accent); }
+  .tech-card p { color:var(--dim); font-size:0.88rem; line-height:1.7; margin-bottom:1.25rem; }
+  .tech-link {
+    margin-top:auto; align-self:flex-start;
+    font-family:var(--mono); font-size:0.65rem; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--accent); text-decoration:none;
+    border-bottom:1px solid rgba(255,107,53,0.3); padding-bottom:0.2rem;
+    transition:border-color 0.2s;
+  }
+  .tech-link:hover { border-color:var(--accent); }
+
   /* PROCESS */
   .process { padding:8rem 3rem; background:var(--bg2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   .process-inner { max-width:1000px; margin:0 auto; }
@@ -818,6 +840,7 @@
     .hero{padding:7rem 1.5rem 3rem}
     .stats{flex-direction:column} .stat{border-right:none;border-bottom:1px solid var(--line)} .stat:last-child{border-bottom:none}
     .s-cards{grid-template-columns:1fr}
+    .tech-cards{grid-template-columns:1fr}
     .p-steps{grid-template-columns:1fr;gap:2rem}
     .w-grid{grid-template-columns:1fr}
     .t-grid{grid-template-columns:repeat(2,1fr)}
@@ -903,6 +926,30 @@
     <div class="s-card reveal">
       <h3>POST PRODUCTION</h3>
       <p>Editorial, color, VFX, motion graphics, sound design, and finishing. Everything after the shoot, under one roof.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TECHNOLOGY -->
+<section class="tech" id="technology">
+  <div class="s-label reveal">Technology</div>
+  <h2 class="s-title reveal">WE BUILD OUR OWN TOOLS</h2>
+  <p style="color:var(--dim);font-size:1rem;max-width:600px;margin:-2.5rem 0 3rem;line-height:1.6;" class="reveal">Every production surfaces problems no off-the-shelf software solves. So we build the software.</p>
+  <div class="tech-cards stagger">
+    <div class="tech-card reveal">
+      <div class="tech-logo-row">
+        <img src="/logo-icon.png" alt="Patina" class="tech-logo">
+        <h3>PATINA</h3>
+      </div>
+      <p>Production color conform for AI-generated video. Takes raw AI output and gets it studio-ready — LOG conversion, frame rate conversion, upscaling, and full XML round-trip support. Built in-house, now available to the public.</p>
+      <a href="/patina.html" class="tech-link">Explore Patina &rarr;</a>
+    </div>
+    <div class="tech-card reveal">
+      <div class="tech-logo-row">
+        <img src="/cozyui-logo.png" alt="CozyUI" class="tech-logo">
+        <h3>COZYUI</h3>
+      </div>
+      <p>A self-hosted mission control for AI image and video generation — unifying cloud APIs, local rendering, and finishing tools behind one interface. Plan a shot, generate it, restyle it, grade it, manage every output. One pipeline, full control.</p>
     </div>
   </div>
 </section>
