@@ -1,5 +1,22 @@
 export default async function handler(req, res) {
   if (req.method === 'GET') {
+    // ?all=true&sheet=X — raw, unfiltered rows from any sheet (was all-cases.js;
+    // folded in here to stay under Vercel's serverless function count).
+    if (req.query.all === 'true') {
+      const sheet = req.query.sheet || 'CaseStudy';
+      try {
+        const r = await fetch(
+          `https://script.google.com/macros/s/AKfycbxEXavIf3HNYjEY16k28O3MnJv7WQLRwlFaPUDnMZKcsjnWrp3mjSydsU4mPA_UsbtP/exec?all=true&sheet=${sheet}`,
+          { redirect: 'follow' },
+        );
+        const data = await r.text();
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(200).send(data);
+      } catch (e) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     // Fetch published case studies
     try {
       const sheetRes = await fetch('https://script.google.com/macros/s/AKfycbxEXavIf3HNYjEY16k28O3MnJv7WQLRwlFaPUDnMZKcsjnWrp3mjSydsU4mPA_UsbtP/exec', {

@@ -1,9 +1,50 @@
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxEXavIf3HNYjEY16k28O3MnJv7WQLRwlFaPUDnMZKcsjnWrp3mjSydsU4mPA_UsbtP/exec';
+
+// Subscriber list management — folded in here (rather than separate files)
+// to stay under Vercel's serverless function count on the Hobby plan.
+async function handleSubscribe(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const { email, name } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ _sheet: 'Subscribers', email, name: name || '' }),
+      redirect: 'follow',
+    });
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    console.error('Subscribe error:', e.message);
+    return res.status(500).json({ error: 'Failed to subscribe' });
+  }
+}
+
+async function handleUnsubscribe(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ _sheet: 'Subscribers', action: 'unsubscribe', email }),
+      redirect: 'follow',
+    });
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
+
 export default async function handler(req, res) {
+  if (req.query.action === 'subscribe') return handleSubscribe(req, res);
+  if (req.query.action === 'unsubscribe') return handleUnsubscribe(req, res);
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxEXavIf3HNYjEY16k28O3MnJv7WQLRwlFaPUDnMZKcsjnWrp3mjSydsU4mPA_UsbtP/exec';
   const RESEND_KEY = process.env.RESEND_API_KEY;
   const { subject, preview_text, body, cta_text, cta_url, header_image, body_images, video_url, action, slack_thread } = req.body;
 

@@ -7,6 +7,9 @@
     { "source": "/survey", "destination": "/survey.html" },
     { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
     { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/api/all-cases", "destination": "/api/cases?all=true" },
+    { "source": "/api/subscribe", "destination": "/api/newsletter?action=subscribe" },
+    { "source": "/api/unsubscribe", "destination": "/api/newsletter?action=unsubscribe" },
     { "source": "/:slug([^.]+)", "destination": "/client.html" }
   ],
   "crons": [
