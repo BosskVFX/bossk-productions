@@ -5,6 +5,8 @@
   "rewrites": [
     { "source": "/solar-q26", "destination": "/solar-q26.html" },
     { "source": "/survey", "destination": "/survey.html" },
+    { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
+    { "source": "/terms", "destination": "/terms.html" },
     { "source": "/:slug([^.]+)", "destination": "/client.html" }
   ],
   "crons": [
