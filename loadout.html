@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOADOUT — Bossk Productions</title>
+<meta name="description" content="LOADOUT: every AI image and video model in one desktop app. Seedance, Kling, MiniMax H3, LTX, FLUX, Nano Banana, GPT Image — projects, batching, film finishing, receipts.">
+<meta property="og:title" content="LOADOUT — Bossk Productions">
+<meta property="og:description" content="Every AI image and video model, one app.">
+<meta property="og:image" content="https://bosskproductions.com/loadout-header.jpg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0a;--bg2:#111;--card:#161616;--text:#f0ede8;
+    --dim:#8a8680;--accent:#ff6b35;--line:rgba(255,255,255,0.06);
+    --display:'Bebas Neue',sans-serif;--mono:'Space Mono',monospace;--body:'DM Sans',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;}
+  .hdr{width:100%;max-width:900px;display:block;margin:2rem auto 0;border:1px solid var(--line);}
+  .content{max-width:720px;margin:0 auto;padding:3rem 2rem 6rem;}
+  .title{font-family:var(--display);font-size:clamp(2.5rem,5vw,3.5rem);letter-spacing:0.03em;line-height:1;margin-bottom:0.25rem;}
+  .sub{font-size:0.95rem;color:var(--dim);margin-bottom:2.5rem;line-height:1.6;}
+  .label{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem;display:block;}
+
+  .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+  .dl-card{background:var(--card);border:1px solid var(--line);padding:2rem 1.5rem;text-align:center;transition:border-color 0.2s,transform 0.2s;text-decoration:none;display:block;color:inherit;}
+  .dl-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .dl-card.soon{opacity:0.55;cursor:default;}
+  .dl-card.soon:hover{border-color:var(--line);transform:none;}
+  .dl-icon{font-size:2.5rem;margin-bottom:0.75rem;}
+  .dl-platform{font-family:var(--display);font-size:1.4rem;letter-spacing:0.05em;color:var(--text);margin-bottom:0.25rem;}
+  .dl-version{font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);}
+  .dl-note{font-family:var(--mono);font-size:0.5rem;letter-spacing:0.05em;color:var(--accent);margin-top:0.4rem;}
+  .dl-btn{display:inline-block;margin-top:1.25rem;background:var(--accent);color:var(--bg);font-family:var(--mono);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:0.65rem 1.5rem;}
+  .soon .dl-btn{background:rgba(255,107,53,0.25);color:var(--dim);}
+
+  .box{background:var(--card);border:1px solid var(--line);padding:2rem;margin-top:2.5rem;}
+  .price{font-family:var(--display);font-size:3rem;line-height:1;color:var(--accent);}
+  .price span{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);margin-left:0.5rem;}
+  .box ul{list-style:none;margin:1.25rem 0 0;}
+  .box li{font-size:0.9rem;color:var(--dim);line-height:1.6;padding-left:1.1rem;position:relative;margin-bottom:0.5rem;}
+  .box li::before{content:"";position:absolute;left:0;top:0.62em;width:5px;height:5px;background:var(--accent);}
+  .box li strong{color:var(--text);}
+  .cta{display:block;text-align:center;margin-top:1.5rem;background:var(--accent);color:var(--bg);font-family:var(--mono);font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:1rem;text-decoration:none;}
+
+  .steps{counter-reset:s;list-style:none;margin-top:1.25rem;}
+  .steps li{counter-increment:s;padding-left:2.4rem;position:relative;margin-bottom:0.9rem;font-size:0.9rem;color:var(--dim);line-height:1.6;}
+  .steps li::before{content:counter(s);background:transparent;position:absolute;left:0;top:0.05em;width:1.6rem;height:1.6rem;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:0.65rem;display:flex;align-items:center;justify-content:center;}
+  .steps li strong{color:var(--text);}
+  .fine{font-size:0.7rem;color:var(--dim);margin-top:1.25rem;line-height:1.5;}
+  .footer{max-width:720px;margin:0 auto;padding:0 2rem;font-family:var(--mono);font-size:0.55rem;color:var(--dim);letter-spacing:0.1em;text-align:center;}
+
+  @media(max-width:600px){.content{padding:2rem 1.5rem 4rem;}.dl-grid{grid-template-columns:1fr;}.hdr{max-height:300px;object-fit:cover;}}
+</style>
+</head>
+<body>
+
+<img class="hdr" src="/loadout-header.jpg" alt="LOADOUT — Model Aggregation Terminal">
+
+<div class="content">
+  <div class="title">LOADOUT</div>
+  <p class="sub">Every AI image and video model, one desktop app. Seedance, Kling, MiniMax H3, LTX, FLUX, Nano Banana, GPT Image — with projects, batching, film finishing and a per-project receipt for every render.</p>
+
+  <span class="label">Download</span>
+  <div class="dl-grid">
+    <a href="#" class="dl-card" id="dlWindows">
+      <div class="dl-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="#f0ede8"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg></div>
+      <div class="dl-platform">WINDOWS 11</div>
+      <div class="dl-version" id="verWin">checking&hellip;</div>
+      <div class="dl-btn">Download</div>
+    </a>
+    <a href="#" class="dl-card soon" id="dlMac">
+      <div class="dl-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="#f0ede8"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg></div>
+      <div class="dl-platform">MAC OS</div>
+      <div class="dl-version" id="verMac">coming soon</div>
+      <div class="dl-note">*Requires Apple Silicon (M1–M5)</div>
+      <div class="dl-btn">Coming soon</div>
+    </a>
+  </div>
+  <p class="fine">The app needs an account to sign in. If you don't have one yet, it walks you through creating one on first launch — or start below.</p>
+
+  <div class="box">
+    <div class="price">$10<span>/ month</span></div>
+    <ul>
+      <li><strong>300 GPU minutes every month</strong> on a rented graphics card: MiniMax H3 with audio, LTX-2.5, Viz-Motion, AI Roto. Extra minutes are $10 for 500 and never expire.</li>
+      <li><strong>Your keys, your bills.</strong> Cloud models run on API keys from your own provider accounts, billed by those providers directly. We never see those keys.</li>
+      <li><strong>Only render time counts.</strong> Waiting for a machine is never charged.</li>
+    </ul>
+    <a class="cta" href="https://loadout.bosskproductions.com/join">Create an account</a>
+  </div>
+
+  <div class="box">
+    <span class="label">How it works</span>
+    <ol class="steps">
+      <li><strong>Download and install</strong> the app for your platform above.</li>
+      <li><strong>Open it and choose Create an account.</strong> Pay on Stripe, add your API keys (optional), and download your licence file.</li>
+      <li><strong>Point the app at the licence file.</strong> That's the whole setup — you're rendering.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="footer">&copy; 2026 BOSSK PRODUCTIONS, LLC</div>
+
+<script>
+// Releases live on this site's GitHub repo, tagged loadout-vX.Y.Z (Patina shares the repo, so
+// "latest" alone is not enough - filter by tag). The page fills in the newest build itself, so
+// publishing a new version never means editing this page. If the API is unreachable, the
+// hard-coded fallback below still downloads a real build.
+const FALLBACK = {
+  tag: 'loadout-v0.1.0',
+  windows: 'https://github.com/BosskVFX/bossk-productions/releases/download/loadout-v0.1.0/LOADOUT_0.1.0_x64-setup.exe',
+  mac: ''
+};
+function setCard(id, verId, url, tag) {
+  const card = document.getElementById(id), ver = document.getElementById(verId);
+  if (url) {
+    card.href = url; card.classList.remove('soon');
+    ver.textContent = tag.replace(/^loadout-/, '');
+    card.querySelector('.dl-btn').textContent = 'Download';
+  } else {
+    card.removeAttribute('href'); card.classList.add('soon');
+    ver.textContent = 'coming soon';
+    card.querySelector('.dl-btn').textContent = 'Coming soon';
+  }
+}
+(async () => {
+  let rel = null;
+  try {
+    const r = await fetch('https://api.github.com/repos/BosskVFX/bossk-productions/releases?per_page=30');
+    const all = await r.json();
+    rel = (all || []).find(x => /^loadout-v/.test(x.tag_name) && !x.draft && !x.prerelease) || null;
+  } catch {}
+  if (rel) {
+    const a = rel.assets || [];
+    const win = a.find(x => /\.exe$/i.test(x.name)) || a.find(x => /\.msi$/i.test(x.name));
+    const mac = a.find(x => /\.dmg$/i.test(x.name));
+    setCard('dlWindows', 'verWin', win && win.browser_download_url, rel.tag_name);
+    setCard('dlMac', 'verMac', mac && mac.browser_download_url, rel.tag_name);
+  } else {
+    setCard('dlWindows', 'verWin', FALLBACK.windows, FALLBACK.tag);
+    setCard('dlMac', 'verMac', FALLBACK.mac, FALLBACK.tag);
+  }
+})();
+</script>
+</body>
+</html>

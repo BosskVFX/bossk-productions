@@ -1,18 +1,53 @@
 {
   "redirects": [
-    { "source": "/solar-spec", "destination": "/solar-q26", "permanent": false }
+    {
+      "source": "/solar-spec",
+      "destination": "/solar-q26",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/solar-q26", "destination": "/solar-q26.html" },
-    { "source": "/survey", "destination": "/survey.html" },
-    { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
-    { "source": "/terms", "destination": "/terms.html" },
-    { "source": "/api/all-cases", "destination": "/api/cases?all=true" },
-    { "source": "/api/subscribe", "destination": "/api/newsletter?action=subscribe" },
-    { "source": "/api/unsubscribe", "destination": "/api/newsletter?action=unsubscribe" },
-    { "source": "/:slug([^.]+)", "destination": "/client.html" }
+    {
+      "source": "/solar-q26",
+      "destination": "/solar-q26.html"
+    },
+    {
+      "source": "/loadout",
+      "destination": "/loadout.html"
+    },
+    {
+      "source": "/survey",
+      "destination": "/survey.html"
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacy-policy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/api/all-cases",
+      "destination": "/api/cases?all=true"
+    },
+    {
+      "source": "/api/subscribe",
+      "destination": "/api/newsletter?action=subscribe"
+    },
+    {
+      "source": "/api/unsubscribe",
+      "destination": "/api/newsletter?action=unsubscribe"
+    },
+    {
+      "source": "/:slug([^.]+)",
+      "destination": "/client.html"
+    }
   ],
   "crons": [
-    { "path": "/api/newsletter-auto-draft", "schedule": "0 14 1 * *" }
+    {
+      "path": "/api/newsletter-auto-draft",
+      "schedule": "0 14 1 * *"
+    }
   ]
 }
