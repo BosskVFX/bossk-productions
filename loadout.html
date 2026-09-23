@@ -135,6 +135,16 @@ function setCard(id, verId, url, tag) {
     const r = await fetch('https://api.github.com/repos/BosskVFX/bossk-productions/releases?per_page=30');
     const all = await r.json();
     rels = (all || []).filter(x => /^loadout-v/.test(x.tag_name) && !x.draft && !x.prerelease);
+    // Newest by version number, not by GitHub's list order: editing an older release (the Mac
+    // adding its build to it) moved it ahead of a newer one, and the page offered 0.2.9 over 0.2.10.
+    const ver = (t) => (t.replace(/^loadout-v/, '').match(/\d+/g) || []).map(Number);
+    rels.sort((a, b) => {
+      const x = ver(a.tag_name), y = ver(b.tag_name);
+      for (let i = 0; i < Math.max(x.length, y.length); i++) {
+        if ((y[i] || 0) !== (x[i] || 0)) return (y[i] || 0) - (x[i] || 0);
+      }
+      return 0;
+    });
   } catch {}
   if (rels && rels.length) {
     const pick = (test) => {
