@@ -43,6 +43,12 @@
   .box li{font-size:0.9rem;color:var(--dim);line-height:1.6;padding-left:1.1rem;position:relative;margin-bottom:0.5rem;}
   .box li::before{content:"";position:absolute;left:0;top:0.62em;width:5px;height:5px;background:var(--accent);}
   .box li strong{color:var(--text);}
+  .guide{display:grid;grid-template-columns:150px 1fr;gap:1.75rem;align-items:center;}
+  .guide img{width:150px;display:block;border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.5);}
+  .guide p{color:var(--dim);margin:0 0 1rem;line-height:1.6;}
+  .guide h3{font-family:var(--display);font-size:1.6rem;line-height:1;margin:0 0 .6rem;color:var(--text);letter-spacing:.02em;}
+  .guide .cta{display:inline-block;margin-top:0;padding:.8rem 1.4rem;}
+  @media (max-width:560px){.guide{grid-template-columns:1fr;} .guide img{width:120px;}}
   .cta{display:block;text-align:center;margin-top:1.5rem;background:var(--accent);color:var(--bg);font-family:var(--mono);font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:1rem;text-decoration:none;}
 
   .steps{counter-reset:s;list-style:none;margin-top:1.25rem;}
@@ -79,6 +85,15 @@
       <div class="dl-btn">Coming soon</div>
     </a>
   </div>
+  <div class="box guide">
+    <a href="/loadout-guide.pdf" target="_blank" rel="noopener"><img src="/loadout-guide-cover.jpg" alt="LOADOUT Getting Started guide cover"></a>
+    <div>
+      <span class="label">Getting started guide</span>
+      <h3>Set up in ten minutes</h3>
+      <p>A picture guide, one screen at a time: your account, API keys and Higgsfield &mdash; then prepping, generating and finishing your first shot.</p>
+      <a class="cta" href="/loadout-guide.pdf" target="_blank" rel="noopener">Read the guide (PDF, 3.8 MB)</a>
+    </div>
+  </div>
   <p class="fine">The app needs an account to sign in. If you don't have one yet, it walks you through creating one on first launch — or start below.</p>
 
   <div class="box">
@@ -97,7 +112,7 @@
     <ol class="steps">
       <li><strong>Download and install</strong> the app for your platform above.</li>
       <li><strong>Open it and choose Create an account.</strong> Pay on Stripe, add your API keys (optional), and download your licence file.</li>
-      <li><strong>Point the app at the licence file.</strong> That's the whole setup — you're rendering.</li>
+      <li><strong>Point the app at the licence file.</strong> That's the whole setup — you're rendering. The <a href="/loadout-guide.pdf" target="_blank" rel="noopener" style="color:var(--accent)">getting started guide</a> walks through every screen.</li>
     </ol>
   </div>
 </div>
