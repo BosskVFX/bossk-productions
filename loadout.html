@@ -127,18 +127,27 @@ function setCard(id, verId, url, tag) {
   }
 }
 (async () => {
-  let rel = null;
+  // Each card takes the newest release that actually has a file for its platform. Windows
+  // and Mac ship on their own schedules; "newest release" alone showed the Mac card as
+  // "coming soon" whenever Windows published first.
+  let rels = null;
   try {
     const r = await fetch('https://api.github.com/repos/BosskVFX/bossk-productions/releases?per_page=30');
     const all = await r.json();
-    rel = (all || []).find(x => /^loadout-v/.test(x.tag_name) && !x.draft && !x.prerelease) || null;
+    rels = (all || []).filter(x => /^loadout-v/.test(x.tag_name) && !x.draft && !x.prerelease);
   } catch {}
-  if (rel) {
-    const a = rel.assets || [];
-    const win = a.find(x => /\.exe$/i.test(x.name)) || a.find(x => /\.msi$/i.test(x.name));
-    const mac = a.find(x => /\.dmg$/i.test(x.name));
-    setCard('dlWindows', 'verWin', win && win.browser_download_url, rel.tag_name);
-    setCard('dlMac', 'verMac', mac && mac.browser_download_url, rel.tag_name);
+  if (rels && rels.length) {
+    const pick = (test) => {
+      for (const rel of rels) {
+        const hit = (rel.assets || []).find(x => test.test(x.name));
+        if (hit) return { url: hit.browser_download_url, tag: rel.tag_name };
+      }
+      return { url: '', tag: '' };
+    };
+    const win = pick(/\.exe$/i), winMsi = win.url ? win : pick(/\.msi$/i);
+    const mac = pick(/\.dmg$/i);
+    setCard('dlWindows', 'verWin', winMsi.url, winMsi.tag);
+    setCard('dlMac', 'verMac', mac.url, mac.tag);
   } else {
     setCard('dlWindows', 'verWin', FALLBACK.windows, FALLBACK.tag);
     setCard('dlMac', 'verMac', FALLBACK.mac, FALLBACK.tag);
