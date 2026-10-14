@@ -8,6 +8,10 @@
   ],
   "rewrites": [
     {
+      "source": "/card",
+      "destination": "/api/card"
+    },
+    {
       "source": "/solar-q26",
       "destination": "/solar-q26.html"
     },
