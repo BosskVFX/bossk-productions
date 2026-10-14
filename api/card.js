@@ -3,9 +3,9 @@
 // Logs every scan to Vercel Observability and 302-redirects to the destination.
 // To change where /card points, update the CARD_DESTINATION env var in
 // Vercel → Project Settings → Environment Variables, then redeploy.
-// Falls back to https://princesslumi.com/ if the env var is unset.
+// Falls back to the Bossk home page if the env var is unset.
 
-const DEFAULT_DESTINATION = 'https://princesslumi.com/';
+const DEFAULT_DESTINATION = 'https://www.bosskproductions.com/';
 
 export default function handler(req, res) {
   const destination = process.env.CARD_DESTINATION || DEFAULT_DESTINATION;
