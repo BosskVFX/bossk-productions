@@ -44,6 +44,14 @@
       "destination": "/api/newsletter?action=unsubscribe"
     },
     {
+      "source": "/kickboxer",
+      "destination": "/kickboxer/index.html"
+    },
+    {
+      "source": "/kickboxer/",
+      "destination": "/kickboxer/index.html"
+    },
+    {
       "source": "/:slug([^.]+)",
       "destination": "/client.html"
     }
