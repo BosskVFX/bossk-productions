@@ -297,6 +297,13 @@
     transition:border-color 0.2s;
   }
   .tech-link:hover { border-color:var(--accent); }
+  .tech-cards-solo { grid-template-columns:1fr; }
+  .tech-card.tech-card-wide { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:2rem; align-items:center; }
+  .tech-hero { display:block; border:1px solid var(--line); overflow:hidden; }
+  .tech-hero img { display:block; width:100%; height:auto; transition:transform .4s ease; }
+  .tech-hero:hover img { transform:scale(1.02); }
+  .tech-copy { display:flex; flex-direction:column; }
+  .tech-copy p { margin-bottom:1.5rem; }
 
   /* PROCESS */
   .process { padding:8rem 3rem; background:var(--bg2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
@@ -841,6 +848,7 @@
     .stats{flex-direction:column} .stat{border-right:none;border-bottom:1px solid var(--line)} .stat:last-child{border-bottom:none}
     .s-cards{grid-template-columns:1fr}
     .tech-cards{grid-template-columns:1fr}
+    .tech-card.tech-card-wide{grid-template-columns:1fr;gap:1.25rem}
     .p-steps{grid-template-columns:1fr;gap:2rem}
     .w-grid{grid-template-columns:1fr}
     .t-grid{grid-template-columns:repeat(2,1fr)}
@@ -937,18 +945,14 @@
   <div class="s-label reveal">Technology</div>
   <h2 class="s-title reveal">WE BUILD OUR OWN TOOLS</h2>
   <p style="color:var(--dim);font-size:1rem;max-width:600px;margin:-2.5rem 0 3rem;line-height:1.6;" class="reveal">Every production surfaces problems no off-the-shelf software solves. So we build the software.</p>
-  <div class="tech-cards stagger">
-    <div class="tech-card reveal">
-      <img src="/patina-logo.png" alt="Patina — Production Color Conform for AI Generated Video" style="width:100%;max-width:230px;height:auto;margin-bottom:1.25rem;border:1px solid var(--line);">
-      <p>Production color conform for AI-generated video. Takes raw AI output and gets it studio-ready — LOG conversion, frame rate conversion, upscaling, and full XML round-trip support. Built in-house, now available to the public.</p>
-      <a href="/patina.html" class="tech-link">Explore Patina &rarr;</a>
-    </div>
-    <div class="tech-card reveal">
-      <div class="tech-logo-row">
-        <img src="/cozyui-logo.png" alt="CozyUI" class="tech-logo">
-        <h3 style="font-size:2rem;">COZYUI</h3>
+  <div class="tech-cards tech-cards-solo stagger">
+    <div class="tech-card tech-card-wide reveal">
+      <a href="/loadout" class="tech-hero" aria-label="LOADOUT download page"><img src="/loadout-header.jpg" alt="LOADOUT by Bossk Productions"></a>
+      <div class="tech-copy">
+        <h3 style="font-size:2rem;">LOADOUT</h3>
+        <p>Our production software for AI image and video. Every major model in one desktop app, with storyboarding, projects, batching and film finishing built in. Plan a shot, generate it, refine it and deliver it from one place. Built in-house for our own productions, now available on Windows and Mac.</p>
+        <a href="/loadout" class="tech-link">Download LOADOUT &rarr;</a>
       </div>
-      <p>A self-hosted mission control for AI image and video generation — unifying cloud APIs, local rendering, and finishing tools behind one interface. Plan a shot, generate it, restyle it, grade it, manage every output. One pipeline, full control. While most studios build campaigns on public aggregators, we built our own — proprietary infrastructure competitors can't access.</p>
     </div>
   </div>
 </section>
