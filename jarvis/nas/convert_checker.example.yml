@@ -1,0 +1,26 @@
+# Copy to convert_checker.yml next to the script (or anywhere; pass --config).
+# Paths are as seen from wherever the checker runs. If it runs in the Docker container
+# from jarvis/deploy/nas, these are the container-side mounts.
+
+source_dir:  /mnt/tank/video/originals      # the conversion job reads from here
+output_dir:  /mnt/tank/video/h264           # the job writes clip.mp4 here, same sub-folder layout
+holding_dir: /mnt/tank/video/_holding       # verified originals wait here for hold_days, then delete
+
+hold_days: 7
+duration_tolerance_s: 1.0
+min_size_ratio: 0.03        # converted must be at least 3% of the original's bytes (ProRes -> H.264 is usually 5-15%)
+min_bitrate_kbps: 1500      # floor at 1080p, scaled by resolution
+required_codec: h264
+tail_seconds: 5             # decode the last 5s to catch truncated files; 0 to disable
+min_age_minutes: 10         # ignore converted files written in the last 10 min
+output_suffix: ""           # "_h264" if the job writes clip_h264.mp4
+output_ext: ".mp4"
+
+state_file: convert_checker_state.json   # ledger of what was verified / moved / purged
+report_dir: reports
+
+notify:
+  ntfy_url: https://ntfy.sh/CHANGE-ME-to-a-long-random-topic   # or http://truenas:8093/jarvis if self-hosted
+  # ntfy_token: tk_xxx
+  # slack_webhook: https://hooks.slack.com/services/...
+summary_title: NAS conversions
