@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOSSK</title>
+<style>
+  :root { --bg: #000; }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; cursor: none; }
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 400ms ease; }
+  video.on { opacity: 1; }
+  .glow { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0;
+          background: radial-gradient(circle at 50% 50%, rgba(255,107,53,0.55), rgba(255,107,53,0) 60%); transition: opacity 120ms linear; }
+  .fallback { position: absolute; width: 28vmin; height: 28vmin; border-radius: 50%; background: #ff6b35; opacity: 0.9;
+              transition: transform 120ms ease-out; display: none; }
+  .caption { position: absolute; bottom: 6vh; width: 100%; text-align: center; color: #f0ede8; font: 500 2.2vmin/1.4 -apple-system, "DM Sans", sans-serif;
+             opacity: 0.0; transition: opacity 300ms; letter-spacing: 0.02em; }
+  .caption.on { opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="fallback" id="fallback"></div>
+  <div class="glow" id="glow"></div>
+  <div class="caption" id="caption"></div>
+</div>
+<script>
+// Bare expressions window. Drop videos named idle.mp4, listening.mp4, thinking.mp4, speaking.mp4, asking.mp4
+// into ~/.bossk/expressions. The daemon's state picks the clip; mic and speech level drive scale and glow.
+// No videos yet -> an orange disc that breathes with the level, so the loop can be felt before the art exists.
+const stage = document.getElementById('stage'), glow = document.getElementById('glow');
+const fallback = document.getElementById('fallback'), caption = document.getElementById('caption');
+const vids = {}; let current = null, videos = {};
+async function loadVideos() {
+  try { videos = await (await fetch('/videos.json')).json(); } catch (e) { videos = {}; }
+  for (const [state, src] of Object.entries(videos)) {
+    const v = document.createElement('video'); v.src = src; v.loop = true; v.muted = true; v.playsInline = true; v.preload = 'auto';
+    stage.insertBefore(v, fallback); vids[state] = v; v.play().catch(() => {});
+  }
+  if (!Object.keys(videos).length) fallback.style.display = 'block';
+}
+function show(state) {
+  const pick = vids[state] || vids['idle'] || null;
+  if (pick === current) return;
+  for (const v of Object.values(vids)) v.classList.toggle('on', v === pick);
+  current = pick;
+}
+let smooth = 0;
+async function tick() {
+  try {
+    const s = await (await fetch('/state.json')).json();
+    show(s.state);
+    smooth = smooth * 0.6 + (s.level || 0) * 0.4;
+    const scale = 1 + smooth * 0.08;
+    if (current) current.style.transform = `scale(${scale})`;
+    fallback.style.transform = `scale(${1 + smooth * 0.5})`;
+    glow.style.opacity = s.state === 'speaking' || s.state === 'asking' ? 0.25 + smooth * 0.6 : smooth * 0.5;
+    caption.textContent = s.text || ''; caption.classList.toggle('on', !!s.text && s.state !== 'idle');
+  } catch (e) {}
+  setTimeout(tick, 80);
+}
+loadVideos().then(tick);
+document.addEventListener('keydown', e => { if (e.key === 'f') document.documentElement.requestFullscreen?.(); });
+</script>
+</body>
+</html>

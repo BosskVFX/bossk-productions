@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mac mini: the voice daemon. cp to ~/Library/LaunchAgents/ and launchctl load it. Edit the paths first.
+     Needs: pip3 install pvporcupine pvrecorder pyyaml ; brew install whisper-cpp ; the ggml model in ~/.bossk/models -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.bossk.voice</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>-m</string><string>voice.daemon</string>
+    <string>--config</string><string>/Users/jason/.bossk/voice.yml</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/jason/bossk</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/tmp/bossk-voice.log</string>
+  <key>StandardErrorPath</key><string>/tmp/bossk-voice.err</string>
+</dict>
+</plist>

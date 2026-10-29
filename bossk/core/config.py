@@ -24,6 +24,8 @@ class CoreConfig:
     ask_expire_minutes: int = 240
     max_wait_seconds: int = 540                       # cap on how long /decide blocks for an answer (under the hook timeout)
     stale_machine_seconds: int = 120
+    knowledge_dir: str = ""                            # the central markdown folder (phase 5); "" until it exists
+    voice_id: str = ""                                 # ElevenLabs voice id (or ELEVENLABS_VOICE_ID in secrets.env)
     notify: dict[str, Any] = field(default_factory=dict)
 
     @classmethod

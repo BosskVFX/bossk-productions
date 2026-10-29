@@ -74,3 +74,29 @@ the PC's Tailscale name to `config.local.json` `allowed_hosts`. Set `LOADOUT_URL
 Hornets through LOADOUT: stage 1 is LOADOUT's AI Roto (SAM 2 + MatAnyone) via `client.roto()`; stage 2 is a
 Wan VACE graph submitted with `client.comfy_prompt()` through LOADOUT's `/api/prompt` proxy to the 4090;
 stage 3 is the ffmpeg composite in `pipelines/hornets/` (next).
+
+## Voice daemon (Mac mini)
+
+`voice/daemon.py` is BOSSK's voice in the office. Two loops share one microphone:
+
+- **Asks.** Long-polls the core for asks addressed to this machine, speaks the ask, listens, sends what Jason said to
+  the core, handles the confirm step, and after two unclear answers leaves the ask open on the phone.
+- **Hey BOSSK.** Porcupine runs on-device; no audio leaves the mini until the wake word fires. Then one utterance is
+  recorded, transcribed locally with whisper.cpp (large-v3-turbo on the M4), and routed: pause / resume, yes / no /
+  confirm for a pending ask, status, or anything else to the core's `/chat` which answers with Claude from live state
+  and the knowledge folder.
+
+Speech out: the core's `/tts` renders ElevenLabs audio, so the key stays on the NAS; the mini caches it and pre-renders
+the fixed phrases. macOS `say` is the zero-setup fallback. The bare expressions window at `http://127.0.0.1:8751/`
+crossfades `~/.bossk/expressions/{idle,listening,thinking,speaking,asking}.mp4` by state and reacts to mic and speech
+level. Press `f` for full screen. With no videos it shows a breathing disc so the loop can be felt before the art exists.
+
+Setup on the mini:
+```
+pip3 install pvporcupine pvrecorder pyyaml
+brew install whisper-cpp          # then download ggml-large-v3-turbo.bin into ~/.bossk/models
+cp voice/voice.example.yml ~/.bossk/voice.yml   # set wake_keyword_path once the "Hey BOSSK" .ppn is trained
+echo "PICOVOICE_ACCESS_KEY=..." >> ~/.bossk/secrets.env
+python3 -m voice.daemon --dev     # keyboard wake word, `say` voice: proves the loop before any model is installed
+```
+On the NAS, `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` in secrets.env turn on the real voice.

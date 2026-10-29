@@ -15,3 +15,5 @@ stale_machine_seconds: 120
 notify:
   ntfy_url: http://127.0.0.1:8093/bossk
   ntfy_token: $NTFY_TOKEN                 # $NAME reads from secrets.env
+knowledge_dir: /data/knowledge             # central markdown folder (phase 5)
+voice_id: ""                               # ElevenLabs voice id once picked, or ELEVENLABS_VOICE_ID in secrets.env

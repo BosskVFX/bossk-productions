@@ -18,6 +18,8 @@ Routes
   POST /notify {title, body, priority} send to the phone through the core
   POST /rulebook/replay {rules:<yaml text>, days:30}
   POST /rulebook/reload
+  POST /chat {text, machine}            spoken answer for "Hey BOSSK, ..." (Claude, with live state + knowledge notes)
+  POST /tts  {text, voice?}             ElevenLabs audio (audio/mpeg) or 204 when no key, so the mini falls back to `say`
 """
 from __future__ import annotations
 
@@ -33,6 +35,7 @@ from typing import Any
 import yaml
 
 from .asks import AskQueue, Ask
+from .assistant import Assistant, ElevenLabsTTS
 from .config import CoreConfig
 from .ledger import Ledger
 from .notify import Action, NotifyConfig, notify
@@ -61,6 +64,9 @@ class Core:
                                                   for k, v in cfg.notify.items()})
         self._notify = notify_fn
         self.paused: str | None = None
+        self.assistant = Assistant(self.secrets.get("ANTHROPIC_API_KEY"), cfg.reviewer_model, cfg.knowledge_dir)
+        self.tts = ElevenLabsTTS(self.secrets.get("ELEVENLABS_API_KEY"), self.secrets.get("ELEVENLABS_VOICE_ID") or cfg.voice_id,
+                                 cache_dir=Path(cfg.data_dir) / "tts_cache")
         self._lock = threading.Lock()
         self.asks.on_change.append(self._on_ask_change)
 
@@ -295,6 +301,22 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.core.replay(str(body.get("rules", "")), int(body.get("days", 30))))
             if url.path == "/rulebook/reload":
                 return self._json(200, {"rules": self.core.reload_rulebook()})
+            if url.path == "/chat":
+                text = str(body.get("text", ""))[:2000]
+                reply = self.core.assistant.reply(text, self.core.health(), self.core.ledger.query(limit=25))
+                self.core.ledger.record("chat", machine=body.get("machine"), summary=text, data={"reply": reply})
+                return self._json(200, {"reply": reply})
+            if url.path == "/tts":
+                audio = self.core.tts.synth(str(body.get("text", ""))[:1000], str(body.get("voice", "")))
+                if not audio:
+                    self.send_response(204); self.send_header("Content-Length", "0"); self.end_headers()
+                    return None
+                self.send_response(200)
+                self.send_header("Content-Type", "audio/mpeg")
+                self.send_header("Content-Length", str(len(audio)))
+                self.end_headers()
+                self.wfile.write(audio)
+                return None
         except Exception as e:  # noqa: BLE001
             log.exception("request failed")
             return self._json(500, {"error": str(e)})
