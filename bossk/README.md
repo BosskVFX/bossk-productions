@@ -59,3 +59,18 @@ run a week with `--dry-run` in the compose command, then drop the flag.
 | `POST /rulebook/replay`, `POST /rulebook/reload` | rule changes |
 
 All routes take `Authorization: Bearer <BOSSK_TOKEN>` except the ntfy button callbacks.
+
+## Loadout bridge
+
+`loadout/client.py` drives LOADOUT over its own HTTP API, as documented in LOADOUT-BRIDGE.md (0.2.28).
+No new surface in LOADOUT is required for a first pass. The client polls every job to completion because
+LOADOUT only downloads, files and records a video when something polls `/video/status`. Every creative
+generation requires a `prompt_master_id`; prep tools (roto, previz) do not. Submits are serialised and pin the
+active project first, since the active project is global server state.
+
+Reaching LOADOUT from the NAS over Tailscale: start the server with `PORT=5500` (binds all interfaces) and add
+the PC's Tailscale name to `config.local.json` `allowed_hosts`. Set `LOADOUT_URL=http://<pc>:5500` for the core.
+
+Hornets through LOADOUT: stage 1 is LOADOUT's AI Roto (SAM 2 + MatAnyone) via `client.roto()`; stage 2 is a
+Wan VACE graph submitted with `client.comfy_prompt()` through LOADOUT's `/api/prompt` proxy to the 4090;
+stage 3 is the ffmpeg composite in `pipelines/hornets/` (next).
