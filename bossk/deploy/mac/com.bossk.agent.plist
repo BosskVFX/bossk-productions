@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mac mini / laptop: idle + session reporter. Install:
+     cp com.bossk.agent.plist ~/Library/LaunchAgents/ && launchctl load ~/Library/LaunchAgents/com.bossk.agent.plist
+     Edit the path to idle_reporter.py first. The Claude Code hooks are installed separately by bossk_hook.py install. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.bossk.agent</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/jason/bossk/agents/idle_reporter.py</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/tmp/bossk-agent.log</string>
+  <key>StandardErrorPath</key><string>/tmp/bossk-agent.err</string>
+</dict>
+</plist>

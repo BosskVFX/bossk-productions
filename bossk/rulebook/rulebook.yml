@@ -1,0 +1,116 @@
+# BOSSK rulebook. Tiers: 0 never, 1 allow, 2 review, 3 ask Jason.
+# Tier 0 and 3 are checked before tier 1, so a broad allow can never rescue a dangerous call.
+# Anything unmatched is tier 2 (reviewer agent). Grow this from the approval log, never by hand at 2am.
+
+defaults:
+  unknown_tier: 2
+  idle_minutes_away: 10        # keyboard and mouse idle on every machine -> ask goes to the phone
+  ask_timeout_minutes: 240     # a pending ask older than this is reported, never auto-answered
+  hold_days: 7                 # NAS holding folder retention
+
+rules:
+  # ---------------------------------------------------------------- tier 0: never
+  - id: nuke-root
+    tier: 0
+    match: { tool: "Bash", command: "\\brm\\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r)\\s+(/|~|\\$HOME|/mnt|/mnt/tank)(\\s|$)" }
+    reason: recursive delete of a root or the whole pool
+  - id: disk-format
+    tier: 0
+    match: { tool: "Bash", command: "\\b(mkfs|diskpart|format\\s+[a-z]:|dd\\s+if=.*of=/dev/|zpool\\s+destroy|zfs\\s+destroy)\\b" }
+    reason: formats or destroys a disk or dataset
+  - id: history-rewrite-main
+    tier: 0
+    match: { tool: "Bash", command: "git\\s+push\\s+.*(--force|-f)\\b.*\\b(main|master)\\b" }
+    reason: force push to main
+
+  # ---------------------------------------------------------------- tier 3: ask Jason
+  - id: outbound-message
+    tier: 3
+    confirm: true
+    match: { tool: "mcp__(Gmail|Slack|gmail|slack)__.*(send|reply|forward|schedule).*" }
+    reason: sends a message to a person
+  - id: outbound-shell-message
+    tier: 3
+    confirm: true
+    match: { tool: "Bash", command: "\\b(sendmail|mail\\s+-s|twilio|curl\\s+.*hooks\\.slack\\.com|osascript.*(Messages|Mail))\\b" }
+    reason: sends a message from the shell
+  - id: spend
+    tier: 3
+    confirm: true
+    match: { tool: "Bash|mcp__.*", command: "\\b(stripe|checkout|purchase|buy|payment|billing|topup|credits)\\b" }
+    reason: spends money
+  - id: generation-spend
+    tier: 3
+    match: { tool: "mcp__Higgsfield__(generate_.*|execute_preset|upscale_.*|ai_influencer_generate|dubbing|motion_control|shorts_studio_create|ads_studio_generate)" }
+    reason: Higgsfield credits, and generation must go through prompt-master then Loadout
+  - id: delete-outside-holding
+    tier: 3
+    match: { tool: "Bash", command: "(^|[;&|]\\s*)(sudo\\s+)?(rm|rmdir|del|erase|Remove-Item|trash|shred)\\b" }
+    unless: { path_under: ["/mnt/tank/video/_holding", "$cwd/node_modules", "$cwd/dist", "$cwd/build", "$cwd/.cache", "/tmp"] }
+    reason: deletes outside the approved folders
+  - id: push-main
+    tier: 3
+    match: { tool: "Bash", command: "git\\s+push\\b(?!.*\\b(claude|feature|fix|wip)/)" }
+    reason: pushes to a shared branch
+  - id: deploy
+    tier: 3
+    match: { tool: "Bash", command: "\\b(vercel\\s+(deploy|--prod)|gh\\s+pr\\s+merge|git\\s+merge\\s+.*\\b(main|master)\\b|docker\\s+(push|compose\\s+up)|kubectl|ssh\\s+)\\b" }
+    reason: deploys or touches another machine
+  - id: client-files
+    tier: 3
+    match: { tool: "Bash|Edit|Write|MultiEdit", path_under: ["/mnt/tank/clients", "/Volumes/tank/clients", "Z:/clients"] }
+    reason: client deliverables
+  - id: credentials
+    tier: 3
+    match: { tool: "Bash|Edit|Write|Read", path_under: ["~/.ssh", "~/.aws", "~/.config/op", "~/.bossk/secrets"] }
+    reason: credentials
+  - id: credentials-in-command
+    tier: 3
+    match: { tool: "Bash", command: "[A-Z_]*(API_KEY|SECRET|TOKEN|PASSWORD)[A-Z_]*\\s*=|\\bop\\s+(read|item)\\b" }
+    reason: handles a secret
+  - id: scheduled-tasks
+    tier: 3
+    match: { tool: "Bash", command: "\\b(crontab|launchctl\\s+(load|bootstrap)|schtasks\\s+/create)\\b" }
+    reason: creates a scheduled task
+
+  # ---------------------------------------------------------------- tier 1: allow
+  - id: reads
+    tier: 1
+    match: { tool: "Read|Glob|Grep|LS|ListDir|WebSearch|WebFetch|TodoRead|TodoWrite|TaskList|TaskGet|TaskCreate|TaskUpdate|NotebookRead" }
+  - id: project-writes
+    tier: 1
+    match: { tool: "Edit|Write|MultiEdit|NotebookEdit", path_under: ["$cwd"] }
+    reason: edits inside the project
+  - id: safe-shell
+    tier: 1
+    match: { tool: "Bash", command: "^\\s*(ls|ll|pwd|cat|head|tail|wc|echo|printf|which|type|file|stat|du|df|find|grep|rg|sed\\s+-n|awk|sort|uniq|diff|tree|env|date|uname|whoami|hostname|ps|top\\s+-l|nvidia-smi|ffprobe|mediainfo|exiftool|python3?\\s+-c|node\\s+-e)\\b" }
+    reason: read-only shell
+  - id: git-local
+    tier: 1
+    match: { tool: "Bash", command: "^\\s*git\\s+(status|diff|log|show|branch|stash|add|commit|checkout\\s+-b|switch\\s+-c|fetch|rev-parse|remote\\s+-v|blame|tag)\\b" }
+    reason: local git
+  - id: push-feature
+    tier: 1
+    match: { tool: "Bash", command: "^\\s*git\\s+push\\s+(-u\\s+)?origin\\s+(claude|feature|fix|wip)/" }
+    reason: pushes to a feature branch
+  - id: build-test
+    tier: 1
+    match: { tool: "Bash", command: "^\\s*(npm\\s+(test|run\\s+(build|lint|test|typecheck|dev))|npx\\s+(tsc|eslint|prettier|vitest|jest|playwright\\s+test)|pnpm\\s+(test|build|lint)|yarn\\s+(test|build|lint)|pytest|python3?\\s+-m\\s+(pytest|unittest|ruff|mypy)|ruff|mypy|cargo\\s+(build|test|check|clippy)|go\\s+(build|test|vet)|make\\s+(test|build|lint))\\b" }
+    reason: builds and tests
+  - id: media-tools
+    tier: 1
+    match: { tool: "Bash", command: "^\\s*(ffmpeg|ffprobe|magick|convert|oiiotool|exrheader)\\b" }
+    unless: { command: "\\s-y\\s.*\\b(/mnt/tank/clients|/Volumes/tank/clients)\\b" }
+    reason: ffmpeg and image tools
+  - id: package-install-project
+    tier: 1
+    match: { tool: "Bash", command: "^\\s*(npm\\s+(ci|install)|pnpm\\s+install|pip\\s+install\\s+-r|uv\\s+sync)\\s*$" }
+    reason: installs the project's own lockfile
+  - id: mcp-reads
+    tier: 1
+    match: { tool: "mcp__.*__(get|list|read|search|show|query|describe|find)_.*" }
+    reason: read-only MCP calls
+  - id: comfyui-local
+    tier: 1
+    match: { tool: "Bash|WebFetch", url: "^https?://(pc|bossk-pc|127\\.0\\.0\\.1|localhost|100\\.[0-9.]+):8188/" }
+    reason: ComfyUI on the 4090 over Tailscale

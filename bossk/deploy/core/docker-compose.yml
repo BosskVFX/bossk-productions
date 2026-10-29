@@ -1,0 +1,62 @@
+# TrueNAS SCALE: Apps > Discover > Custom App > Install via YAML, paste this.
+# Or on the shell: docker compose -f docker-compose.yml up -d
+#
+# Before first start:
+#   mkdir -p /mnt/tank/bossk/data && cp bossk.example.yml /mnt/tank/bossk/data/bossk.yml
+#   echo "BOSSK_TOKEN=$(python3 -c 'import secrets;print(secrets.token_urlsafe(32))')" > /mnt/tank/bossk/data/secrets.env
+#   echo "ANTHROPIC_API_KEY=sk-ant-..." >> /mnt/tank/bossk/data/secrets.env   # reviewer agent
+#   chmod 600 /mnt/tank/bossk/data/secrets.env
+# Then point every machine agent at http://<truenas tailscale name>:8750 with that token.
+
+services:
+  core:
+    build:
+      context: ../..          # the bossk/ folder
+      dockerfile: deploy/core/Dockerfile
+    container_name: bossk-core
+    restart: unless-stopped
+    network_mode: host         # Tailscale on the host; the core binds 0.0.0.0:8750, firewall it to the tailnet
+    environment:
+      BOSSK_CONFIG: /data/bossk.yml
+      BOSSK_SECRETS_FILE: /data/secrets.env
+      BOSSK_PUBLIC_URL: http://truenas:8750    # how the iPhone reaches the core over Tailscale (ntfy buttons)
+    volumes:
+      - /mnt/tank/bossk/data:/data
+      - /mnt/tank/video:/mnt/tank/video        # same path inside as outside so the checker config is literal
+      - /dev/zfs:/dev/zfs                      # zfs snapshot before purges
+    privileged: true                           # needed for zfs snapshot; drop it and set zfs_dataset: "" otherwise
+
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    container_name: bossk-ntfy
+    restart: unless-stopped
+    command: serve
+    environment:
+      NTFY_BASE_URL: http://truenas:8093
+      NTFY_LISTEN_HTTP: ":8093"
+      NTFY_BEHIND_PROXY: "false"
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all       # then: docker exec bossk-ntfy ntfy user add jason ; ntfy access jason bossk rw
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+    network_mode: host
+    volumes:
+      - /mnt/tank/bossk/ntfy/cache:/var/cache/ntfy
+      - /mnt/tank/bossk/ntfy/lib:/var/lib/ntfy
+
+  nas-checker:
+    build:
+      context: ../..
+      dockerfile: deploy/core/Dockerfile
+    container_name: bossk-nas-checker
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      BOSSK_SECRETS_FILE: /data/secrets.env
+    volumes:
+      - /mnt/tank/bossk/data:/data
+      - /mnt/tank/video:/mnt/tank/video
+      - /dev/zfs:/dev/zfs
+    privileged: true
+    # nightly at 03:17; add --dry-run for the first week
+    command: >
+      sh -c 'echo "17 3 * * * cd /opt/bossk && set -a && . /data/secrets.env && set +a && python3 nas/convert_checker.py --config /data/convert_checker.yml >> /data/convert_checker.log 2>&1" | crontab - && cron -f'

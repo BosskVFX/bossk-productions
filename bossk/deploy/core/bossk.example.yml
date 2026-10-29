@@ -1,0 +1,17 @@
+# Core config. Copy to /mnt/tank/bossk/data/bossk.yml. Secrets go in secrets.env next to it, never here.
+host: 0.0.0.0
+port: 8750
+public_url: http://truenas:8750          # Tailscale name the iPhone can reach, used in ntfy buttons
+data_dir: /data
+rulebook: /opt/bossk/rulebook/rulebook.yml   # copy to /data/rulebook.yml to edit without rebuilding
+ledger: ledger.sqlite
+machine_name: truenas
+reviewer_model: claude-sonnet-5-5
+reviewer_enabled: true
+voice_grace_seconds: 90                   # voice ask unanswered this long -> phone too
+ask_expire_minutes: 240
+max_wait_seconds: 540                     # under the 600 s hook timeout
+stale_machine_seconds: 120
+notify:
+  ntfy_url: http://127.0.0.1:8093/bossk
+  ntfy_token: $NTFY_TOKEN                 # $NAME reads from secrets.env

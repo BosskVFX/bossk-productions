@@ -1,0 +1,29 @@
+# Copy to convert_checker.yml. Paths as seen from where the checker runs (inside the container
+# from deploy/nas these are the container-side mounts, mapped 1:1 to the pool paths).
+source_dir:  /mnt/tank/video/originals
+output_dir:  /mnt/tank/video/h264          # same sub-folder layout, clip.mov -> clip.mp4
+holding_dir: /mnt/tank/video/_holding
+
+hold_days: 7
+duration_tolerance_s: 1.0
+min_size_ratio: 0.03          # ProRes -> H.264 is usually 5-15% of the original
+min_bitrate_kbps: 1500        # at 1080p, scaled by resolution
+required_codec: h264
+tail_seconds: 5
+min_age_minutes: 10
+output_suffix: ""             # "_h264" if the job writes clip_h264.mp4
+output_ext: ".mp4"
+
+zfs_dataset: tank/video       # snapshot before every purge; "" to disable
+zfs_snapshot_keep: 14
+
+ask: through_core             # the purge becomes a tier 3 ask (voice at the desk, phone when away)
+core_url: http://127.0.0.1:8750
+core_token_env: BOSSK_TOKEN
+ask_wait_seconds: 1800
+
+state_file: convert_checker_state.json
+report_dir: reports
+notify:
+  ntfy_url: http://127.0.0.1:8093/bossk     # self-hosted ntfy from deploy/core, or https://ntfy.sh/<long-random-topic>
+summary_title: NAS conversions
