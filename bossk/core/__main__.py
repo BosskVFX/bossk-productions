@@ -26,9 +26,18 @@ def main() -> int:
         logging.error("BOSSK_TOKEN is not set (env or %s). Generate one: python3 -c 'import secrets;print(secrets.token_urlsafe(32))'", secrets.file)
         return 1
     core = Core(cfg, token=token, secrets=secrets)
+    if cfg.knowledge_dir:
+        from core.knowledge import seed, start_log_writer
+        created = seed(cfg.knowledge_dir)
+        if created:
+            logging.info("seeded knowledge folder: %s", ", ".join(created))
+        start_log_writer(cfg.knowledge_dir, core.ledger)
     httpd = serve(core)
-    logging.info("BOSSK core listening on %s:%s, %d rules, reviewer=%s, notify=%s", cfg.host, cfg.port,
-                 len(core.rulebook.rules), core.reviewer.available, core.notify_cfg.enabled())
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        logging.warning("ANTHROPIC_API_KEY is set in the core's environment. It is stripped from every Claude call; remove it anyway.")
+    logging.info("BOSSK core listening on %s:%s, %d rules, brain=%s (Claude plan), notify=%s", cfg.host, cfg.port,
+                 len(core.rulebook.rules), "ready" if core.cli.available and secrets.get("CLAUDE_CODE_OAUTH_TOKEN") else "NOT SET UP",
+                 core.notify_cfg.enabled())
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

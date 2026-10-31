@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Fake `claude` for tests. Behaves like headless Claude Code's json / stream-json output.
+Fails loudly if any API-billing variable reaches it, which is the guarantee under test."""
+import json, os, sys, time
+args = sys.argv[1:]
+prompt = sys.stdin.read()
+log = os.environ.get("FAKE_CLAUDE_LOG")
+if log:
+    with open(log, "a") as f:
+        f.write(json.dumps({"args": args, "prompt": prompt[-300:], "oauth": bool(os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")),
+                            "api_key": bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))}) + "\n")
+if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"):
+    print(json.dumps({"type": "result", "is_error": True, "result": "API KEY LEAKED INTO CLAUDE CALL"})); sys.exit(1)
+fmt = args[args.index("--output-format") + 1] if "--output-format" in args else "text"
+sid = "sess-" + ("resumed" if "--resume" in args else "new")
+if "Requested call:" in prompt and "Rule reason" not in prompt:
+    reply = json.dumps({"verdict": os.environ.get("FAKE_CLAUDE_VERDICT", "allow"), "reason": "routine for the task", "ask": "Can the session install a package?"})
+elif "Rule reason" in prompt:
+    reply = json.dumps({"ask": "Excuse me Jason, frontdesk wants to push to main. Yes or no?", "confirm_text": "Say confirm."})
+else:
+    reply = os.environ.get("FAKE_CLAUDE_REPLY", "Two sessions are running. Nothing is waiting on you. All quiet on Mother.")
+if fmt == "json":
+    print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": reply, "session_id": sid}))
+elif fmt == "stream-json":
+    print(json.dumps({"type": "system", "subtype": "init", "session_id": sid}), flush=True)
+    delay = float(os.environ.get("FAKE_CLAUDE_DELAY", "0"))
+    for i in range(0, len(reply), 7):
+        print(json.dumps({"type": "stream_event", "session_id": sid, "event": {"type": "content_block_delta",
+                          "delta": {"type": "text_delta", "text": reply[i:i + 7]}}}), flush=True)
+        if delay:
+            time.sleep(delay)
+    print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": reply, "session_id": sid}), flush=True)
+else:
+    print(reply)

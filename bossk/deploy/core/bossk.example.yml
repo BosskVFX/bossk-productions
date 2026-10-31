@@ -6,7 +6,8 @@ data_dir: /data
 rulebook: /opt/bossk/rulebook/rulebook.yml   # copy to /data/rulebook.yml to edit without rebuilding
 ledger: ledger.sqlite
 machine_name: truenas
-reviewer_model: claude-sonnet-5-5
+reviewer_model: sonnet                    # Claude Code alias, billed to the Claude plan, never the API
+voice_model: haiku
 reviewer_enabled: true
 voice_grace_seconds: 90                   # voice ask unanswered this long -> phone too
 ask_expire_minutes: 240
@@ -15,5 +16,5 @@ stale_machine_seconds: 120
 notify:
   ntfy_url: http://127.0.0.1:8093/bossk
   ntfy_token: $NTFY_TOKEN                 # $NAME reads from secrets.env
-knowledge_dir: /data/knowledge             # central markdown folder (phase 5)
+knowledge_dir: /mnt/tank/bossk/knowledge  # the one shared memory folder (SMB share "bossk" on Mother)
 voice_id: ""                               # ElevenLabs voice id once picked, or ELEVENLABS_VOICE_ID in secrets.env

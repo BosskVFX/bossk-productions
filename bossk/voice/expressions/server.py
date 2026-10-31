@@ -13,7 +13,8 @@ VIDEO_DIR = Path("~/.bossk/expressions").expanduser()
 STATES = ["idle", "listening", "thinking", "speaking", "asking"]
 
 
-def start(state, port: int = 8751, video_dir: Path | None = None) -> ThreadingHTTPServer:
+def start(state, port: int = 8751, video_dir: Path | None = None, on_ptt=None) -> ThreadingHTTPServer:
+    """Serves the face and accepts push-to-talk from Stream Deck HTTP buttons: POST /ptt/down|up|toggle|stop."""
     vdir = video_dir or VIDEO_DIR
 
     class H(BaseHTTPRequestHandler):
@@ -46,6 +47,13 @@ def start(state, port: int = 8751, video_dir: Path | None = None) -> ThreadingHT
                 f = vdir / Path(path).name
                 if f.exists() and f.suffix in (".mp4", ".webm", ".mov"):
                     return self._send(200, f.read_bytes(), mimetypes.guess_type(f.name)[0] or "video/mp4")
+            self._send(404, b"not found", "text/plain")
+
+        def do_POST(self):
+            path = urllib.parse.urlparse(self.path).path
+            if path.startswith("/ptt/") and on_ptt and path.split("/")[-1] in ("down", "up", "toggle", "stop"):
+                on_ptt(path.split("/")[-1])
+                return self._send(200, b'{"ok": true}', "application/json")
             self._send(404, b"not found", "text/plain")
 
     httpd = ThreadingHTTPServer(("127.0.0.1", port), H)

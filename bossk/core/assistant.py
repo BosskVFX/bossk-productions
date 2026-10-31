@@ -1,74 +1,82 @@
-"""The spoken assistant behind "Hey BOSSK, ...": answers a question from live state and the knowledge
-folder using Claude, and renders speech through ElevenLabs. Both degrade: no API key means a short
-deterministic status answer, and no ElevenLabs key means the mini falls back to macOS `say`."""
+"""The spoken assistant behind push-to-talk: answers through headless Claude Code on Jason's Claude
+subscription (never the API), with live state in the prompt and the shared knowledge folder as its working
+directory, so the knowledge folder's CLAUDE.md boot file and notes are its memory. Streams sentences so
+speech can start before the answer is finished. Also renders ElevenLabs speech when a key is configured."""
 from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import time
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
-try:
-    import anthropic  # type: ignore
-except ImportError:  # pragma: no cover
-    anthropic = None
+from .claude_cli import ClaudeCLI, sentences
 
 CHAT_SYSTEM = """You are BOSSK, Jason Miller's background operations supervisor, answering out loud through a speaker.
-Answer in one to three short spoken sentences. Plain words, no lists, no markdown, no code. Numbers as words
-when small. If the live state answers the question, use it. If you do not know, say so in one sentence.
-Never promise to take an action you cannot: you can only report, and tell Jason to say 'yes', 'no', 'pause' or 'resume'."""
+Answer in one to three short spoken sentences. Plain words, no lists, no markdown, no code, no file paths read aloud.
+Use the live state in the message and the notes in this folder; read notes with your tools when the question needs them.
+If you do not know, say so in one sentence. You can only report; actions happen when Jason says yes, no, pause or resume."""
+
+CONVERSATION_TTL_S = 600   # a follow-up within 10 minutes continues the same Claude session
 
 
 class Assistant:
-    def __init__(self, api_key: str | None, model: str = "claude-sonnet-5-5", knowledge_dir: str | Path | None = None):
-        self.client = anthropic.Anthropic(api_key=api_key) if (anthropic and api_key) else None
+    def __init__(self, cli: ClaudeCLI | None, model: str = "haiku"):
+        self.cli = cli if (cli and cli.available) else None
         self.model = model
-        self.knowledge_dir = Path(knowledge_dir).expanduser() if knowledge_dir else None
+        self._sessions: dict[str, tuple[str, float]] = {}
+        self._lock = threading.Lock()
 
-    def _knowledge(self, text: str, limit_chars: int = 6000) -> str:
-        """Crude retrieval: notes whose filename or tags share a word with the question, newest first."""
-        if not self.knowledge_dir or not self.knowledge_dir.exists():
-            return ""
-        words = {w.lower() for w in text.split() if len(w) > 3}
-        hits = []
-        for p in sorted(self.knowledge_dir.rglob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True)[:400]:
-            head = p.read_text(errors="replace")[:600].lower()
-            if any(w in p.stem.lower() or w in head for w in words):
-                hits.append(p)
-            if len(hits) >= 4:
-                break
-        out, used = [], 0
-        for p in hits:
-            body = p.read_text(errors="replace")[:2000]
-            out.append(f"--- {p.relative_to(self.knowledge_dir)} ---\n{body}")
-            used += len(body)
-            if used > limit_chars:
-                break
-        return "\n".join(out)
+    @property
+    def available(self) -> bool:
+        return self.cli is not None
 
-    def reply(self, text: str, state: dict[str, Any], recent: list[dict] | None = None) -> str:
-        if not self.client:
-            return self._fallback(text, state)
-        ctx = {"paused": state.get("paused"), "presence": state.get("presence"), "pending_asks": [a.get("text") for a in state.get("pending_asks", [])],
-               "recent_events": [{"kind": e.get("kind"), "outcome": e.get("outcome"), "summary": e.get("summary")} for e in (recent or [])[:25]]}
-        user = f"Live state:\n{json.dumps(ctx, default=str)[:4000]}\n\nKnowledge notes:\n{self._knowledge(text)}\n\nJason said: {text}"
-        try:
-            msg = self.client.messages.create(model=self.model, max_tokens=200, system=CHAT_SYSTEM, messages=[{"role": "user", "content": user}])
-            return "".join(getattr(b, "text", "") for b in msg.content).strip() or self._fallback(text, state)
-        except Exception:  # noqa: BLE001
-            return self._fallback(text, state)
+    def _prompt(self, text: str, state: dict[str, Any], recent: list[dict] | None) -> str:
+        ctx = {"paused": state.get("paused"), "presence": state.get("presence"),
+               "pending_asks": [a.get("text") for a in state.get("pending_asks", [])],
+               "recent_events": [{"kind": e.get("kind"), "outcome": e.get("outcome"), "summary": e.get("summary")}
+                                 for e in (recent or [])[:25]]}
+        return f"Live state:\n{json.dumps(ctx, default=str)[:4000]}\n\nJason said: {text}"
+
+    def stream(self, text: str, state: dict[str, Any], recent: list[dict] | None = None, *, machine: str = "",
+               cancel: threading.Event | None = None) -> Iterator[str]:
+        """Yield spoken sentences."""
+        if not self.cli:
+            yield self._fallback(state)
+            return
+        with self._lock:
+            prev = self._sessions.get(machine)
+        resume = prev[0] if prev and time.time() - prev[1] < CONVERSATION_TTL_S else None
+        meta: dict[str, Any] = {}
+        any_out = False
+        for s in sentences(self.cli.stream(self._prompt(text, state, recent), system=CHAT_SYSTEM, resume=resume,
+                                           model=self.model, max_turns=4, tools=("Read", "Grep", "Glob"),
+                                           cancel=cancel, meta=meta)):
+            if cancel is not None and cancel.is_set():
+                break
+            any_out = True
+            yield s
+        if meta.get("session_id"):
+            with self._lock:
+                self._sessions[machine] = (meta["session_id"], time.time())
+        if not any_out and not (cancel and cancel.is_set()):
+            yield "Sorry, I could not get an answer just now." if meta.get("error") else self._fallback(state)
+
+    def reply(self, text: str, state: dict[str, Any], recent: list[dict] | None = None, machine: str = "") -> str:
+        return " ".join(self.stream(text, state, recent, machine=machine))
 
     @staticmethod
-    def _fallback(text: str, state: dict[str, Any]) -> str:
+    def _fallback(state: dict[str, Any]) -> str:
         pending = len(state.get("pending_asks", []))
         machines = state.get("presence", {}).get("machines", {})
         sessions = sum(len(m.get("sessions", [])) for m in machines.values())
-        return f"I cannot think out loud without my API key yet. {sessions} sessions running, {pending} asks pending."
+        return f"My Claude login is not set up on the server yet. {sessions} sessions running, {pending} asks pending."
 
 
 class ElevenLabsTTS:
+    """Optional premium voice. The mini speaks with local Kokoro by default; this only runs if a key is set."""
     def __init__(self, api_key: str | None, voice_id: str = "", model_id: str = "eleven_flash_v2_5", cache_dir: str | Path = "~/.bossk/tts_cache"):
         self.api_key, self.voice_id, self.model_id = api_key, voice_id, model_id
         self.cache = Path(cache_dir).expanduser()

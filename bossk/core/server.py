@@ -18,7 +18,8 @@ Routes
   POST /notify {title, body, priority} send to the phone through the core
   POST /rulebook/replay {rules:<yaml text>, days:30}
   POST /rulebook/reload
-  POST /chat {text, machine}            spoken answer for "Hey BOSSK, ..." (Claude, with live state + knowledge notes)
+  POST /chat {text, machine, stream?}   spoken answer (Claude Code on the subscription, live state + knowledge folder);
+                                        stream=true returns NDJSON lines {"text": sentence} ... {"done": true}
   POST /tts  {text, voice?}             ElevenLabs audio (audio/mpeg) or 204 when no key, so the mini falls back to `say`
 """
 from __future__ import annotations
@@ -36,6 +37,7 @@ import yaml
 
 from .asks import AskQueue, Ask
 from .assistant import Assistant, ElevenLabsTTS
+from .claude_cli import ClaudeCLI
 from .config import CoreConfig
 from .ledger import Ledger
 from .notify import Action, NotifyConfig, notify
@@ -49,7 +51,7 @@ log = logging.getLogger("bossk.core")
 
 class Core:
     def __init__(self, cfg: CoreConfig, *, token: str, secrets: Secrets | None = None, reviewer: Reviewer | None = None,
-                 notify_fn=notify):
+                 notify_fn=notify, assistant: Assistant | None = None):
         self.cfg = cfg
         self.token = token
         self.secrets = secrets or Secrets()
@@ -59,12 +61,14 @@ class Core:
         self.presence = Presence(away_minutes=float(self.rulebook.defaults.get("idle_minutes_away", 10)),
                                  stale_seconds=cfg.stale_machine_seconds)
         self.asks = AskQueue()
-        self.reviewer = reviewer or Reviewer(self.secrets.get("ANTHROPIC_API_KEY"), cfg.reviewer_model, cfg.reviewer_enabled)
+        self.cli = ClaudeCLI(binary=cfg.claude_binary or None, oauth_token=self.secrets.get("CLAUDE_CODE_OAUTH_TOKEN"),
+                             model=cfg.reviewer_model, cwd=cfg.knowledge_dir or None)
+        self.reviewer = reviewer or Reviewer(self.cli, cfg.reviewer_model, cfg.reviewer_enabled)
         self.notify_cfg = NotifyConfig.from_dict({k: (self.secrets.get(v[1:]) if isinstance(v, str) and v.startswith("$") else v)
                                                   for k, v in cfg.notify.items()})
         self._notify = notify_fn
         self.paused: str | None = None
-        self.assistant = Assistant(self.secrets.get("ANTHROPIC_API_KEY"), cfg.reviewer_model, cfg.knowledge_dir)
+        self.assistant = assistant or Assistant(self.cli, cfg.voice_model)
         self.tts = ElevenLabsTTS(self.secrets.get("ELEVENLABS_API_KEY"), self.secrets.get("ELEVENLABS_VOICE_ID") or cfg.voice_id,
                                  cache_dir=Path(cfg.data_dir) / "tts_cache")
         self._lock = threading.Lock()
@@ -303,9 +307,31 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {"rules": self.core.reload_rulebook()})
             if url.path == "/chat":
                 text = str(body.get("text", ""))[:2000]
-                reply = self.core.assistant.reply(text, self.core.health(), self.core.ledger.query(limit=25))
-                self.core.ledger.record("chat", machine=body.get("machine"), summary=text, data={"reply": reply})
-                return self._json(200, {"reply": reply})
+                machine = str(body.get("machine", ""))
+                state, recent = self.core.health(), self.core.ledger.query(limit=25)
+                if not body.get("stream"):
+                    reply = self.core.assistant.reply(text, state, recent, machine=machine)
+                    self.core.ledger.record("chat", machine=machine, summary=text, data={"reply": reply})
+                    return self._json(200, {"reply": reply})
+                cancel = threading.Event()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/x-ndjson")
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                said = []
+                try:
+                    for sentence in self.core.assistant.stream(text, state, recent, machine=machine, cancel=cancel):
+                        said.append(sentence)
+                        self.wfile.write((json.dumps({"text": sentence}) + "\n").encode())
+                        self.wfile.flush()
+                    self.wfile.write(b'{"done": true}\n')
+                    self.wfile.flush()
+                except (BrokenPipeError, ConnectionResetError):
+                    cancel.set()     # the mini interrupted: stop Claude mid-answer
+                self.core.ledger.record("chat", machine=machine, summary=text,
+                                        data={"reply": " ".join(said), "interrupted": cancel.is_set()})
+                self.close_connection = True
+                return None
             if url.path == "/tts":
                 audio = self.core.tts.synth(str(body.get("text", ""))[:1000], str(body.get("voice", "")))
                 if not audio:

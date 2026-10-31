@@ -147,6 +147,9 @@ def install(argv: list[str]) -> int:
     ap.add_argument("--can-speak", action="store_true", help="this machine runs the voice daemon")
     ap.add_argument("--offline", choices=["deny", "ask"], default="deny", help="what to do when the core is unreachable")
     ap.add_argument("--settings", default="~/.claude/settings.json")
+    ap.add_argument("--knowledge", default="", help="path to the shared knowledge folder as this machine sees it, "
+                    "e.g. /Volumes/bossk/knowledge on a Mac or Z:/bossk/knowledge on the PC")
+    ap.add_argument("--claude-md", default="~/.claude/CLAUDE.md")
     a = ap.parse_args(argv)
 
     AGENT_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -171,10 +174,41 @@ def install(argv: list[str]) -> int:
             entry["matcher"] = spec["matcher"]
         entries.append(entry)
         hooks[event] = entries
+    if a.knowledge:
+        link_memory(a.knowledge, a.machine, settings, Path(a.claude_md).expanduser())
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     settings_path.write_text(json.dumps(settings, indent=2))
     print(f"BOSSK agent config: {AGENT_FILE}\nhooks merged into: {settings_path}\nmachine: {a.machine}  can_speak: {a.can_speak}")
+    if a.knowledge:
+        print(f"memory: {a.claude_md} imports {a.knowledge}/CLAUDE.md; auto memory -> {a.knowledge}/machines/{a.machine}/memory")
     return 0
+
+
+MEMORY_BEGIN = "<!-- BOSSK shared memory: managed by bossk_hook.py install -->"
+MEMORY_END = "<!-- /BOSSK shared memory -->"
+
+
+def link_memory(knowledge: str, machine: str, settings: dict, claude_md: Path) -> None:
+    """Point this machine's Claude Code at the one shared memory folder.
+    ~/.claude/CLAUDE.md gets an @import of <knowledge>/CLAUDE.md (user-scope imports load without a prompt),
+    and auto memory is written to <knowledge>/machines/<machine>/memory so machines never write the same file."""
+    k = knowledge.replace("\\", "/").rstrip("/")
+    root = Path(knowledge).expanduser()
+    if not (root / "CLAUDE.md").exists():
+        raise SystemExit(f"{root}/CLAUDE.md not found: mount Mother's bossk share first (the core seeds it on first start)")
+    mem = root / "machines" / machine / "memory"
+    mem.mkdir(parents=True, exist_ok=True)
+    settings["autoMemoryDirectory"] = str(mem).replace("\\", "/")
+    block = f"{MEMORY_BEGIN}\n@{k}/CLAUDE.md\n{MEMORY_END}"
+    text = claude_md.read_text() if claude_md.exists() else ""
+    if MEMORY_BEGIN in text and MEMORY_END in text:
+        pre, rest = text.split(MEMORY_BEGIN, 1)
+        post = rest.split(MEMORY_END, 1)[1]
+        text = pre + block + post
+    else:
+        text = (text.rstrip() + "\n\n" if text.strip() else "") + block + "\n"
+    claude_md.parent.mkdir(parents=True, exist_ok=True)
+    claude_md.write_text(text)
 
 
 def main() -> int:

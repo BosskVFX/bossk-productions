@@ -1,9 +1,9 @@
-"""Text-to-speech backends.
+"""Text-to-speech.
 
-CoreTTS: asks the BOSSK core for audio (POST /tts). The core holds the ElevenLabs key; the mini never
-sees it. Audio is cached on the mini by text hash, and the fixed phrases are pre-rendered at startup so
-only the variable part of an ask is ever a live call.
-SayTTS: macOS built-in `say`. Zero setup, sounds like Apple. The fallback when the core or ElevenLabs is down.
+KokoroTTS: local and free (pip install kokoro soundfile; brew install espeak-ng). Default. bm_lewis is a
+           British male voice; ~60 others. Output is WAV, so the face can follow the waveform.
+CoreTTS  : ElevenLabs through the core (key stays on Mother). Optional upgrade once a voice is picked.
+SayTTS   : macOS `say`. Zero setup fallback.
 """
 from __future__ import annotations
 
@@ -17,7 +17,40 @@ from typing import Protocol
 
 
 class TTS(Protocol):
-    def synth(self, text: str) -> Path | None: ...       # path to an audio file, or None to skip speaking
+    def synth(self, text: str) -> Path | None: ...
+
+
+def _key(cache: Path, *parts: str, ext: str) -> Path:
+    return cache / (hashlib.sha1("|".join(parts).encode()).hexdigest() + ext)
+
+
+class KokoroTTS:
+    def __init__(self, voice: str = "bm_lewis", speed: float = 1.05, cache_dir: str | Path = "~/.bossk/tts_cache", fallback: "TTS | None" = None):
+        from kokoro import KPipeline  # type: ignore
+        import numpy  # type: ignore
+        import soundfile  # type: ignore
+        self._np, self._sf = numpy, soundfile
+        self.voice, self.speed = voice, speed
+        self._pipe = KPipeline(lang_code=voice[0])          # 'b' British, 'a' American
+        self.cache = Path(cache_dir).expanduser()
+        self.cache.mkdir(parents=True, exist_ok=True)
+        self.fallback = fallback
+
+    def synth(self, text: str) -> Path | None:
+        p = _key(self.cache, "kokoro", self.voice, str(self.speed), text, ext=".wav")
+        if p.exists():
+            return p
+        try:
+            chunks = [audio for _, _, audio in self._pipe(text, voice=self.voice, speed=self.speed)]
+            if not chunks:
+                return None
+            self._sf.write(str(p), self._np.concatenate(chunks), 24000, subtype="PCM_16")
+            return p
+        except Exception:  # noqa: BLE001
+            return self.fallback.synth(text) if self.fallback else None
+
+    def prerender(self, phrases: list[str]) -> int:
+        return sum(1 for ph in phrases if self.synth(ph))
 
 
 class CoreTTS:
@@ -27,12 +60,9 @@ class CoreTTS:
         self.cache.mkdir(parents=True, exist_ok=True)
         self.fallback = fallback
 
-    def _key(self, text: str) -> Path:
-        return self.cache / (hashlib.sha1(f"{self.voice}|{text}".encode()).hexdigest() + ".mp3")
-
     def synth(self, text: str) -> Path | None:
-        p = self._key(text)
-        if p.exists() and p.stat().st_size > 0:
+        p = _key(self.cache, "eleven", self.voice, text, ext=".mp3")
+        if p.exists() and p.stat().st_size:
             return p
         req = urllib.request.Request(self.core_url + "/tts", data=json.dumps({"text": text, "voice": self.voice}).encode(),
                                      headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.token}"}, method="POST")
@@ -46,15 +76,11 @@ class CoreTTS:
         return self.fallback.synth(text) if self.fallback else None
 
     def prerender(self, phrases: list[str]) -> int:
-        n = 0
-        for ph in phrases:
-            if not self._key(ph).exists() and self.synth(ph):
-                n += 1
-        return n
+        return sum(1 for ph in phrases if self.synth(ph))
 
 
 class SayTTS:
-    def __init__(self, voice: str = "Samantha", cache_dir: str | Path = "~/.bossk/tts_cache_say"):
+    def __init__(self, voice: str = "Daniel", cache_dir: str | Path = "~/.bossk/tts_cache"):
         self.voice = voice
         self.cache = Path(cache_dir).expanduser()
         self.cache.mkdir(parents=True, exist_ok=True)
@@ -62,9 +88,9 @@ class SayTTS:
     def synth(self, text: str) -> Path | None:
         if not shutil.which("say"):
             return None
-        p = self.cache / (hashlib.sha1(f"{self.voice}|{text}".encode()).hexdigest() + ".aiff")
+        p = _key(self.cache, "say", self.voice, text, ext=".wav")
         if not p.exists():
-            subprocess.run(["say", "-v", self.voice, "-o", str(p), text], check=False)
+            subprocess.run(["say", "-v", self.voice, "--file-format=WAVE", "--data-format=LEI16@22050", "-o", str(p), text], check=False)
         return p if p.exists() else None
 
 

@@ -14,6 +14,7 @@
           background: radial-gradient(circle at 50% 50%, rgba(255,107,53,0.55), rgba(255,107,53,0) 60%); transition: opacity 120ms linear; }
   .fallback { position: absolute; width: 28vmin; height: 28vmin; border-radius: 50%; background: #ff6b35; opacity: 0.9;
               transition: transform 120ms ease-out; display: none; }
+  canvas#ring { position: absolute; width: 60vmin; height: 60vmin; pointer-events: none; }
   .caption { position: absolute; bottom: 6vh; width: 100%; text-align: center; color: #f0ede8; font: 500 2.2vmin/1.4 -apple-system, "DM Sans", sans-serif;
              opacity: 0.0; transition: opacity 300ms; letter-spacing: 0.02em; }
   .caption.on { opacity: 0.85; }
@@ -22,6 +23,7 @@
 <body>
 <div class="stage" id="stage">
   <div class="fallback" id="fallback"></div>
+  <canvas id="ring" width="800" height="800"></canvas>
   <div class="glow" id="glow"></div>
   <div class="caption" id="caption"></div>
 </div>
@@ -57,8 +59,24 @@ async function tick() {
     fallback.style.transform = `scale(${1 + smooth * 0.5})`;
     glow.style.opacity = s.state === 'speaking' || s.state === 'asking' ? 0.25 + smooth * 0.6 : smooth * 0.5;
     caption.textContent = s.text || ''; caption.classList.toggle('on', !!s.text && s.state !== 'idle');
+    drawRing(s.waveform || [], s.state, s.pending_ask);
   } catch (e) {}
   setTimeout(tick, 80);
+}
+// 64-point waveform ring around the face: the mic while listening, BOSSK's voice while speaking.
+const ring = document.getElementById('ring'), rc = ring.getContext('2d');
+function drawRing(wf, state, pending) {
+  rc.clearRect(0, 0, 800, 800);
+  const n = 64, r0 = 300, color = state === 'listening' ? '240,237,232' : '255,107,53';
+  rc.strokeStyle = `rgba(${color},${state === 'idle' && !pending ? 0.15 : 0.8})`; rc.lineWidth = 6; rc.lineCap = 'round';
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2, v = Math.min(1, Math.abs(wf[i] || 0));
+    const len = 8 + v * 90 + (pending && state !== 'listening' ? 6 * (1 + Math.sin(Date.now() / 300)) : 0);
+    rc.beginPath();
+    rc.moveTo(400 + Math.cos(a) * r0, 400 + Math.sin(a) * r0);
+    rc.lineTo(400 + Math.cos(a) * (r0 + len), 400 + Math.sin(a) * (r0 + len));
+    rc.stroke();
+  }
 }
 loadVideos().then(tick);
 document.addEventListener('keydown', e => { if (e.key === 'f') document.documentElement.requestFullscreen?.(); });

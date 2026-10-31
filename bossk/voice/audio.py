@@ -1,139 +1,184 @@
-"""Microphone capture and playback for the voice daemon.
+"""Microphone capture and speaker playback for push-to-talk.
 
-Capture uses pvrecorder (Picovoice's recorder, 16 kHz mono int16 frames) because Porcupine wants
-exactly that stream, and the same stream is reused to record the answer after the wake word.
-Playback shells out to afplay on macOS (ffplay elsewhere). Both are behind small classes so tests
-can swap in fakes.
+The mic is open only while the talk button is held (or toggled on), so BOSSK never hears its own voice:
+no echo cancellation, no speakerphone needed. Playback can be cut off instantly, which is how pressing the
+button interrupts BOSSK mid-sentence.
 """
 from __future__ import annotations
 
 import array
 import math
 import shutil
-import struct
 import subprocess
-import tempfile
+import threading
 import time
 import wave
 from pathlib import Path
-from typing import Iterator, Protocol
+from typing import Callable
 
 SAMPLE_RATE = 16000
-FRAME_LENGTH = 512          # Porcupine's frame length at 16 kHz
-
-
-class Recorder(Protocol):
-    def start(self) -> None: ...
-    def stop(self) -> None: ...
-    def read(self) -> list[int]: ...          # one frame of FRAME_LENGTH int16 samples
-
-
-class PvRecorder:
-    def __init__(self, device_index: int = -1):
-        from pvrecorder import PvRecorder as _R  # type: ignore
-        self._r = _R(frame_length=FRAME_LENGTH, device_index=device_index)
-
-    def start(self) -> None:
-        self._r.start()
-
-    def stop(self) -> None:
-        self._r.stop()
-
-    def read(self) -> list[int]:
-        return list(self._r.read())
+FRAME = 512                       # 32 ms at 16 kHz
+FrameCb = Callable[[list[int]], None]
 
 
 def rms(frame: list[int]) -> float:
-    """0..1 loudness of one frame, used for end-of-speech detection and the expressions level."""
+    """0..1 loudness of a frame."""
     if not frame:
         return 0.0
     return min(1.0, math.sqrt(sum(s * s for s in frame) / len(frame)) / 32768.0 * 4)
 
 
-def record_utterance(rec: Recorder, *, max_seconds: float = 8.0, silence_seconds: float = 0.9, start_threshold: float = 0.04,
-                     level_cb=None, already_started: bool = True) -> list[int]:
-    """Read frames until `silence_seconds` of quiet after speech, or `max_seconds`. Returns int16 samples."""
-    frames_per_s = SAMPLE_RATE / FRAME_LENGTH
-    max_frames = int(max_seconds * frames_per_s)
-    silence_frames = int(silence_seconds * frames_per_s)
-    out: list[int] = []
-    quiet, spoke, n = 0, False, 0
-    while n < max_frames:
-        f = rec.read()
-        n += 1
-        out.extend(f)
-        lvl = rms(f)
-        if level_cb:
-            level_cb(lvl)
-        if lvl >= start_threshold:
-            spoke, quiet = True, 0
-        elif spoke:
-            quiet += 1
-            if quiet >= silence_frames:
-                break
-        elif n > frames_per_s * 3 and not spoke:   # 3 s of nothing: he isn't answering
-            break
-    return out
+def waveform64(frame: list[int]) -> list[float]:
+    """64 points of -1..1 for the face to draw."""
+    if not frame:
+        return [0.0] * 64
+    step = max(1, len(frame) // 64)
+    return [round(max(-1.0, min(1.0, frame[i * step] / 8192.0)), 3) for i in range(64) if i * step < len(frame)] + \
+        [0.0] * max(0, 64 - len(range(0, len(frame), step)))
 
 
-def write_wav(samples: list[int], path: str | Path) -> Path:
+def write_wav(samples: list[int], path: str | Path, rate: int = SAMPLE_RATE) -> Path:
     p = Path(path)
     with wave.open(str(p), "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
-        w.setframerate(SAMPLE_RATE)
+        w.setframerate(rate)
         w.writeframes(array.array("h", samples).tobytes())
     return p
 
 
-class Player:
-    def play(self, audio_path: str | Path) -> None:
-        if shutil.which("afplay"):
-            subprocess.run(["afplay", str(audio_path)], check=False)
-        elif shutil.which("ffplay"):
-            subprocess.run(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", str(audio_path)], check=False)
-        elif shutil.which("aplay"):
-            subprocess.run(["aplay", "-q", str(audio_path)], check=False)
+class SoundDeviceCapture:
+    """Real microphone through PortAudio (pip install sounddevice). Opens only between begin() and end()."""
+    def __init__(self, device: int | str | None = None):
+        import sounddevice  # type: ignore  # noqa: F401
+        self.device = device
+        self._buf: list[int] = []
+        self._stream = None
+        self._lock = threading.Lock()
 
-    def duration_s(self, audio_path: str | Path) -> float:
-        if shutil.which("ffprobe"):
-            r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(audio_path)],
-                               capture_output=True, text=True)
-            try:
-                return float(r.stdout.strip())
-            except ValueError:
-                pass
-        return 0.0
+    def begin(self, on_frame: FrameCb | None = None) -> None:
+        import sounddevice as sd  # type: ignore
+        self._buf = []
+
+        def cb(indata, frames, t, status):
+            f = indata[:, 0].tolist()
+            with self._lock:
+                self._buf.extend(f)
+            if on_frame:
+                on_frame(f)
+        self._stream = sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="int16", blocksize=FRAME,
+                                      device=self.device, callback=cb)
+        self._stream.start()
+
+    def end(self) -> list[int]:
+        if self._stream is not None:
+            self._stream.stop()
+            self._stream.close()
+            self._stream = None
+        with self._lock:
+            out, self._buf = self._buf, []
+        return out
 
 
-class FakeRecorder:
-    """Feeds scripted utterances: each item is a list of samples; a loud burst followed by silence."""
-    def __init__(self, utterances: list[list[int]] | None = None):
-        self.queue = list(utterances or [])
-        self.started = False
+class FakeCapture:
+    """Test mic: each begin() plays the next scripted utterance into on_frame at real-time pace."""
+    def __init__(self, script: list[list[int]] | None = None, speed: float = 8.0):
+        self.script = list(script or [])
+        self.speed = speed
+        self._buf: list[int] = []
+        self._stop = threading.Event()
+        self._t: threading.Thread | None = None
+        self.opened = 0
 
-    def start(self) -> None:
-        self.started = True
+    def begin(self, on_frame: FrameCb | None = None) -> None:
+        self.opened += 1
+        self._buf, self._stop = [], threading.Event()
+        samples = self.script.pop(0) if self.script else []
 
-    def stop(self) -> None:
-        self.started = False
+        def feed():
+            i = 0
+            while not self._stop.is_set():
+                f = samples[i:i + FRAME] if i < len(samples) else [0] * FRAME
+                i += FRAME
+                self._buf.extend(f)
+                if on_frame:
+                    on_frame(f)
+                time.sleep(FRAME / SAMPLE_RATE / self.speed)
+        self._t = threading.Thread(target=feed, daemon=True)
+        self._t.start()
 
-    def read(self) -> list[int]:
-        if not self.queue:
-            return [0] * FRAME_LENGTH
-        cur = self.queue[0]
-        frame, rest = cur[:FRAME_LENGTH], cur[FRAME_LENGTH:]
-        if rest:
-            self.queue[0] = rest
-        else:
-            self.queue.pop(0)
-        return frame + [0] * (FRAME_LENGTH - len(frame))
+    def end(self) -> list[int]:
+        self._stop.set()
+        if self._t:
+            self._t.join(1)
+        out, self._buf = self._buf, []
+        return out
 
 
 def loud(seconds: float = 0.6, amp: int = 8000) -> list[int]:
-    n = int(seconds * SAMPLE_RATE)
-    return [int(amp * math.sin(i * 0.3)) for i in range(n)]
+    return [int(amp * math.sin(i * 0.3)) for i in range(int(seconds * SAMPLE_RATE))]
 
 
-def quiet(seconds: float = 1.2) -> list[int]:
+def quiet(seconds: float = 1.0) -> list[int]:
     return [0] * int(seconds * SAMPLE_RATE)
+
+
+class Player:
+    """afplay on macOS, ffplay/aplay elsewhere. play() blocks until done or stop() is called.
+    For WAV files it also feeds a loudness envelope and waveform to `level_cb` so the face moves with the voice."""
+    def __init__(self):
+        self._proc: subprocess.Popen | None = None
+        self._lock = threading.Lock()
+
+    def _cmd(self, path: str) -> list[str] | None:
+        if shutil.which("afplay"):
+            return ["afplay", path]
+        if shutil.which("ffplay"):
+            return ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path]
+        if shutil.which("aplay") and path.endswith(".wav"):
+            return ["aplay", "-q", path]
+        return None
+
+    def play(self, path: str | Path, level_cb: Callable[[float, list[float]], None] | None = None) -> bool:
+        """Returns False if interrupted."""
+        cmd = self._cmd(str(path))
+        if not cmd:
+            return True
+        env = _envelope(Path(path)) if level_cb else []
+        with self._lock:
+            self._proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            proc = self._proc
+        t0 = time.time()
+        while proc.poll() is None:
+            if level_cb:
+                if env:
+                    i = int((time.time() - t0) * 30)
+                    lvl, wf = env[i] if i < len(env) else (0.0, [0.0] * 64)
+                else:
+                    lvl, wf = 0.5 + 0.2 * math.sin((time.time() - t0) * 9), [0.0] * 64
+                level_cb(lvl, wf)
+            time.sleep(1 / 30)
+        if level_cb:
+            level_cb(0.0, [0.0] * 64)
+        return proc.returncode == 0
+
+    def stop(self) -> None:
+        with self._lock:
+            if self._proc and self._proc.poll() is None:
+                self._proc.kill()
+
+
+def _envelope(path: Path) -> list[tuple[float, list[float]]]:
+    if path.suffix.lower() != ".wav":
+        return []
+    try:
+        with wave.open(str(path), "rb") as w:
+            rate, n, width = w.getframerate(), w.getnframes(), w.getsampwidth()
+            data = w.readframes(n)
+        if width != 2:
+            return []
+        s = array.array("h", data).tolist()
+        hop = max(1, rate // 30)
+        return [(rms(s[i:i + hop]), waveform64(s[i:i + hop])) for i in range(0, len(s), hop)]
+    except (OSError, wave.Error, EOFError):
+        return []

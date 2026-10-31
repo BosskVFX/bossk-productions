@@ -95,6 +95,30 @@ class HookTest(unittest.TestCase):
         self.assertIn(("tool", None), kinds)
         self.assertIn(("session", "Notification"), kinds)
 
+    def test_install_links_shared_memory(self):
+        from core.knowledge import seed
+        k = self.tmp / "knowledge"
+        seed(k)
+        cmd_md = self.tmp / "CLAUDE.md"
+        cmd_md.write_text("# my own notes\n")
+        settings = self.tmp / "settings2.json"
+        env = {**os.environ, "BOSSK_AGENT_FILE": str(self.tmp / "agent2.json")}
+        for _ in range(2):   # idempotent
+            r = subprocess.run([sys.executable, str(HOOK), "install", "--core", "http://x:8750", "--token", "t", "--machine", "mini",
+                                "--settings", str(settings), "--knowledge", str(k), "--claude-md", str(cmd_md)],
+                               capture_output=True, text=True, env=env)
+            self.assertEqual(r.returncode, 0, r.stderr)
+        text = cmd_md.read_text()
+        self.assertTrue(text.startswith("# my own notes"))
+        self.assertEqual(text.count(f"@{k}/CLAUDE.md"), 1)
+        s = json.loads(settings.read_text())
+        self.assertEqual(s["autoMemoryDirectory"], str(k / "machines" / "mini" / "memory"))
+        self.assertTrue((k / "machines" / "mini" / "memory").is_dir())
+        r = subprocess.run([sys.executable, str(HOOK), "install", "--core", "http://x", "--token", "t", "--settings", str(settings),
+                            "--knowledge", str(self.tmp / "not-mounted")], capture_output=True, text=True, env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("mount", r.stderr + r.stdout)
+
     def test_transcript_tail(self):
         sys.path.insert(0, str(HOOK.parent))
         import bossk_hook  # noqa: E402

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Mac mini: the voice daemon. cp to ~/Library/LaunchAgents/ and launchctl load it. Edit the paths first.
-     Needs: pip3 install pvporcupine pvrecorder pyyaml ; brew install whisper-cpp ; the ggml model in ~/.bossk/models -->
+     Needs: pip3 install sounddevice pynput mlx-whisper kokoro soundfile pyyaml ; brew install espeak-ng -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>

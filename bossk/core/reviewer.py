@@ -10,10 +10,7 @@ import json
 import re
 from typing import Any
 
-try:
-    import anthropic  # type: ignore
-except ImportError:  # pragma: no cover
-    anthropic = None
+from .claude_cli import ClaudeCLI
 
 REVIEW_SYSTEM = """You are the reviewer inside BOSSK, a supervisor for Jason Miller's Claude Code sessions.
 A session wants to run a tool call that the rulebook did not classify. Decide: allow, deny, or escalate to Jason.
@@ -52,24 +49,25 @@ def template_ask(tool: str, tool_input: dict[str, Any], *, machine: str, session
 
 
 class Reviewer:
-    def __init__(self, api_key: str | None, model: str = "claude-sonnet-5-5", enabled: bool = True):
+    """Runs on the Claude subscription through headless Claude Code. No API key is ever used."""
+    def __init__(self, cli: ClaudeCLI | None, model: str = "sonnet", enabled: bool = True):
         self.model = model
-        self.client = anthropic.Anthropic(api_key=api_key) if (enabled and anthropic and api_key) else None
+        self.cli = cli if (enabled and cli and cli.available) else None
 
     @property
     def available(self) -> bool:
-        return self.client is not None
+        return self.cli is not None
 
     def _ask_model(self, system: str, user: str, max_tokens: int = 400) -> dict[str, Any] | None:
-        if not self.client:
+        if not self.cli:
             return None
+        r = self.cli.ask(user, system=system, model=self.model, max_turns=1, tools=())
+        if not r.ok:
+            return None
+        m = re.search(r"\{.*\}", r.text, re.S)
         try:
-            msg = self.client.messages.create(model=self.model, max_tokens=max_tokens, system=system,
-                                              messages=[{"role": "user", "content": user}])
-            text = "".join(getattr(b, "text", "") for b in msg.content)
-            m = re.search(r"\{.*\}", text, re.S)
             return json.loads(m.group(0)) if m else None
-        except Exception:  # noqa: BLE001
+        except json.JSONDecodeError:
             return None
 
     def review(self, *, tool: str, tool_input: dict[str, Any], cwd: str | None, machine: str,

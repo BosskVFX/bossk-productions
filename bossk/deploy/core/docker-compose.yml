@@ -4,7 +4,9 @@
 # Before first start:
 #   mkdir -p /mnt/tank/bossk/data && cp bossk.example.yml /mnt/tank/bossk/data/bossk.yml
 #   echo "BOSSK_TOKEN=$(python3 -c 'import secrets;print(secrets.token_urlsafe(32))')" > /mnt/tank/bossk/data/secrets.env
-#   echo "ANTHROPIC_API_KEY=sk-ant-..." >> /mnt/tank/bossk/data/secrets.env   # reviewer agent
+#   On any machine signed in to the Max account run:  claude setup-token
+#   echo "CLAUDE_CODE_OAUTH_TOKEN=<the token it prints>" >> /mnt/tank/bossk/data/secrets.env
+#   That is BOSSK's brain, billed to the Claude plan. Never put ANTHROPIC_API_KEY here: the core strips it anyway.
 #   chmod 600 /mnt/tank/bossk/data/secrets.env
 # Then point every machine agent at http://<truenas tailscale name>:8750 with that token.
 
@@ -23,6 +25,7 @@ services:
     volumes:
       - /mnt/tank/bossk/data:/data
       - /mnt/tank/video:/mnt/tank/video        # same path inside as outside so the checker config is literal
+      - /mnt/tank/bossk/knowledge:/mnt/tank/bossk/knowledge   # the one shared memory folder
       - /dev/zfs:/dev/zfs                      # zfs snapshot before purges
     privileged: true                           # needed for zfs snapshot; drop it and set zfs_dataset: "" otherwise
 

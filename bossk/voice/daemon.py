@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""BOSSK voice daemon for the Mac mini (and the laptop).
+"""BOSSK voice daemon, push-to-talk. Runs on the Mac mini (and the laptop).
 
-Two loops in one process:
-  1. Asks. Long-polls the core for asks addressed to this machine (GET /asks?channel=voice:<machine>).
-     Speaks the ask, opens the mic, sends what Jason said to the core (POST /asks/<id>/answer), handles
-     the confirm step, and gives up politely after two unclear answers (the ask stays open on the phone).
-  2. Wake word. Reads the mic continuously; audio never leaves the machine until "Hey BOSSK" fires.
-     Then it records one utterance, transcribes it locally, and routes it:
-       - "stop everything" / "pause"           -> POST /pause
-       - "resume" / "unpause" / "carry on"      -> POST /unpause
-       - "yes" / "no" / "confirm" with an ask pending -> answers the oldest pending ask
-       - "status" / "what's running"            -> spoken summary from GET /health
-       - anything else                          -> POST /chat, speaks the reply
+How it behaves
+  * Hold the talk button and speak; let go when done. The mic is open only while the button is held, so BOSSK
+    never hears itself. Tap the button (Stream Deck) instead to start, and it stops after a pause.
+  * Press the button while BOSSK is talking and it stops instantly. Whatever you say next is the new request.
+  * When a Claude Code session needs Jason, BOSSK chimes and speaks the ask, then waits. It never gives up and
+    walks away: the ask stays open (and goes to the phone after the core's grace period) until it is answered.
+    Hold the button and say:
+        "yes" / "no"          answers it ("confirm" is needed after "yes" for money and messages)
+        "details"             reads exactly what will run
+        "repeat"              says the ask again
+  * Anything else goes to BOSSK's brain on Mother (Claude Code on Jason's Claude plan) and is spoken back
+    sentence by sentence as it is written. "Stop everything" pauses all auto-approvals; "resume" undoes it;
+    "status" says what is running.
 
-State for the expressions window is written to ~/.bossk/voice_state.json on every change:
-  {"state": idle|listening|thinking|speaking|asking, "level": 0..1, "text": "...", "ts": ...}
-and served at http://127.0.0.1:8751/ with the bare window from voice/expressions/.
+The face (expressions window, http://127.0.0.1:8751/) follows state: idle, listening, thinking, speaking,
+asking (an ask is waiting), with live level and a 64-point waveform from the mic or the voice.
 
-Run:   python3 -m voice.daemon --config ~/.bossk/voice.yml
-Dev:   python3 -m voice.daemon --dev      (keyboard wake word, macOS `say`, no Porcupine or whisper needed)
+Run:  python3 -m voice.daemon --config ~/.bossk/voice.yml
 """
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ import argparse
 import json
 import logging
 import os
+import queue
 import re
 import sys
 import tempfile
@@ -34,79 +35,119 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from voice import audio as audio_mod  # noqa: E402
-from voice.audio import FRAME_LENGTH, Player, record_utterance, rms, write_wav  # noqa: E402
+from voice.audio import SAMPLE_RATE, Player, rms, waveform64, write_wav  # noqa: E402
 
 log = logging.getLogger("bossk.voice")
 
-PAUSE_RE = re.compile(r"\b(stop everything|pause everything|stop all|hold everything|freeze)\b", re.I)
+ANSWER_RE = re.compile(r"^\W*(yes|yeah|yep|yup|no|nope|nah|confirm|confirmed|approve|approved|deny|denied|go ahead|do it|cancel|don'?t)\b", re.I)
+DETAILS_RE = re.compile(r"\b(details?|what (exactly|command)|show me|what will (it|you) run|what is it running)\b", re.I)
+REPEAT_RE = re.compile(r"\b(repeat|say (that|it) again|what did you (ask|say)|come again|what was (that|the question))\b", re.I)
+PAUSE_RE = re.compile(r"\b(stop everything|pause everything|pause all|stop all|hold everything|freeze everything)\b", re.I)
 UNPAUSE_RE = re.compile(r"\b(unpause|resume|carry on|continue everything|you can go)\b", re.I)
-STATUS_RE = re.compile(r"\b(status|what'?s running|what are you doing|anything pending|how many sessions)\b", re.I)
-ANSWER_RE = re.compile(r"^\s*(yes|yeah|yep|no|nope|confirm|confirmed|approve|deny|go ahead|cancel)\b", re.I)
+STATUS_RE = re.compile(r"^\W*(status|what'?s running|what is running|what are you doing|anything pending|how many sessions)\b", re.I)
+NEVERMIND_RE = re.compile(r"^\W*(never ?mind|forget it|nothing|ignore that)\W*$", re.I)
+
+PHRASES = {
+    "ack_yes": "Done.",
+    "ack_no": "Okay, I won't.",
+    "confirm": "Say confirm to go ahead.",
+    "unclear_answer": "Say yes, no, or details.",
+    "already": "That one was already answered.",
+    "didnt_catch": "I didn't catch that.",
+    "paused": "Paused. Nothing runs on its own until you say resume.",
+    "unpaused": "Resumed.",
+    "nothing_pending": "Nothing is waiting on you.",
+    "okay": "Okay.",
+    "core_down": "I can't reach Mother right now.",
+    "handled_elsewhere": "That ask was answered on your phone.",
+}
 
 
+# ---------------------------------------------------------------------- core client
 class CoreClient:
     def __init__(self, url: str, token: str, machine: str):
         self.url, self.token, self.machine = url.rstrip("/"), token, machine
 
-    def _req(self, method: str, path: str, body: dict | None = None, timeout: float = 30) -> dict[str, Any]:
-        req = urllib.request.Request(self.url + path, data=json.dumps(body).encode() if body is not None else None, method=method,
-                                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.token}"})
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+    def _req(self, method: str, path: str, body: dict | None = None, timeout: float = 30):
+        return urllib.request.Request(self.url + path, data=json.dumps(body).encode() if body is not None else None, method=method,
+                                      headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.token}"})
+
+    def call(self, method: str, path: str, body: dict | None = None, timeout: float = 30) -> dict[str, Any]:
+        with urllib.request.urlopen(self._req(method, path, body), timeout=timeout) as r:
             return json.loads(r.read() or b"{}")
 
-    def poll_asks(self, wait: int = 25) -> list[dict]:
+    def poll_asks(self, wait: int = 20) -> list[dict] | None:
         try:
-            return self._req("GET", f"/asks?channel=voice:{self.machine}&wait={wait}", timeout=wait + 15).get("asks", [])
+            return self.call("GET", f"/asks?channel=voice:{self.machine}&wait={wait}", timeout=wait + 15).get("asks", [])
+        except (urllib.error.URLError, OSError, ValueError):
+            return None
+
+    def pending(self) -> list[dict]:
+        try:
+            return self.call("GET", "/asks?channel=all").get("asks", [])
         except (urllib.error.URLError, OSError, ValueError):
             return []
 
     def answer(self, ask_id: str, text: str) -> str:
-        return str(self._req("POST", f"/asks/{ask_id}/answer", {"text": text, "by": f"voice:{self.machine}"}).get("result", "error"))
-
-    def pending(self) -> list[dict]:
         try:
-            return self._req("GET", "/asks?channel=all").get("asks", [])
+            return str(self.call("POST", f"/asks/{ask_id}/answer", {"text": text, "by": f"voice:{self.machine}"}).get("result", "error"))
         except (urllib.error.URLError, OSError, ValueError):
-            return []
+            return "error"
 
     def health(self) -> dict:
-        return self._req("GET", "/health")
+        return self.call("GET", "/health")
 
     def pause(self, reason: str) -> None:
-        self._req("POST", "/pause", {"reason": reason})
+        self.call("POST", "/pause", {"reason": reason})
 
     def unpause(self) -> None:
-        self._req("POST", "/unpause", {})
-
-    def chat(self, text: str) -> str:
-        return str(self._req("POST", "/chat", {"text": text, "machine": self.machine}, timeout=60).get("reply", ""))
+        self.call("POST", "/unpause", {})
 
     def event(self, kind: str, message: str) -> None:
         try:
-            self._req("POST", "/events", {"machine": self.machine, "session_id": "voice", "event": kind, "message": message}, timeout=5)
+            self.call("POST", "/events", {"machine": self.machine, "session_id": "voice", "event": kind, "message": message}, timeout=5)
         except Exception:  # noqa: BLE001
             pass
 
+    def chat_stream(self, text: str, cancel: threading.Event):
+        """Yield sentences from the core's streaming /chat. Closing the connection on cancel stops Claude on Mother."""
+        resp = urllib.request.urlopen(self._req("POST", "/chat", {"text": text, "machine": self.machine, "stream": True}), timeout=120)
+        try:
+            for raw in resp:
+                if cancel.is_set():
+                    return
+                line = raw.decode(errors="replace").strip()
+                if not line:
+                    continue
+                try:
+                    msg = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if msg.get("done"):
+                    return
+                if msg.get("text"):
+                    yield msg["text"]
+        finally:
+            resp.close()
 
+
+# ---------------------------------------------------------------------- face state
 class VoiceState:
-    """Writes voice_state.json for the expressions window and serves it on a tiny local HTTP server."""
-    def __init__(self, path: str | Path, port: int = 8751, serve: bool = True):
-        self.path = Path(path).expanduser()
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.state, self.level, self.text = "idle", 0.0, ""
+    def __init__(self, path: str | Path | None = None):
+        self.path = Path(path).expanduser() if path else None
+        if self.path:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.state, self.level, self.text, self.waveform = "idle", 0.0, "", [0.0] * 64
+        self.pending_ask = False
         self._lock = threading.Lock()
-        self._write()
-        if serve:
-            from voice.expressions.server import start as start_expr
-            start_expr(self, port)
+        self._last_write = 0.0
 
-    def set(self, state: str | None = None, level: float | None = None, text: str | None = None) -> None:
+    def set(self, state: str | None = None, *, level: float | None = None, text: str | None = None, waveform: list[float] | None = None) -> None:
         with self._lock:
             if state is not None:
                 self.state = state
@@ -114,258 +155,420 @@ class VoiceState:
                 self.level = max(0.0, min(1.0, level))
             if text is not None:
                 self.text = text
-            self._write()
+            if waveform is not None:
+                self.waveform = waveform
+            now = time.time()
+            if self.path and (state is not None or now - self._last_write > 0.1):
+                self._last_write = now
+                tmp = self.path.with_suffix(".tmp")
+                tmp.write_text(json.dumps(self._snap()))
+                os.replace(tmp, self.path)
+
+    def _snap(self) -> dict:
+        return {"state": self.state, "level": round(self.level, 3), "text": self.text, "waveform": self.waveform,
+                "pending_ask": self.pending_ask, "ts": time.time()}
 
     def snapshot(self) -> dict:
-        return {"state": self.state, "level": round(self.level, 3), "text": self.text, "ts": time.time()}
-
-    def _write(self) -> None:
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(self.snapshot()))
-        os.replace(tmp, self.path)
+        with self._lock:
+            return self._snap()
 
 
-class VoiceDaemon:
-    def __init__(self, *, core: CoreClient, recorder, wake, stt, tts, player: Player | None = None, state: VoiceState | None = None,
-                 phrases: dict[str, str] | None = None, listen_seconds: float = 8.0, sleep=time.sleep):
-        self.core, self.rec, self.wake, self.stt, self.tts = core, recorder, wake, stt, tts
-        self.player = player or Player()
-        self.state = state or VoiceState(tempfile.gettempdir() + "/bossk_voice_state.json", serve=False)
-        self.ph = {**DEFAULT_PHRASES, **(phrases or {})}
-        self.listen_seconds = listen_seconds
-        self._sleep = sleep
-        self._mic_lock = threading.Lock()       # the ask loop and the wake loop share one microphone
-        self._stop = threading.Event()
-        self.handled: list[dict] = []           # for tests and the ledger
+# ---------------------------------------------------------------------- speaker
+class Speaker:
+    """Speaks queued sentences on its own thread. interrupt() drops the queue and cuts the current sentence."""
+    def __init__(self, tts, player, state: VoiceState, rest_state: Callable[[], str]):
+        self.tts, self.player, self.state, self.rest_state = tts, player, state, rest_state
+        self.q: queue.Queue = queue.Queue()
+        self.gen = 0
+        self.busy = threading.Event()
+        self.spoken: list[str] = []
+        threading.Thread(target=self._run, daemon=True, name="speaker").start()
 
-    # ------------------------------------------------------------------ speaking and listening
     def say(self, text: str, state: str = "speaking") -> None:
-        if not text:
-            return
-        self.state.set(state=state, text=text, level=0.6)
-        log.info("BOSSK: %s", text)
-        path = self.tts.synth(text)
-        if path:
-            self.player.play(path)
-        self.state.set(state="idle", level=0.0)
+        if text:
+            self.busy.set()
+            self.q.put((text, state, self.gen))
 
-    def listen(self) -> str:
-        """Record one utterance and transcribe it. Returns "" when nothing was said."""
-        self.state.set(state="listening", level=0.0, text="")
-        samples = record_utterance(self.rec, max_seconds=self.listen_seconds, level_cb=lambda l: self.state.set(level=l))
-        self.state.set(state="thinking", level=0.0)
-        if rms(samples[: FRAME_LENGTH * 4]) == 0 and max((abs(s) for s in samples), default=0) < 300:
-            self.state.set(state="idle")
-            return ""
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            wav = write_wav(samples, f.name)
+    def interrupt(self) -> None:
+        self.gen += 1
         try:
-            text = self.stt.transcribe(wav)
-        finally:
-            try:
-                os.unlink(wav)
-            except OSError:
-                pass
-        self.state.set(state="idle")
-        log.info("Jason: %s", text)
-        return text.strip()
+            while True:
+                self.q.get_nowait()
+        except queue.Empty:
+            pass
+        self.player.stop()
+        self.q.put((None, None, -1))      # wake the speaker thread so it settles back to rest
 
-    # ------------------------------------------------------------------ asks
-    def handle_ask(self, ask: dict) -> str:
-        """Speak the ask and run the answer loop. Returns the final core result."""
-        with self._mic_lock:
-            self.say(ask["text"], state="asking")
-            result = "unclear"
-            for attempt in range(3):
-                heard = self.listen()
-                if not heard:
-                    if attempt == 0:
-                        self.say(self.ph["repeat"], state="asking")
-                        continue
-                    break
-                result = self.core.answer(ask["id"], heard)
-                if result == "yes":
-                    self.say(self.ph["ack_yes"]); break
-                if result == "no":
-                    self.say(self.ph["ack_no"]); break
-                if result == "awaiting_confirm":
-                    self.say(ask.get("confirm_text") or self.ph["confirm"], state="asking")
-                    continue
-                if result in ("closed", "not_found"):
-                    self.say(self.ph["already_handled"]); break
-                self.say(self.ph["unclear"], state="asking")
+    def wait_idle(self, timeout: float = 30) -> bool:
+        end = time.time() + timeout
+        while time.time() < end:
+            if not self.busy.is_set() and self.q.empty():
+                return True
+            time.sleep(0.02)
+        return False
+
+    def _run(self) -> None:
+        while True:
+            text, st, gen = self.q.get()
+            if text is None or gen != self.gen:
+                self._maybe_rest()
+                continue
+            self.busy.set()
+            self.state.set(st, text=text, level=0.3)
+            log.info("BOSSK: %s", text)
+            self.spoken.append(text)
+            path = self.tts.synth(text)
+            if path and gen == self.gen:
+                self.player.play(path, level_cb=lambda l, wf: self.state.set(level=l, waveform=wf))
+            self._maybe_rest()
+
+    def _maybe_rest(self) -> None:
+        if self.q.empty():
+            self.busy.clear()
+            if self.state.state in ("speaking", "asking"):
+                self.state.set(self.rest_state(), level=0.0, text="", waveform=[0.0] * 64)
+
+
+# ---------------------------------------------------------------------- daemon
+class VoiceDaemon:
+    def __init__(self, *, core: CoreClient, capture, stt, tts, player=None, state: VoiceState | None = None,
+                 phrases: dict[str, str] | None = None, min_press_s: float = 0.3, toggle_silence_s: float = 1.2,
+                 toggle_max_s: float = 25.0, chime: str | Path | None = None):
+        self.core, self.capture, self.stt = core, capture, stt
+        self.player = player or Player()
+        self.state = state or VoiceState()
+        self.ph = {**PHRASES, **(phrases or {})}
+        self.min_press_s, self.toggle_silence_s, self.toggle_max_s = min_press_s, toggle_silence_s, toggle_max_s
+        self.chime = Path(chime).expanduser() if chime else None
+        self.speaker = Speaker(tts, self.player, self.state, self._rest_state)
+        self.events: queue.Queue = queue.Queue()
+        self.work: queue.Queue = queue.Queue()
+        self.asks: list[dict] = []                 # open asks for this machine, oldest first; asks[0] is "the" ask
+        self.announced: set[str] = set()
+        self.listening = False
+        self.toggle_mode = False
+        self.press_t = 0.0
+        self._spoke_t = 0.0
+        self._heard_speech = False
+        self.chat_cancel: threading.Event | None = None
+        self.thinking = threading.Event()
+        self._stop = threading.Event()
+        self.log: list[dict] = []                  # what happened, for tests and the ledger
+
+    # -------------------------------------------------------------- input events (from any trigger)
+    def post(self, kind: str, payload: Any = None) -> None:
+        self.events.put((kind, payload))
+
+    def _rest_state(self) -> str:
+        self.state.pending_ask = bool(self.asks)
+        return "asking" if self.asks else "idle"
+
+    def interrupt(self) -> None:
+        self.speaker.interrupt()
+        if self.chat_cancel:
+            self.chat_cancel.set()
+
+    def _on_frame(self, f: list[int]) -> None:
+        lvl = rms(f)
+        self.state.set(level=lvl, waveform=waveform64(f))
+        if lvl >= 0.04:
+            self._heard_speech, self._spoke_t = True, time.time()
+
+    def _begin_listening(self, toggle: bool) -> None:
+        self.interrupt()
+        self.listening, self.toggle_mode, self.press_t = True, toggle, time.time()
+        self._heard_speech, self._spoke_t = False, 0.0
+        self.state.set("listening", level=0.0, text="")
+        self.capture.begin(self._on_frame)
+
+    def _end_listening(self) -> None:
+        if not self.listening:
+            return
+        samples = self.capture.end()
+        held = time.time() - self.press_t
+        self.listening, self.toggle_mode = False, False
+        if held < self.min_press_s and not self._heard_speech:
+            self.state.set(self._rest_state(), level=0.0)          # a tap: only an interrupt
+            return
+        self.state.set("thinking", level=0.0)
+        self.work.put(samples)
+
+    def handle_event(self, kind: str, payload: Any = None) -> None:
+        if kind == "down":
+            if not self.listening:
+                self._begin_listening(toggle=False)
+        elif kind == "up":
+            self._end_listening()
+        elif kind == "toggle":
+            if self.listening:
+                self._end_listening()
+            elif self.speaker.busy.is_set() or self.thinking.is_set():
+                self.interrupt()
+                self.state.set(self._rest_state(), level=0.0)
             else:
-                result = "gave_up"
-            if result in ("unclear", "awaiting_confirm", "gave_up"):
-                self.say(self.ph["leave_on_phone"])
-                result = "gave_up"
-        self.handled.append({"ask_id": ask["id"], "result": result})
-        self.core.event("voice_ask", f"{ask['id']}: {result}")
-        return result
+                self._begin_listening(toggle=True)
+        elif kind == "stop":
+            self.interrupt()
+            self.state.set(self._rest_state(), level=0.0)
+        elif kind == "asks":
+            self._sync_asks(payload or [])
 
-    def ask_loop(self) -> None:
-        while not self._stop.is_set():
-            for ask in self.core.poll_asks():
-                if self._stop.is_set():
-                    return
-                self.handle_ask(ask)
+    def _sync_asks(self, current: list[dict]) -> None:
+        ids = {a["id"] for a in current}
+        gone = [a for a in self.asks if a["id"] not in ids]
+        self.asks = [a for a in self.asks if a["id"] in ids] + [a for a in current if a["id"] not in {x["id"] for x in self.asks}]
+        for a in gone:
+            if a["id"] in self.announced and a.get("_answered_here") is not True:
+                self.speaker.say(self.ph["handled_elsewhere"])
+        if self.asks and self.asks[0]["id"] not in self.announced and not self.listening and not self.thinking.is_set():
+            self._announce(self.asks[0])
+        self.state.pending_ask = bool(self.asks)
+        if not self.asks and self.state.state == "asking":
+            self.state.set("idle")
 
-    # ------------------------------------------------------------------ wake word
-    def handle_wake(self) -> str:
-        with self._mic_lock:
-            self.state.set(state="listening", text="")
-            heard = self.listen()
-            if not heard:
-                self.say(self.ph["didnt_catch"])
-                return "nothing"
-            return self.route(heard)
+    def _announce(self, ask: dict) -> None:
+        self.announced.add(ask["id"])
+        if self.chime and self.chime.exists():
+            self.player.play(self.chime)
+        self.speaker.say(ask["text"], state="asking")
+        self.log.append({"announce": ask["id"]})
 
-    def route(self, heard: str) -> str:
-        self.core.event("voice_command", heard)
-        if PAUSE_RE.search(heard):
-            self.core.pause(f"Jason said: {heard}")
-            self.say(self.ph["paused"])
+    # -------------------------------------------------------------- understanding (worker thread)
+    def handle_text(self, heard: str) -> str:
+        t = heard.strip()
+        self.core.event("voice_command", t)
+        if not t:
+            self.speaker.say(self.ph["didnt_catch"])
+            return "nothing"
+        if NEVERMIND_RE.match(t):
+            self.speaker.say(self.ph["okay"])
+            return "nevermind"
+        if PAUSE_RE.search(t):
+            try:
+                self.core.pause(f"Jason said: {t}")
+                self.speaker.say(self.ph["paused"])
+            except Exception:  # noqa: BLE001
+                self.speaker.say(self.ph["core_down"])
             return "paused"
-        if UNPAUSE_RE.search(heard):
-            self.core.unpause()
-            self.say(self.ph["unpaused"])
+        if UNPAUSE_RE.search(t):
+            try:
+                self.core.unpause()
+                self.speaker.say(self.ph["unpaused"])
+            except Exception:  # noqa: BLE001
+                self.speaker.say(self.ph["core_down"])
             return "unpaused"
-        if ANSWER_RE.match(heard):
-            pending = self.core.pending()
-            if pending:
-                res = self.core.answer(pending[0]["id"], heard)
-                self.say({"yes": self.ph["ack_yes"], "no": self.ph["ack_no"], "awaiting_confirm": pending[0].get("confirm_text") or self.ph["confirm"]}.get(res, self.ph["unclear"]))
-                return f"answered:{res}"
-            self.say(self.ph["nothing_pending"])
+        ask = self.asks[0] if self.asks else None
+        if ask:
+            if DETAILS_RE.search(t):
+                self.speaker.say(details_text(ask), state="asking")
+                return "details"
+            if REPEAT_RE.search(t):
+                self.speaker.say(ask["text"], state="asking")
+                return "repeat"
+            if ANSWER_RE.match(t):
+                return self._answer(ask, t)
+        elif ANSWER_RE.match(t):
+            others = self.core.pending()
+            if others:
+                return self._answer(others[0], t)
+            self.speaker.say(self.ph["nothing_pending"])
             return "nothing_pending"
-        if STATUS_RE.search(heard):
-            self.say(self.status_text())
+        if STATUS_RE.match(t):
+            self.speaker.say(self.status_text())
             return "status"
-        self.state.set(state="thinking")
-        reply = self.core.chat(heard) or self.ph["no_answer"]
-        self.say(reply)
-        return "chat"
+        return self._chat(t)
+
+    def _answer(self, ask: dict, t: str) -> str:
+        res = self.core.answer(ask["id"], t)
+        if res == "yes":
+            ask["_answered_here"] = True
+            self.asks = [a for a in self.asks if a["id"] != ask["id"]]
+            self.speaker.say(self.ph["ack_yes"])
+        elif res == "no":
+            ask["_answered_here"] = True
+            self.asks = [a for a in self.asks if a["id"] != ask["id"]]
+            self.speaker.say(self.ph["ack_no"])
+        elif res == "awaiting_confirm":
+            self.speaker.say(ask.get("confirm_text") or self.ph["confirm"], state="asking")
+        elif res in ("closed", "not_found"):
+            self.asks = [a for a in self.asks if a["id"] != ask["id"]]
+            self.speaker.say(self.ph["already"])
+        elif res == "error":
+            self.speaker.say(self.ph["core_down"])
+        else:
+            self.speaker.say(self.ph["unclear_answer"], state="asking")
+        self.log.append({"answer": ask["id"], "result": res})
+        if self.asks and self.asks[0]["id"] not in self.announced:
+            self._announce(self.asks[0])
+        return f"answered:{res}"
+
+    def _chat(self, t: str) -> str:
+        cancel = threading.Event()
+        self.chat_cancel = cancel
+        self.state.set("thinking")
+        n = 0
+        try:
+            for sentence in self.core.chat_stream(t, cancel):
+                if cancel.is_set():
+                    break
+                self.speaker.say(sentence)
+                n += 1
+        except Exception:  # noqa: BLE001
+            if not cancel.is_set():
+                self.speaker.say(self.ph["core_down"])
+        if n == 0 and not cancel.is_set():
+            self.state.set(self._rest_state())
+        return "interrupted" if cancel.is_set() else "chat"
 
     def status_text(self) -> str:
         try:
             h = self.core.health()
         except Exception:  # noqa: BLE001
             return self.ph["core_down"]
-        sessions = sum(len(m.get("sessions", [])) for m in h.get("presence", {}).get("machines", {}).values())
-        waiting = sum(1 for m in h.get("presence", {}).get("machines", {}).values() for s in m.get("sessions", []) if s.get("waitingFor"))
+        machines = h.get("presence", {}).get("machines", {})
+        sessions = sum(len(m.get("sessions", [])) for m in machines.values())
+        waiting = sum(1 for m in machines.values() for s in m.get("sessions", []) if s.get("waitingFor"))
         pending = len(h.get("pending_asks", []))
         parts = [f"{sessions} session{'s' if sessions != 1 else ''} running"]
         if waiting:
             parts.append(f"{waiting} waiting on input")
         parts.append(f"{pending} ask{'s' if pending != 1 else ''} pending" if pending else "nothing pending")
         if h.get("paused"):
-            parts.append("and I am paused")
+            parts.append("and I'm paused")
         return ", ".join(parts) + "."
 
-    def wake_loop(self) -> None:
-        self.rec.start()
+    def process(self, samples: list[int]) -> str:
+        self.thinking.set()
         try:
-            while not self._stop.is_set():
-                if self._mic_lock.locked():
-                    self._sleep(0.05)
-                    continue
-                frame = self.rec.read()
-                if self.wake.process(frame):
-                    self.handle_wake()
+            if max((abs(s) for s in samples), default=0) < 300:
+                self.speaker.say(self.ph["didnt_catch"])
+                return "nothing"
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                wav = write_wav(samples, f.name, SAMPLE_RATE)
+            try:
+                text = self.stt.transcribe(wav)
+            finally:
+                try:
+                    os.unlink(wav)
+                except OSError:
+                    pass
+            log.info("Jason: %s", text)
+            result = self.handle_text(text)
+            self.log.append({"heard": text, "result": result})
+            return result
         finally:
-            self.rec.stop()
+            self.thinking.clear()
+            if self.asks and self.asks[0]["id"] not in self.announced and not self.listening:
+                self._announce(self.asks[0])
 
-    # ------------------------------------------------------------------ lifecycle
-    def run(self) -> None:
-        t = threading.Thread(target=self.ask_loop, daemon=True, name="asks")
-        t.start()
-        self.wake_loop()
+    # -------------------------------------------------------------- threads
+    def _event_loop(self) -> None:
+        while not self._stop.is_set():
+            try:
+                kind, payload = self.events.get(timeout=0.05)
+                self.handle_event(kind, payload)
+            except queue.Empty:
+                pass
+            if self.listening and self.toggle_mode:
+                now = time.time()
+                if (self._heard_speech and now - self._spoke_t > self.toggle_silence_s) or now - self.press_t > self.toggle_max_s:
+                    self._end_listening()
+
+    def _work_loop(self) -> None:
+        while not self._stop.is_set():
+            try:
+                samples = self.work.get(timeout=0.1)
+            except queue.Empty:
+                continue
+            try:
+                self.process(samples)
+            except Exception:  # noqa: BLE001
+                log.exception("processing failed")
+                self.speaker.say(self.ph["didnt_catch"])
+
+    def _ask_loop(self) -> None:
+        while not self._stop.is_set():
+            asks = self.core.poll_asks(wait=20)
+            if asks is None:
+                time.sleep(3)
+                continue
+            self.post("asks", asks)
+            if not asks:
+                continue
+            time.sleep(1)            # long-poll returns at once while asks are pending; re-check each second
+
+    def start(self) -> None:
+        for fn, name in ((self._event_loop, "events"), (self._work_loop, "work"), (self._ask_loop, "asks")):
+            threading.Thread(target=fn, daemon=True, name=name).start()
 
     def stop(self) -> None:
         self._stop.set()
+        self.interrupt()
 
 
-DEFAULT_PHRASES = {
-    "repeat": "Sorry, I did not hear you. Yes or no?",
-    "unclear": "I did not get that. Say yes or no.",
-    "confirm": "Say confirm to go ahead.",
-    "ack_yes": "Done.",
-    "ack_no": "Understood, I will not.",
-    "already_handled": "That one was already answered.",
-    "leave_on_phone": "No problem. I will leave it on your phone.",
-    "didnt_catch": "I did not catch that.",
-    "paused": "Paused. Nothing runs until you say resume.",
-    "unpaused": "Resumed.",
-    "nothing_pending": "Nothing is waiting on you.",
-    "no_answer": "I do not have an answer for that yet.",
-    "core_down": "I cannot reach the core right now.",
-}
+def details_text(ask: dict) -> str:
+    ti = ask.get("tool_input") or {}
+    what = ti.get("command") or ti.get("file_path") or ti.get("url") or json.dumps(ti)[:160]
+    what = str(what)
+    if len(what) > 220:
+        what = what[:220] + ", and more"
+    session = (ask.get("context") or {}).get("session_name") or ask.get("session_id", "")[:8]
+    return f"The {session} session on {ask.get('machine')} wants to run: {what}. Yes or no?"
 
 
 # ---------------------------------------------------------------------- wiring
-def build_from_config(cfg: dict[str, Any], dev: bool = False) -> VoiceDaemon:
-    from voice.stt import FakeSTT, WhisperCpp
-    from voice.tts import CoreTTS, SayTTS
-    from voice.wake import KeyboardWake, PorcupineWake
+def build_from_config(cfg: dict[str, Any]) -> tuple[VoiceDaemon, list]:
+    from voice.audio import SoundDeviceCapture
+    from voice.expressions.server import start as start_face
+    from voice.ptt import KeyTrigger
+    from voice.stt import build as build_stt
+    from voice.tts import CoreTTS, KokoroTTS, SayTTS
 
     agent = json.loads(Path(cfg.get("agent_file", "~/.bossk/agent.json")).expanduser().read_text())
     core = CoreClient(agent["core"], agent["token"], agent.get("machine", "mini"))
-    state = VoiceState(cfg.get("state_file", "~/.bossk/voice_state.json"), port=int(cfg.get("expressions_port", 8751)),
-                       serve=bool(cfg.get("expressions_window", True)))
-    say = SayTTS(voice=cfg.get("say_voice", "Samantha"))
-    tts = CoreTTS(agent["core"], agent["token"], cfg.get("tts_cache", "~/.bossk/tts_cache"), voice=cfg.get("voice", ""), fallback=say) \
-        if cfg.get("tts", "core") == "core" else say
-    phrases = dict(DEFAULT_PHRASES)
-    if cfg.get("phrases_file") and Path(cfg["phrases_file"]).expanduser().exists():
-        phrases.update(yaml.safe_load(Path(cfg["phrases_file"]).expanduser().read_text()) or {})
-    if hasattr(tts, "prerender"):
-        n = tts.prerender(list(phrases.values()))
-        log.info("pre-rendered %d phrases", n)
-    if dev:
-        rec = audio_mod.PvRecorder() if _has("pvrecorder") else audio_mod.FakeRecorder()
-        wake = KeyboardWake()
-        stt = WhisperCpp(cfg["whisper_model"]) if cfg.get("whisper_model") else FakeSTT()
+    state = VoiceState(cfg.get("state_file", "~/.bossk/voice_state.json"))
+    say = SayTTS(voice=cfg.get("say_voice", "Daniel"))
+    kind = cfg.get("tts", "kokoro")
+    if kind == "kokoro":
+        try:
+            tts = KokoroTTS(voice=cfg.get("kokoro_voice", "bm_lewis"), speed=float(cfg.get("kokoro_speed", 1.05)), fallback=say)
+        except ImportError:
+            log.warning("kokoro not installed, using macOS say")
+            tts = say
+    elif kind == "elevenlabs":
+        tts = CoreTTS(agent["core"], agent["token"], cfg.get("tts_cache", "~/.bossk/tts_cache"), voice=cfg.get("voice", ""), fallback=say)
     else:
-        rec = audio_mod.PvRecorder(int(cfg.get("mic_index", -1)))
-        secrets = _read_env_file(Path(cfg.get("secrets_file", "~/.bossk/secrets.env")).expanduser())
-        wake = PorcupineWake(secrets.get("PICOVOICE_ACCESS_KEY", ""), keyword_path=cfg.get("wake_keyword_path"),
-                             sensitivity=float(cfg.get("wake_sensitivity", 0.6)))
-        stt = WhisperCpp(cfg["whisper_model"], threads=int(cfg.get("whisper_threads", 6)))
-    return VoiceDaemon(core=core, recorder=rec, wake=wake, stt=stt, tts=tts, state=state, phrases=phrases,
-                       listen_seconds=float(cfg.get("listen_seconds", 8)))
-
-
-def _has(mod: str) -> bool:
-    try:
-        __import__(mod)
-        return True
-    except ImportError:
-        return False
-
-
-def _read_env_file(p: Path) -> dict[str, str]:
-    out = {}
-    if p.exists():
-        for line in p.read_text().splitlines():
-            if "=" in line and not line.strip().startswith("#"):
-                k, v = line.split("=", 1)
-                out[k.strip()] = v.strip().strip("\"'")
-    return out
+        tts = say
+    if hasattr(tts, "prerender"):
+        tts.prerender(list(PHRASES.values()))
+    stt = build_stt(cfg.get("stt", "mlx"), cfg.get("stt_model", ""))
+    d = VoiceDaemon(core=core, capture=SoundDeviceCapture(cfg.get("mic_device")), stt=stt, tts=tts, state=state,
+                    min_press_s=float(cfg.get("min_press_s", 0.3)), toggle_silence_s=float(cfg.get("toggle_silence_s", 1.2)),
+                    chime=cfg.get("chime"))
+    keep = []
+    if cfg.get("expressions_window", True):
+        keep.append(start_face(state, port=int(cfg.get("expressions_port", 8751)), on_ptt=d.post))
+    if cfg.get("talk_key"):
+        k = KeyTrigger(cfg["talk_key"], d.post, mode=cfg.get("talk_mode", "hold"))
+        k.start()
+        keep.append(k)
+    return d, keep
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="~/.bossk/voice.yml")
-    ap.add_argument("--dev", action="store_true", help="keyboard wake word, no Porcupine; whisper only if configured")
     ap.add_argument("-v", "--verbose", action="store_true")
     a = ap.parse_args()
     logging.basicConfig(level=logging.DEBUG if a.verbose else logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     p = Path(a.config).expanduser()
-    cfg = yaml.safe_load(p.read_text()) if p.exists() else {}
-    d = build_from_config(cfg or {}, dev=a.dev)
-    log.info("BOSSK voice daemon up (%s). %s", "dev: press Enter to wake" if a.dev else "say Hey BOSSK", "")
+    cfg = (yaml.safe_load(p.read_text()) if p.exists() else {}) or {}
+    d, _keep = build_from_config(cfg)
+    d.start()
+    log.info("BOSSK voice up. Hold %s to talk.", cfg.get("talk_key", "the talk button"))
     try:
-        d.run()
+        while True:
+            time.sleep(3600)
     except KeyboardInterrupt:
         d.stop()
     return 0

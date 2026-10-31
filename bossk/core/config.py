@@ -18,7 +18,9 @@ class CoreConfig:
     rulebook: str = "rulebook/rulebook.yml"
     ledger: str = "ledger.sqlite"
     machine_name: str = "truenas"
-    reviewer_model: str = "claude-sonnet-5-5"
+    reviewer_model: str = "sonnet"                    # Claude Code model alias; billed to the Claude plan
+    voice_model: str = "haiku"                        # fastest for spoken answers
+    claude_binary: str = ""                           # path to `claude`; "" = on PATH
     reviewer_enabled: bool = True
     voice_grace_seconds: int = 90                     # voice ask unanswered this long -> phone too
     ask_expire_minutes: int = 240

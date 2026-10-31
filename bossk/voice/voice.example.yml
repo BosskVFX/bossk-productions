@@ -1,26 +1,30 @@
-# Copy to ~/.bossk/voice.yml on the Mac mini. Core URL, token and machine name come from ~/.bossk/agent.json
-# (written by bossk_hook.py install --can-speak).
+# ~/.bossk/voice.yml on the Mac mini. Core URL, token and machine name come from ~/.bossk/agent.json
+# (written by: python3 agents/hooks/bossk_hook.py install ... --can-speak).
 agent_file: ~/.bossk/agent.json
-secrets_file: ~/.bossk/secrets.env        # PICOVOICE_ACCESS_KEY=... (the only key that lives on the mini)
 
-# Wake word: Porcupine. Train "Hey BOSSK" at console.picovoice.ai, download the macOS .ppn, point at it.
-wake_keyword_path: ~/.bossk/hey-bossk_mac.ppn
-wake_sensitivity: 0.6
-mic_index: -1                              # pvrecorder device index; -1 = default input
+# Push-to-talk. Hold the key to talk, let go when done; press while BOSSK talks to cut it off.
+# Use a button plugged into the Mac mini itself (Stream Deck key set to F19, a foot pedal, a macro pad),
+# so it works wherever Synergy has the mouse. Grant Input Monitoring + Accessibility to the Python running this.
+talk_key: f19
+talk_mode: hold            # hold | toggle (tap to start, stops itself after a pause)
+# Stream Deck alternative: HTTP-request buttons to http://127.0.0.1:8751/ptt/toggle  (and /ptt/stop)
 
-# Speech-to-text: whisper.cpp.  brew install whisper-cpp ; download ggml-large-v3-turbo.bin (and the Core ML encoder)
-whisper_model: ~/.bossk/models/ggml-large-v3-turbo.bin
-whisper_threads: 6
-listen_seconds: 8
+# Speech-to-text, local and free: mlx (Apple GPU, default) | faster-whisper | whisper-cpp
+stt: mlx
+stt_model: mlx-community/whisper-large-v3-turbo
 
-# Text-to-speech: "core" asks the NAS for ElevenLabs audio (key stays on the NAS) with macOS `say` as fallback; "say" = Apple only.
-tts: core
-voice: ""                                  # ElevenLabs voice id once Jason picks one; empty = the core's default
-say_voice: Samantha
-tts_cache: ~/.bossk/tts_cache
-phrases_file: ~/.bossk/phrases.yml         # optional overrides of the fixed phrases
+# Voice, local and free: kokoro (default) | elevenlabs (through Mother, once a voice is picked) | say (macOS)
+tts: kokoro
+kokoro_voice: bm_lewis     # British male. Try bm_george, bm_fable, am_michael, af_heart
+kokoro_speed: 1.05
+say_voice: Daniel          # fallback
+voice: ""                  # ElevenLabs voice id, only for tts: elevenlabs
 
-# Expressions window: http://127.0.0.1:8751/  (videos in ~/.bossk/expressions: idle, listening, thinking, speaking, asking)
-expressions_window: true
+mic_device:                # blank = system default input
+min_press_s: 0.3           # shorter than this with no speech = just an interrupt tap
+toggle_silence_s: 1.2
+chime: ~/.bossk/chime.wav  # optional sound before BOSSK asks something
+
+expressions_window: true   # http://127.0.0.1:8751/  press f for full screen
 expressions_port: 8751
 state_file: ~/.bossk/voice_state.json
