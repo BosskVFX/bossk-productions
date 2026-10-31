@@ -2,3 +2,5 @@ node_modules/
 package-lock.json
 *.sqlite
 *.sqlite-journal
+__pycache__/
+*.pyc
