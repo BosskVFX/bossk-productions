@@ -56,7 +56,8 @@ class Core:
         self.token = token
         self.secrets = secrets or Secrets()
         Path(cfg.data_dir).mkdir(parents=True, exist_ok=True)
-        self.ledger = Ledger(cfg.ledger)
+        ledger_path = cfg.ledger if Path(cfg.ledger).is_absolute() or cfg.ledger == ":memory:" else str(Path(cfg.data_dir) / cfg.ledger)
+        self.ledger = Ledger(ledger_path)
         self.rulebook = Rulebook.load(cfg.rulebook)
         self.presence = Presence(away_minutes=float(self.rulebook.defaults.get("idle_minutes_away", 10)),
                                  stale_seconds=cfg.stale_machine_seconds)
